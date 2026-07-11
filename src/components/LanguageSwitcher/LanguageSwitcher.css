@@ -1,0 +1,5 @@
+/* Fixed above every existing modal so language selection stays globally accessible. */
+.language-switcher { position: fixed; top: 14px; right: 16px; z-index: 20000; display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid rgba(148,163,184,.45); border-radius: 12px; background: rgba(255,255,255,.96); color: #0f172a; box-shadow: 0 8px 24px rgba(15,23,42,.16); font-size: 12px; font-weight: 700; backdrop-filter: blur(10px); }
+.language-switcher select { min-width: 100px; padding: 6px 8px; border-radius: 8px; font-size: 13px; }
+[dir='rtl'] .language-switcher { right: auto; left: 16px; }
+@media (max-width: 520px) { .language-switcher span { display: none; } .language-switcher select { min-width: 88px; } }
