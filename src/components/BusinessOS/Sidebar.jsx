@@ -4,6 +4,7 @@ import { useLanguage } from '../../context/LanguageContext'
 const MENU_ITEMS = [
   ['dashboard', 'dashboard', '⌂'],
   ['businesses', 'businesses', '◎'],
+  ['ideas-vault', 'ideasVault', '◇'],
   ['projects', 'projects', '▦'],
   ['websites-assets', 'websitesAssets', '◇'],
   ['crm', 'crm', '◫'],

@@ -2,7 +2,7 @@
 
 ## Last Updated
 
-2026-07-11 IDT
+2026-07-12 IDT
 
 ## Current Main Goal
 
@@ -10,15 +10,16 @@ Launch a working revenue-producing Business OS.
 
 ## Current Active Task
 
-No coding task is active. The final Business OS navigation cleanup is complete and verified. The next approved migration task remains Phase 1 read-only repository inspection.
+No coding task is active. Ideas Vault is complete and verified. The next revenue priority is restoring reliable real lead acquisition.
 
 ## Last Completed Task
 
-Final Business OS navigation cleanup. The sidebar now contains 13 system categories only; BS Finder is accessed through Businesses, BS Funds through Websites & Assets, the BS Finder business card shows live local metrics, and BS Funds was removed from the main dashboard project cards. Build and lint passed.
+Ideas Vault. Business OS now has a compact revenue-first idea screen with add, edit, delete, status changes, deterministic priority scoring, persistent localStorage, four-language labels, RTL/LTR, and light/dark presentation. Build and lint passed.
 
 ## What Is Working
 
 - Business OS shell with internal screen state and fixed RTL/LTR-aware sidebar.
+- Ideas Vault with revenue potential, time-to-revenue, effort, cost, status, next-action tracking, deterministic scoring, and local persistence shared with Dashboard quick capture.
 - Business OS Command Center v2 with a dominant task-backed mission, focus mode, local business overview, verified ecosystem facts, development/document panels, theme persistence, and compact responsive views.
 - Scalable 13-item system navigation: Dashboard, Businesses, Projects, Websites & Assets, CRM, Sales, Tasks, AI Center, Development, Documents, Users & Permissions, Integrations, and Settings.
 - Businesses landing page and BS Finder workspace linking to Lead Discovery, CRM, Sales, Proposal Generator, Demo Website Builder, and Real Website Builder.
@@ -75,6 +76,7 @@ Final Business OS navigation cleanup. The sidebar now contains 13 system categor
 - Demo website quality still requires improvement before it can be sold as a professional customer website.
 - Google Sheets requires a configured public Apps Script web-app endpoint.
 - All operational data currently relies on browser localStorage and can be lost if browser storage is cleared.
+- Ideas Vault data is local to the current browser and has no cloud backup or multi-device synchronization.
 - The local backend CORS configuration is development-specific (`http://localhost:5173`) and must be configured before a paid production API is deployed.
 - Mission Control is task-record based; it does not yet generate a separate per-lead sales workflow task for every action stage.
 - AI Center is safely disconnected because no OpenAI API key is currently configured.
@@ -144,16 +146,16 @@ The flow currently works through WhatsApp opening and local tracking. Payment, r
 
 ## Next 10 Tasks
 
-1. Execute Migration Phase 1 read-only repository inspection after Owner approval.
-2. Reconcile the current combined source with the private Business OS remote without changing active projects.
-3. Define the paid-customer website requirements and delivery workflow.
-4. Upgrade Website Builder quality for real customer production sites.
-5. Add website editing, approval, publishing, and deployment states.
-6. Persist all real leads, CRM, tasks, and actions in a secure cloud database.
-7. Add authentication, tenant/user ownership, and authorization.
-8. Build the full CRM dashboard with pipeline and follow-up views.
-9. Connect BS Funds to real lead and revenue data.
-10. Add automated tests for revenue-critical workflows.
+1. Restore and verify reliable real lead acquisition for multiple industries and cities.
+2. Select and configure the real payment provider and payment handoff.
+3. Build the focused CRM pipeline required to close the first customer.
+4. Add controlled sales follow-up automation for real prospects.
+5. Verify the complete customer journey from lead through payment.
+6. Verify proposal acceptance and secure-payment handoff with a real configured URL.
+7. Deploy and smoke-test the customer-facing sales flow on a public URL.
+8. Complete the paid-customer website delivery and approval workflow.
+9. Add revenue-critical follow-up reminders and outcome tracking.
+10. Add focused tests for lead, proposal, payment, and delivery workflows.
 
 ## Do Not Touch
 
@@ -168,4 +170,5 @@ Do not change these stable areas without a specific task and verification plan:
 - WebsiteBuilder, ProposalGenerator, and SalesCenter contracts.
 - Language context, all four languages, and RTL/LTR behavior.
 - Business OS internal screen-state architecture.
+- Ideas Vault storage key `business-os-command-center-ideas-v1` and its compatibility with Dashboard quick capture.
 - Production error boundary and static-host fallback.

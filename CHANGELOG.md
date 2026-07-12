@@ -36,6 +36,7 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Real Website Builder V1 with customer intake, three professional templates, deterministic four-language content, RTL/LTR previews, project status tracking, and localStorage persistence.
 - Business OS Command Center v2 with task-backed Current Mission actions, Focus Mode, local business overview, three ecosystem project cards, development and document centers, priority queue, grouped risks, AI connection summary, local idea capture, persistent light/dark themes, and responsive navigation.
 - Businesses and Websites & Assets category pages, plus a focused BS Finder workspace that exposes existing revenue tools without placing them in the global sidebar.
+- Revenue-first Ideas Vault with compact CRUD, status updates, deterministic scoring, priority labels, shared Dashboard idea persistence, responsive cards, and four-language RTL/LTR support.
 
 ### Changed
 

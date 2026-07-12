@@ -1,7 +1,8 @@
 // Verified local facts for Command Center v2. No external service claims are made here.
+import { addIdea, IDEAS_STORAGE_KEY as VAULT_STORAGE_KEY, loadIdeas as loadVaultIdeas } from '../IdeasVault/ideasStorage'
 export const COMMAND_CENTER_UPDATED = '2026-07-11'
 export const LAST_BACKUP = '2026-07-11 14:53 IDT'
-export const IDEA_STORAGE_KEY = 'business-os-command-center-ideas-v1'
+export const IDEA_STORAGE_KEY = VAULT_STORAGE_KEY
 
 export const ecosystemProjects = [
   { id: 'business-os', name: 'Business OS', technicalName: 'Embedded in bs-hunter', purpose: 'Owner management layer for projects, tasks, status, agents, and business operations.', status: 'Active · local', categories: ['Business OS', 'Infrastructure', 'Global Languages', 'Automation', 'Future Development'], currentTask: 'Build Business OS Command Center v2', nextTask: 'Read-only repository inspection', blockers: ['Local source is not protected by Git', 'Intended remote is non-empty and unverified'], repository: 'Intended: kammmartin7-rgb/business-os · not connected', lastUpdate: '2026-07-11', screen: 'dashboard' },
@@ -44,5 +45,5 @@ export const knownCommandIssues = [
   ['low', 'Documentation drift', 'README and some status/task history do not fully match current source.'],
 ]
 
-export function loadIdeas() { try { const value = JSON.parse(localStorage.getItem(IDEA_STORAGE_KEY)); return Array.isArray(value) ? value : [] } catch { return [] } }
-export function saveIdea(idea) { const ideas = [idea, ...loadIdeas()].slice(0, 50); localStorage.setItem(IDEA_STORAGE_KEY, JSON.stringify(ideas)); return ideas }
+export function loadIdeas() { return loadVaultIdeas() }
+export function saveIdea(idea) { return addIdea(idea) }

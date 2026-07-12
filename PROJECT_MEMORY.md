@@ -1,6 +1,6 @@
 # Project Operational Memory
 
-Last updated: 2026-07-11  
+Last updated: 2026-07-12
 Memory status: Current as of this session  
 Update rule: Update this file after every completed work session using verified facts only.
 
@@ -11,8 +11,8 @@ Update rule: Update this file after every completed work session using verified 
 | Official project name | Business OS ecosystem; primary operating business: BS Finder |
 | Current technical name | `bs-hunter` / BS Hunter for the combined working application |
 | Current local folder | `/Users/sdfghjklpoiuytrewq/my-website/bs-hunter` |
-| Git repository | None connected locally. Intended Business OS destination: `https://github.com/kammmartin7-rgb/business-os.git`, but mapping is **UNVERIFIED** and the remote is non-empty. No BS Finder repository currently exists at the audited owner paths. |
-| Current branch | Not applicable — current folder is not a Git repository |
+| Git repository | `https://github.com/kammmartin7-rgb/bs-finder.git` — verified private repository connected as `origin` |
+| Current branch | `main`, tracking `origin/main` |
 | Deployment status | Static deployment was prepared previously, but no current public deployment has been verified. The latest interrupted Task 19.1 source has not received a fresh production-build verification. |
 | Current owner | Owner role has full authority. Owner’s personal/legal identity: **UNKNOWN**. |
 | Current business purpose | Business OS manages the ecosystem. BS Finder is the primary revenue business, intended to move businesses from lead discovery through demo, sales, payment, real website delivery, maintenance, upsell, and retention. |
@@ -30,7 +30,7 @@ The separate `/Users/sdfghjklpoiuytrewq/my-website/business-os` folder is only a
 
 The BS Funds project is `/Users/sdfghjklpoiuytrewq/my-website/first ever`. It is a Git repository connected to `kammmartin7-rgb/bs-funds`, but its working tree contains extensive mixed, uncommitted BS Hunter-related work.
 
-The current combined `bs-hunter` folder has no `.git` repository or remote. The intended `kammmartin7-rgb/business-os` remote exists and is non-empty, but its contents have not been reconciled with local code. No `kammmartin7-rgb/bs-finder` or `kammmartin7-rgb/bs-hunter` repository was found during the audit.
+The current combined `bs-hunter` folder is now protected by Git and connected to the private `kammmartin7-rgb/bs-finder` repository. The protected baseline commit is `16e119ee0c4820f4cc2f141f3ed6fced3c9ef056` on `main`. Historical audit and migration documents still contain pre-repository facts and must be read as dated evidence.
 
 Task 19.1 — premium Real Website Builder output — was interrupted. The changed source passed lint during the audit, but it is not recorded as completed and has not received a fresh production build verification.
 
@@ -89,34 +89,38 @@ Chronology is recorded only where verified. Exact dates for earlier application 
 
 - Created this `PROJECT_MEMORY.md` as the continuously updated session memory.
 
+### 2026-07-12 — Ideas Vault
+
+- Added a focused Business OS Ideas Vault using the existing Dashboard idea storage key.
+- Added idea CRUD, status changes, deterministic revenue-first scoring, Fast Money/High Potential/Review/Later labels, four-language UI, RTL/LTR, and light/dark styles.
+- Verified build, lint, storage persistence, CRUD, status updates, scoring, and sorting.
+
 ---
 
 ## Current Active Task
 
-**Awaiting Owner approval to execute Migration Phase 1: read-only inspection and reconciliation evidence for every repository, beginning with the non-empty private `kammmartin7-rgb/business-os` remote.** Final navigation cleanup is complete; no coding task is active.
-
-No repository inspection clone, Git connection, pull, push, merge, reset, migration, cleanup, or new feature is currently authorized.
+**No coding task is active. Ideas Vault is complete. The next planned revenue task is restoring and verifying real lead acquisition.**
 
 ---
 
 ## Next 10 Tasks
 
-1. Execute Phase 1 read-only repository inspection in an isolated location after Owner approval.
-2. Compare the private `business-os` remote tree/history with the current local combined source without connecting either active folder.
-3. Protect the current `bs-hunter` code in a separate local Git-backed copy after secret/exclusion review and Owner approval.
-4. Preserve the BS Funds dirty working tree with an approved safety branch/commit and independent patch/untracked-file evidence.
-5. Establish and approve one authoritative local-folder-to-repository mapping for Business OS, BS Finder, and BS Funds.
-6. Separate Business OS management code into an independently tested project without embedding the full BS Finder application.
-7. Preserve BS Finder operational code as an independently tested revenue application while retaining stable storage IDs and compatibility.
-8. Create a clean BS Funds target from verified finance source while retaining every mixed file in recoverable backup/history.
-9. Establish correct Git remotes and first branches/pushes only after isolated history reconciliation, secret scanning, and explicit Owner approval.
-10. Resolve interrupted Task 19.1 by either completing and verifying it or intentionally reverting it after source protection.
+1. Restore and verify real lead acquisition across industries and cities.
+2. Select and connect a real payment provider and payment handoff.
+3. Build the minimum CRM pipeline needed to close the first customer.
+4. Add controlled sales follow-up automation.
+5. Test the entire customer journey from lead through payment.
+6. Verify proposal acceptance and real payment-link behavior.
+7. Deploy and smoke-test the revenue flow publicly.
+8. Complete the paid-customer website approval and delivery workflow.
+9. Add focused follow-up reminders and sales outcome tracking.
+10. Add revenue-critical workflow tests.
 
 ---
 
 ## Known Risks
 
-- The most valuable combined source has no Git protection.
+- Ideas, tasks, CRM, leads, and website projects still depend heavily on browser localStorage.
 - The intended Business OS remote is non-empty and its source relationship to local code is **UNKNOWN**.
 - BS Funds has a large mixed, uncommitted working tree; accidental cleanup or push could lose or publish unrelated work.
 - BS Hunter is the current technical name while BS Finder is the official business name; uncontrolled renaming can break routes, storage, imports, configuration, repositories, and deployments.
@@ -132,10 +136,7 @@ No repository inspection clone, Git connection, pull, push, merge, reset, migrat
 
 ## Current Blockers
 
-- Owner approval is required for Phase 1 private repository inspection and inspection location.
-- The contents/history of `kammmartin7-rgb/business-os` have not been inspected in isolation.
-- The authoritative final repository mapping between combined local code, Business OS, and BS Finder is not approved.
-- A BS Finder GitHub repository does not currently exist at the audited owner paths.
+- Reliable automatic real-lead search still requires a configured provider/backend or another verified source.
 - BS Funds mixed working-tree ownership is unresolved.
 - Task 19.1 cannot safely continue or be reverted until source protection/repository strategy is approved.
 - Production paid search requires provider billing and a deployed/configured backend.
@@ -167,11 +168,11 @@ No repository inspection clone, Git connection, pull, push, merge, reset, migrat
 
 - Folder: `/Users/sdfghjklpoiuytrewq/my-website/bs-hunter`
 - Package: `bs-hunter`
-- Git: none
-- Branch: not applicable
-- Remote: none
-- Push status: current work is not pushed from this folder
-- Intended remote: `kammmartin7-rgb/business-os`, unverified mapping
+- Git: initialized and connected
+- Branch: `main`, tracking `origin/main`
+- Remote: `https://github.com/kammmartin7-rgb/bs-finder.git`
+- Protected baseline commit: `16e119ee0c4820f4cc2f141f3ed6fced3c9ef056`
+- Current Ideas Vault task changes are intentionally uncommitted and unpushed
 
 ### Separate Business OS starter
 
@@ -264,17 +265,15 @@ Future businesses are independent managed projects with verified repositories, d
 
 ## Last Session Summary
 
-The latest completed work session restructured Business OS navigation without changing repositories or operational modules:
+The latest completed work session added the minimal Ideas Vault:
 
-- Old sidebar mixed Command Center, BS Hunter, BS Funds, Projects, Tasks, CRM, Sales Center, AI Center, Website Builder, Real Website Builder, Development, Documents, Users, Integrations, and Settings.
-- Final sidebar contains only: Dashboard, Businesses, Projects, Websites & Assets, CRM, Sales, Tasks, AI Center, Development, Documents, Users & Permissions, Integrations, and Settings.
-- Added a Businesses page containing BS Finder and a BS Finder workspace linking to Lead Discovery, CRM, Sales, Proposal Generator, Demo Website Builder, and Real Website Builder.
-- The BS Finder card shows its technical name, type, status, current task, and live real-lead, demo-site, proposal, and won-sales counts from existing storage logic.
-- Added Websites & Assets containing BS Funds, Demo Websites, Customer Websites, Templates, Landing Pages, and Archived Websites. BS Funds opens its existing screen from this page.
-- Removed duplicate top-level BS Hunter, BS Funds, Sales Center, Website Builder, Real Website Builder, and standalone Websites entries without deleting their components or working destinations.
-- Removed BS Funds from the main Dashboard project cards and changed display-only Open BS Hunter labels to Open BS Finder while retaining technical identifiers.
-- Verified production build, lint, local Vite module loading, exact sidebar structure, destination wiring, persistent theme support, four-language translations, and RTL-aware CSS.
-- No Git operation, repository change, folder rename, external connection, or BS Funds project edit occurred.
+- Added Ideas Vault to the existing state-based Business OS sidebar.
+- Reused `business-os-command-center-ideas-v1` so Dashboard quick capture and the full Vault share one source.
+- Added add, edit, delete, status changes, next action, and compact revenue decision fields.
+- Added deterministic scoring weighted toward faster revenue, higher potential, lower effort, and lower cost.
+- Added Fast Money, High Potential, Review, and Later labels.
+- Verified CRUD, persistence, status updates, sorting, build, lint, RTL/LTR code paths, and light/dark styles.
+- No commit or push was performed.
 
 ---
 

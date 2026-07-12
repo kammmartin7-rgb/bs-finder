@@ -10,6 +10,7 @@ import TasksModule from './TasksModule'
 import Projects from '../Projects/Projects'
 import AICenter from '../AICenter/AICenter'
 import RealWebsiteBuilder from '../RealWebsiteBuilder/RealWebsiteBuilder'
+import IdeasVault from '../IdeasVault/IdeasVault'
 import { AssetsHub, BSFinderWorkspace, BusinessesHub } from './NavigationHub'
 
 const PLACEHOLDER_KEYS = { crm: 'crmPlaceholder', sales: 'salesModulePlaceholder', users: 'usersPlaceholder', integrations: 'integrationsPlaceholder', settings: 'settingsPlaceholder' }
@@ -37,6 +38,7 @@ export default function BusinessOS({ leads = [], realWebsiteLead, onDashboardFil
     if (activeScreen === 'real-website-builder') return <RealWebsiteBuilder initialLead={realWebsiteLead} />
     if (activeScreen === 'bs-funds') return <BSFunds />
     if (activeScreen === 'tasks') return <TasksModule />
+    if (activeScreen === 'ideas-vault') return <IdeasVault />
 
     return (
       <section className="business-os__placeholder">
