@@ -6,6 +6,10 @@ export const DEFAULT_CRM_RECORD = {
   status: 'new',
   notes: '',
   nextFollowUp: '',
+  dealAmount: '',
+  proposalAmount: '',
+  stageChangedAt: '',
+  updatedAt: '',
 }
 
 export function getLeadCrmKey(lead = {}) {
@@ -30,8 +34,9 @@ export function loadLeadCrm(leadKey) {
 
 export function saveLeadCrm(leadKey, record) {
   try {
-    window.localStorage.setItem(`${STORAGE_PREFIX}${leadKey}`, JSON.stringify(record))
-    window.dispatchEvent(new CustomEvent(CRM_CHANGE_EVENT, { detail: { leadKey, record } }))
+    const nextRecord = { ...DEFAULT_CRM_RECORD, ...record, updatedAt: new Date().toISOString() }
+    window.localStorage.setItem(`${STORAGE_PREFIX}${leadKey}`, JSON.stringify(nextRecord))
+    window.dispatchEvent(new CustomEvent(CRM_CHANGE_EVENT, { detail: { leadKey, record: nextRecord } }))
     return true
   } catch {
     return false

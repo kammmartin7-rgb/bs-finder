@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS.
 
 ## Current Active Task
 
-No coding task is active. Ideas Vault is complete and verified. The next revenue priority is restoring reliable real lead acquisition.
+CRM V2 implementation is active. Tasks 1-4 are complete: the responsive sales shell now uses existing real lead, CRM, and activity records, renders the sales pipeline and lead cards, and prioritizes urgent actions.
 
 ## Last Completed Task
 
-Ideas Vault. Business OS now has a compact revenue-first idea screen with add, edit, delete, status changes, deterministic priority scoring, persistent localStorage, four-language labels, RTL/LTR, and light/dark presentation. Build and lint passed.
+CRM V2 Tasks 1-4. The former CRM placeholder is now a four-language, RTL/LTR, light/dark sales workspace connected to existing local lead and CRM data. Build and lint passed.
 
 ## What Is Working
 
@@ -33,11 +33,14 @@ Ideas Vault. Business OS now has a compact revenue-first idea screen with add, e
 - Demo leads remain a manual test option and are excluded from real dashboard statistics.
 - Lead scoring, search/filter/sort controls, CSV export, and Google Sheets export integration.
 - Lead CRM status, notes, and follow-up date persistence.
+- CRM V2 shell, real-data pipeline, detailed lead cards, legacy-status display compatibility, and urgency ordering for overdue/today/proposal/demo/new/payment follow-up.
 - Automatic lead-action history with CRM transitions for Proposal and WhatsApp.
 - Four lead actions in a compact 2x2 layout: Proposal, Demo Site, Sales Pitch, WhatsApp.
 - Demo Website Builder with templates, sections, responsive output, contact actions, and generated placeholder copy.
+- Shareable Demo Links with stable per-lead IDs, direct public hash routes, portable URL snapshots, same-browser localStorage persistence, copy/open controls, and a professional missing-demo state.
 - Separate Real Website Builder V1 with manual or BS Hunter lead intake, three professional templates, four website languages, RTL/LTR output, live/full previews, project statuses, and localStorage drafts.
 - Proposal Generator modal.
+- Proposal Templates V1 with three predefined website offers, automatic customer/date details, editable commercial content, and per-business local draft persistence.
 - Sales Center with phone, WhatsApp, email, objection scripts, and copy buttons.
 - Tasks module with CRUD, filters, categories, progress, pagination, a one-time 100-task roadmap, and localStorage.
 - Mission Control shows the six highest-priority incomplete Tasks records.
@@ -47,6 +50,7 @@ Ideas Vault. Business OS now has a compact revenue-first idea screen with add, e
 - AI Center with permanent Business OS navigation, backend configuration status, connection test, chat, four project actions, constrained project/task context, Responses API integration, and non-sensitive activity metadata.
 - Four-language system: English, Hebrew, Arabic, and Russian.
 - Global RTL/LTR document direction and persisted language selection.
+- Working Settings screen with immediate language/theme/compact changes, persisted default opening screen, reset confirmation, and success feedback.
 - Top-level production error boundary and static-host `_redirects` fallback.
 - Production build is static and Free Mode, CSV, Demo, CRM, and Tasks do not require the local backend.
 
@@ -55,10 +59,9 @@ Ideas Vault. Business OS now has a compact revenue-first idea screen with add, e
 - No production deployment has been completed or verified on a real hosting provider.
 - Paid lead search still needs billing, a deployed backend, and `VITE_API_BASE_URL`.
 - BS Funds has no live data integration.
-- CRM has lead-level controls but no full CRM dashboard.
+- CRM V2 still needs Next Action handlers, editable daily goals, follow-up controls, proposal/revenue integration, search, filters, and sorting.
 - Websites screen is still a placeholder; Real Website Builder is available through its own module.
-- Global Sales, Users & Permissions, Integrations, and Settings remain safe placeholder screens until their data or functionality is connected.
-- Settings screen is still a placeholder.
+- Global Sales, Users & Permissions, and Integrations remain safe placeholder screens until their data or functionality is connected.
 - Demo Website Builder does not use AI, customer-specific business types, image generation, editing, publishing, domains, or hosting.
 - Real Website Builder V1 does not yet include section editing, client approvals, publishing, domains, hosting, or a payment-triggered delivery workflow.
 - No payment integration exists.

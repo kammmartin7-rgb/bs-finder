@@ -95,26 +95,50 @@ Chronology is recorded only where verified. Exact dates for earlier application 
 - Added idea CRUD, status changes, deterministic revenue-first scoring, Fast Money/High Potential/Review/Later labels, four-language UI, RTL/LTR, and light/dark styles.
 - Verified build, lint, storage persistence, CRUD, status updates, scoring, and sorting.
 
+### 2026-07-12 — Shareable Demo Links verification
+
+- Verified the existing stable demo identifier, direct `#/demo/{id}` route, portable demo snapshot, localStorage refresh persistence, Copy Demo Link and Open Demo controls, and professional missing-demo state.
+- Verified deterministic new-tab behavior, build, lint, and Vite module loading without changing Demo Website Builder source.
+
+### 2026-07-12 — Proposal Templates V1
+
+- Added Basic Website, Business Website, and Premium Website templates while preserving existing proposal package IDs and approvals.
+- Added automatic business name, optional contact name, and current date plus editable price, delivery, revisions, included items, and per-business local draft saving.
+- Verified template selection, autofill, editing, existing App integration, build, lint, and Vite module loading.
+
+### 2026-07-12 — Business OS Settings
+
+- Replaced the Settings placeholder with controls for interface language, light/dark mode, default opening screen, and compact mode.
+- Reused LanguageContext and the Business OS theme owner while persisting one normalized settings record under `business-os-settings-v1`.
+- Verified save/reload, legacy language/theme compatibility, default-screen loading, compact toggle, reset, four-language labels, RTL/LTR paths, build, lint, and Vite module loading.
+
+### 2026-07-12 — CRM V2 Tasks 1-4
+
+- Replaced the CRM placeholder with a responsive sales workspace supporting four languages, RTL/LTR, and light/dark mode.
+- Reused the existing loaded leads, `bs-hunter-crm:*` records, and `bs-hunter-lead-action-history`; demo leads remain excluded.
+- Added ten pipeline stages, detailed lead cards, backward-compatible legacy-stage display mapping, and urgent ordering for overdue and current sales work.
+- Verified build and lint. Next Action handlers, daily-goal calculations, follow-up editing, revenue integration, search, filters, and sorting remain pending.
+
 ---
 
 ## Current Active Task
 
-**No coding task is active. Ideas Vault is complete. The next planned revenue task is restoring and verifying real lead acquisition.**
+**CRM V2 is active. Tasks 1-4 are verified complete; Task 5, the Next Action engine, is next.**
 
 ---
 
 ## Next 10 Tasks
 
-1. Restore and verify real lead acquisition across industries and cities.
-2. Select and connect a real payment provider and payment handoff.
-3. Build the minimum CRM pipeline needed to close the first customer.
-4. Add controlled sales follow-up automation.
-5. Test the entire customer journey from lead through payment.
-6. Verify proposal acceptance and real payment-link behavior.
-7. Deploy and smoke-test the revenue flow publicly.
-8. Complete the paid-customer website approval and delivery workflow.
-9. Add focused follow-up reminders and sales outcome tracking.
-10. Add revenue-critical workflow tests.
+1. Add the CRM Next Action engine using existing handlers.
+2. Add CRM follow-up editing and overdue/today/upcoming groups.
+3. Add editable persisted daily goals and verified activity progress.
+4. Integrate existing proposal values and approval state.
+5. Add explicit deal, payment, and website-production state transitions.
+6. Add CRM search, filters, and urgency sorting.
+7. Verify all CRM workflows on desktop and mobile.
+8. Verify all four languages, RTL/LTR, and light/dark mode.
+9. Regression-test every existing BS Finder module.
+10. Complete CRM V2 documentation and final verified push.
 
 ---
 

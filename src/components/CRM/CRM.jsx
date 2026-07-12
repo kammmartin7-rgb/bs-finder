@@ -1,0 +1,41 @@
+// Sales-first CRM V2 workspace connected to existing lead, CRM, and activity records.
+import { useEffect, useMemo, useState } from 'react'
+import { useLanguage } from '../../context/LanguageContext'
+import { subscribeToCrmChanges } from '../LeadCRM/crmStorage'
+import { subscribeToLeadActionChanges } from '../LeadCRM/leadActionStorage'
+import { CRM_STAGES, getCrmLeadViews, getUrgentCrmLeads } from './crmSelectors'
+import './CRM.css'
+
+const COPY = {
+  en: { eyebrow: 'BS Finder Sales', title: 'Sales CRM', subtitle: 'Focus the day on the conversations and deals that need attention.', mission: "Today's Mission", leads: 'Leads today', calls: 'Calls today', followUps: 'Follow-ups today', deals: 'Deals target', revenue: 'Revenue target', notConnected: 'Not connected', urgent: 'Urgent Actions', urgentHint: 'Highest-priority opportunities appear first.', pipeline: 'Sales Pipeline', empty: 'No real leads are currently loaded.', noUrgent: 'No urgent sales actions right now.', contact: 'Contact', phone: 'Phone', email: 'Email', source: 'Source', followUp: 'Next follow-up', proposal: 'Proposal', deal: 'Deal', notes: 'Notes', activity: 'Latest activity', unknown: 'Not available', urgency: { overdue: 'Follow-up overdue', today: 'Follow-up due today', proposal: 'Proposal waiting for response', demo: 'Demo sent — no response', new: 'New lead waiting for first contact', payment: 'Deal won — waiting for payment' }, stages: ['New Lead', 'First Contact', 'Demo Sent', 'Proposal Sent', 'Follow-up', 'Deal Won', 'Paid', 'Website In Progress', 'Completed', 'Archived / Lost'] },
+  he: { eyebrow: 'מכירות BS Finder', title: 'CRM מכירות', subtitle: 'מיקוד היום בשיחות ובעסקאות שדורשות טיפול.', mission: 'המשימה של היום', leads: 'לידים היום', calls: 'שיחות היום', followUps: 'מעקבים היום', deals: 'יעד עסקאות', revenue: 'יעד הכנסה', notConnected: 'לא מחובר', urgent: 'פעולות דחופות', urgentHint: 'ההזדמנויות בעדיפות הגבוהה ביותר מופיעות ראשונות.', pipeline: 'תהליך המכירה', empty: 'אין כרגע לידים אמיתיים טעונים.', noUrgent: 'אין כרגע פעולות מכירה דחופות.', contact: 'איש קשר', phone: 'טלפון', email: 'אימייל', source: 'מקור', followUp: 'מעקב הבא', proposal: 'הצעה', deal: 'עסקה', notes: 'הערות', activity: 'פעילות אחרונה', unknown: 'לא זמין', urgency: { overdue: 'מעקב באיחור', today: 'מעקב להיום', proposal: 'הצעה ממתינה לתגובה', demo: 'דמו נשלח — אין תגובה', new: 'ליד חדש ממתין ליצירת קשר', payment: 'עסקה נסגרה — ממתינה לתשלום' }, stages: ['ליד חדש', 'יצירת קשר ראשונה', 'דמו נשלח', 'הצעה נשלחה', 'מעקב', 'עסקה נסגרה', 'שולם', 'אתר בבנייה', 'הושלם', 'ארכיון / אבד'] },
+  ar: { eyebrow: 'مبيعات BS Finder', title: 'نظام المبيعات CRM', subtitle: 'ركّز يومك على المحادثات والصفقات التي تحتاج إلى اهتمام.', mission: 'مهمة اليوم', leads: 'عملاء اليوم', calls: 'مكالمات اليوم', followUps: 'متابعات اليوم', deals: 'هدف الصفقات', revenue: 'هدف الإيرادات', notConnected: 'غير متصل', urgent: 'إجراءات عاجلة', urgentHint: 'تظهر الفرص الأعلى أولوية أولاً.', pipeline: 'مسار المبيعات', empty: 'لا يوجد عملاء حقيقيون محملون الآن.', noUrgent: 'لا توجد إجراءات مبيعات عاجلة الآن.', contact: 'جهة الاتصال', phone: 'الهاتف', email: 'البريد', source: 'المصدر', followUp: 'المتابعة التالية', proposal: 'العرض', deal: 'الصفقة', notes: 'ملاحظات', activity: 'آخر نشاط', unknown: 'غير متاح', urgency: { overdue: 'متابعة متأخرة', today: 'متابعة اليوم', proposal: 'عرض بانتظار الرد', demo: 'تم إرسال العرض التجريبي — لا رد', new: 'عميل جديد ينتظر التواصل الأول', payment: 'صفقة ناجحة — بانتظار الدفع' }, stages: ['عميل جديد', 'التواصل الأول', 'تم إرسال العرض التجريبي', 'تم إرسال العرض', 'متابعة', 'صفقة ناجحة', 'مدفوع', 'الموقع قيد الإنشاء', 'مكتمل', 'مؤرشف / مفقود'] },
+  ru: { eyebrow: 'Продажи BS Finder', title: 'CRM продаж', subtitle: 'Сосредоточьтесь на разговорах и сделках, которые требуют внимания.', mission: 'Миссия на сегодня', leads: 'Лиды сегодня', calls: 'Звонки сегодня', followUps: 'Контакты сегодня', deals: 'Цель по сделкам', revenue: 'Цель по выручке', notConnected: 'Не подключено', urgent: 'Срочные действия', urgentHint: 'Самые приоритетные возможности отображаются первыми.', pipeline: 'Воронка продаж', empty: 'Сейчас нет загруженных реальных лидов.', noUrgent: 'Срочных действий по продажам сейчас нет.', contact: 'Контакт', phone: 'Телефон', email: 'Email', source: 'Источник', followUp: 'Следующий контакт', proposal: 'Предложение', deal: 'Сделка', notes: 'Заметки', activity: 'Последняя активность', unknown: 'Недоступно', urgency: { overdue: 'Просроченный контакт', today: 'Контакт сегодня', proposal: 'Предложение ожидает ответа', demo: 'Демо отправлено — нет ответа', new: 'Новый лид ожидает первого контакта', payment: 'Сделка выиграна — ожидает оплаты' }, stages: ['Новый лид', 'Первый контакт', 'Демо отправлено', 'Предложение отправлено', 'Повторный контакт', 'Сделка выиграна', 'Оплачено', 'Сайт в работе', 'Завершено', 'Архив / Потерян'] },
+}
+
+const STAGE_ICONS = ['🔥', '📞', '🌐', '📄', '📅', '🤝', '💳', '🏗', '✅', '◌']
+
+function display(value, fallback) { return value === 0 || value ? value : fallback }
+function amount(value, fallback) { const number = Number(value); return Number.isFinite(number) && number > 0 ? `₪${number.toLocaleString()}` : fallback }
+
+function LeadCard({ view, copy }) {
+  return <article className="crm-lead-card"><header><div><h4>{display(view.businessName, copy.unknown)}</h4><span>{display(view.contactName, copy.unknown)}</span></div><strong>{Number(view.lead.leadScore) || '—'}</strong></header><dl><div><dt>{copy.phone}</dt><dd>{display(view.phone, copy.unknown)}</dd></div><div><dt>{copy.email}</dt><dd>{display(view.email, copy.unknown)}</dd></div><div><dt>{copy.source}</dt><dd>{display(view.source, copy.unknown)}</dd></div><div><dt>{copy.followUp}</dt><dd>{display(view.crm.nextFollowUp, copy.unknown)}</dd></div><div><dt>{copy.proposal}</dt><dd>{amount(view.proposalAmount, copy.unknown)}</dd></div><div><dt>{copy.deal}</dt><dd>{amount(view.dealAmount, copy.unknown)}</dd></div></dl><p><b>{copy.notes}:</b> {display(view.crm.notes, copy.unknown)}</p><small>{copy.activity}: {display(view.latestActivity, copy.unknown)}</small></article>
+}
+
+export default function CRM({ leads = [] }) {
+  const { language, direction } = useLanguage()
+  const copy = COPY[language] || COPY.en
+  const [revision, setRevision] = useState(0)
+  useEffect(() => subscribeToCrmChanges(() => setRevision((value) => value + 1)), [])
+  useEffect(() => subscribeToLeadActionChanges(() => setRevision((value) => value + 1)), [])
+  const views = useMemo(() => { void revision; return getCrmLeadViews(leads) }, [leads, revision])
+  const urgent = useMemo(() => getUrgentCrmLeads(views), [views])
+  const stages = useMemo(() => CRM_STAGES.map((stage) => views.filter((view) => view.stage === stage)), [views])
+  const missionLabels = [copy.leads, copy.calls, copy.followUps, copy.deals, copy.revenue]
+
+  return <section className="crm-v2" dir={direction}><header className="crm-v2__header"><div><span>{copy.eyebrow}</span><h1>{copy.title}</h1><p>{copy.subtitle}</p></div></header>
+    <section className="crm-v2__mission"><header><span>01</span><h2>{copy.mission}</h2></header><div>{missionLabels.map((label) => <article key={label}><span>{label}</span><strong>{copy.notConnected}</strong></article>)}</div></section>
+    <section className="crm-v2__urgent"><header><div><span>02</span><h2>{copy.urgent}</h2><p>{copy.urgentHint}</p></div><strong>{urgent.length}</strong></header>{urgent.length ? <div>{urgent.slice(0, 6).map((view) => <article key={view.leadKey} className={`is-priority-${view.urgency.rank}`}><i /><div><strong>{copy.urgency[view.urgency.type]}</strong><span>{view.businessName}</span></div><b>{view.lead.leadScore || '—'}</b></article>)}</div> : <p className="crm-v2__empty">{copy.noUrgent}</p>}</section>
+    <section className="crm-v2__pipeline"><header><span>03</span><h2>{copy.pipeline}</h2></header>{views.length ? <div className="crm-v2__stages">{stages.map((stageViews, index) => <article key={CRM_STAGES[index]}><header><span>{STAGE_ICONS[index]}</span><h3>{copy.stages[index]}</h3><strong>{stageViews.length}</strong></header><div>{stageViews.map((view) => <LeadCard key={view.leadKey} view={view} copy={copy} />)}</div></article>)}</div> : <p className="crm-v2__empty">{copy.empty}</p>}</section>
+  </section>
+}

@@ -37,6 +37,9 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Business OS Command Center v2 with task-backed Current Mission actions, Focus Mode, local business overview, three ecosystem project cards, development and document centers, priority queue, grouped risks, AI connection summary, local idea capture, persistent light/dark themes, and responsive navigation.
 - Businesses and Websites & Assets category pages, plus a focused BS Finder workspace that exposes existing revenue tools without placing them in the global sidebar.
 - Revenue-first Ideas Vault with compact CRUD, status updates, deterministic scoring, priority labels, shared Dashboard idea persistence, responsive cards, and four-language RTL/LTR support.
+- Proposal Templates V1 with Basic, Business, and Premium website offers, customer/contact/date autofill, editable prices and scope details, and per-business local draft saving.
+- Working Business OS Settings screen for language, light/dark theme, default opening screen, compact mode, reset confirmation, and immediate persisted preferences.
+- CRM V2 sales shell connected to existing real leads, CRM records, and action history, with ten-stage pipeline cards and deterministic urgent-action ordering.
 
 ### Changed
 
@@ -52,6 +55,7 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Verified
 
+- Existing Shareable Demo Links: stable IDs, direct no-shell demo routes, new-tab portable loading, refresh persistence, missing-demo state, Vite module serving, build, and lint.
 - Latest application build passed with `npm run build` after this documentation task.
 - Latest lint passed with `npm run lint` after this documentation task.
 - No-key AI status, connection test, chat failure, and empty-message validation passed against the running local backend.

@@ -8,6 +8,8 @@ const LanguageContext = createContext(null)
 
 function getInitialLanguage() {
   try {
+    const settingsLanguage = JSON.parse(window.localStorage.getItem('business-os-settings-v1'))?.language
+    if (supportedLanguages[settingsLanguage]) return settingsLanguage
     const savedLanguage = window.localStorage.getItem(STORAGE_KEY)
     return supportedLanguages[savedLanguage] ? savedLanguage : DEFAULT_LANGUAGE
   } catch {
