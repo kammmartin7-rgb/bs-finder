@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS with one shared CRM and a stable 
 
 ## Current Active Task
 
-Fully stabilize lead persistence and verify manual lead creation, Google Maps import, lead editing, image upload, status changes, drag-and-drop, browser refresh, server restart, and that no leads disappear.
+Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google Maps import, editing, images, server restart, and that no leads disappear. Pipeline stage selector and drag-and-drop now share `updateLeadStage` via `onUpdateLead` / `updatePersistedLead`.
 
 ## Last Completed Task
 
-Business OS navigation cleanup, Sales top-level tab, shared CRM & Sales Pipeline access, fixed-height pipeline columns with internal scroll, and content-driven dynamic lead cards. Build and lint passed.
+Sales Pipeline stage movement: compact stage selector on every pipeline lead card, shared `updateLeadStage` handler for selector and drag-and-drop, persistence through existing `updatePersistedLead`. Build and lint passed; selector and DnD persistence verified with Playwright.
 
 ## Project Rules (Current)
 
@@ -33,7 +33,7 @@ Business OS navigation cleanup, Sales top-level tab, shared CRM & Sales Pipeline
 - Businesses hub lists BS Finder and BS Funds; BS Finder workspace links to Overview, Lead Sources, CRM & Sales Pipeline, Proposal, Demo Builder, Real Website Builder, Media Library, and Customers.
 - Projects, Websites & Assets, Ideas Vault, and Development remain accessible via business hubs, dashboard links, deep routes, or Settings — not as duplicate top-level modules.
 - Sales Pipeline uses two fixed-height rows (primary 420px / secondary 270px); lead lists scroll inside each stage column.
-- Pipeline lead cards use dynamic height from available data; empty optional fields do not reserve space.
+- Pipeline lead cards use dynamic height from available data; compact stage selector on every card; drag-and-drop and selector share `updateLeadStage`; empty optional fields do not reserve space.
 - Ideas Vault with revenue potential, time-to-revenue, effort, cost, status, next-action tracking, deterministic scoring, and local persistence shared with Dashboard quick capture.
 - Business OS Command Center with task-backed mission, focus mode, compact actionable dashboard metrics, and theme persistence.
 - Websites & Assets registry (BS Funds, BS Finder) with production URLs, GitHub repositories, and open/copy actions.
@@ -64,7 +64,7 @@ Business OS navigation cleanup, Sales top-level tab, shared CRM & Sales Pipeline
 
 ## Known Problems
 
-- Lead persistence must be re-verified end-to-end after navigation and pipeline UI changes (active task).
+- Lead persistence must be re-verified end-to-end after navigation and pipeline UI changes (active task); pipeline stage selector and DnD persistence verified; full E2E script still fails on pipeline Edit Lead button (cards open edit on click, not via button).
 - Paid lead search requires provider billing and a deployed backend.
 - Production deployment is prepared but not smoke-tested on a public URL.
 - Demo website quality still requires improvement before it can be sold as a professional customer website.

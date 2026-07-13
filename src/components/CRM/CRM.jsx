@@ -1,12 +1,12 @@
 // Sales-first CRM V2 workspace built on the existing lead, CRM, proposal-action, and language architecture.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
-import { saveLeadCrm, subscribeToCrmChanges } from '../LeadCRM/crmStorage'
+import { loadLeadCrm, saveLeadCrm, subscribeToCrmChanges } from '../LeadCRM/crmStorage'
 import { LEAD_ACTIONS, recordLeadAction, subscribeToLeadActionChanges } from '../LeadCRM/leadActionStorage'
 import { subscribeToProposalChanges } from '../proposalStorage'
 import { matchesDashboardFilter } from '../BusinessOS/dashboardFilters'
 import { loadCrmGoals, saveCrmGoals } from './crmGoalsStorage'
-import { CRM_STAGES, getCrmLeadViews, getCrmRevenueSummary, getFollowUpGroups, getTodayMissionActuals, getUrgentCrmLeads } from './crmSelectors'
+import { CRM_STAGES, getCrmLeadViews, getCrmRevenueSummary, getFollowUpGroups, getTodayMissionActuals, getUrgentCrmLeads, normalizeCrmStage } from './crmSelectors'
 import ManualLeadForm from '../ManualLead/ManualLeadForm'
 import GoogleMapsImportForm from '../GoogleMapsImport/GoogleMapsImportForm'
 import LeadEditForm from './LeadEditForm'
@@ -35,7 +35,17 @@ function amount(value, fallback) { const number = Number(value); return Number.i
 function fieldText(value) { if (value === 0) return '0'; return String(value ?? '').trim() }
 function leadAddress(view) { return [view.lead?.address, view.city].map(fieldText).filter(Boolean).join(', ') }
 
-function LeadCard({ view, copy, onAction, onEditLead, onManageImages, mediaRevision, pipeline = false }) {
+function StageSelect({ value, copy, className, onChange, onClick, onMouseDown }) {
+  return (
+    <select className={className} value={value} aria-label={copy.status} onMouseDown={onMouseDown} onClick={onClick} onChange={onChange}>
+      {CRM_STAGES.map((stage, index) => <option key={stage} value={stage}>{copy.stages[index]}</option>)}
+    </select>
+  )
+}
+
+function stopCardOpen(event) { event.stopPropagation() }
+
+function LeadCard({ view, copy, onAction, onEditLead, onManageImages, mediaRevision, onStageChange, pipeline = false }) {
   const { t } = useLanguage()
   const [editor, setEditor] = useState('')
   const [notes, setNotes] = useState(view.crm.notes)
@@ -52,11 +62,18 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, mediaRevis
   const stageIndex = CRM_STAGES.indexOf(view.stage)
   function update(updates) { saveLeadCrm(view.leadId, { ...view.crm, ...updates }) }
   function openDetails(event) {
-    if (event?.target?.closest('a')) return
+    if (event?.target?.closest('a, select, option')) return
     onEditLead?.(view)
   }
+  function changeStage(event) {
+    stopCardOpen(event)
+    onStageChange?.(view.leadId, event.target.value)
+  }
+  function startDrag(event) {
+    event.dataTransfer.setData('text/plain', view.leadId)
+    event.dataTransfer.effectAllowed = 'move'
+  }
   if (pipeline) {
-    const statusLabel = copy.stages[stageIndex] || view.stage
     const businessName = display(view.businessName, copy.unknown)
     const phone = display(view.phone, copy.unknown)
     const rating = Number(view.lead?.leadScore)
@@ -68,11 +85,11 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, mediaRevis
       leadAddress(view) ? [copy.address, leadAddress(view)] : null,
     ].filter(Boolean)
     return (
-      <article className="crm-lead-card crm-lead-card--pipeline" role="button" tabIndex={0} onClick={openDetails} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEditLead?.(view) } }}>
+      <article className="crm-lead-card crm-lead-card--pipeline" role="button" tabIndex={0} draggable onDragStart={startDrag} onClick={openDetails} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEditLead?.(view) } }}>
         <div className="crm-lead-card__content">
           <strong className="crm-lead-card__name">{businessName}</strong>
-          {view.phone ? <a className="crm-lead-card__phone" href={`tel:${view.phone}`} onClick={(event) => event.stopPropagation()}>{phone}</a> : <span className="crm-lead-card__phone">{phone}</span>}
-          <span className="crm-lead-card__status">{statusLabel}</span>
+          {view.phone ? <a className="crm-lead-card__phone" href={`tel:${view.phone}`} onClick={stopCardOpen}>{phone}</a> : <span className="crm-lead-card__phone">{phone}</span>}
+          <StageSelect value={view.stage} copy={copy} className="crm-lead-card__stage crm-lead-card__stage--pipeline" onMouseDown={stopCardOpen} onClick={stopCardOpen} onChange={changeStage} />
           {optionalFields.map(([label, value]) => <span className="crm-lead-card__field" key={label}><b>{label}</b> {value}</span>)}
         </div>
       </article>
@@ -88,11 +105,10 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, mediaRevis
     if (action === 'call' && view.stage === 'follow-up') recordLeadAction(view.lead, LEAD_ACTIONS.FOLLOW_UP_COMPLETED)
     onAction?.(action, view.lead)
   }
-  function changeStage(event) { update({ status: event.target.value, stageChangedAt: new Date().toISOString(), archived: event.target.value === 'lost' }) }
   function saveEditor() { update(editor === 'notes' ? { notes } : { nextFollowUp: followUp }); setEditor('') }
   const paymentBlocked = view.stage === 'deal-won' && !/^https?:\/\//i.test(String(view.lead.paymentUrl || ''))
   return <article className="crm-lead-card"><header><div>{mediaPreview ? <img className="crm-lead-card__thumb" src={mediaPreview} alt="" loading="lazy" /> : null}<h4>{display(view.businessName, copy.unknown)}</h4><span>{display(view.contactName, copy.unknown)}</span>{mediaItems.length ? <small className="crm-lead-card__media-count">{mediaItems.length} {t('leadImageCount')}</small> : null}</div><strong>{Number(view.lead.leadScore) || '—'}</strong></header>
-    <select className="crm-lead-card__stage" value={view.stage} onChange={changeStage}>{CRM_STAGES.map((stage, index) => <option key={stage} value={stage}>{copy.stages[index]}</option>)}</select>
+    <StageSelect value={view.stage} copy={copy} className="crm-lead-card__stage" onChange={changeStage} />
     <dl><div><dt>{copy.phone}</dt><dd>{display(view.phone, copy.unknown)}</dd></div><div><dt>{copy.email}</dt><dd>{display(view.email, copy.unknown)}</dd></div><div><dt>{copy.website || 'Website'}</dt><dd>{display(view.website, copy.unknown)}</dd></div><div><dt>{copy.source}</dt><dd>{display(view.source, copy.unknown)}</dd></div><div><dt>{copy.followUp}</dt><dd>{display(view.crm.nextFollowUp, copy.unknown)}</dd></div><div><dt>{copy.proposal}</dt><dd>{amount(view.proposalAmount, copy.unknown)}</dd></div><div><dt>{copy.deal}</dt><dd>{amount(view.dealAmount, copy.unknown)}</dd></div></dl>
     <p><b>{copy.notes}:</b> {display(view.crm.notes, copy.unknown)}</p><small>{copy.activity}: {display(view.latestActivity, copy.unknown)}</small>
     <button className="crm-lead-card__primary" type="button" disabled={paymentBlocked} onClick={primary}>{copy.nextAction}: {copy.actions[stageIndex]}</button>{paymentBlocked && <em>{copy.paymentMissing}</em>}
@@ -101,9 +117,34 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, mediaRevis
   </article>
 }
 
+function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEditLead, onManageImages, mediaRevision, onStageChange, isDropTarget, onDragEnter, onDragLeave }) {
+  return (
+    <article className={`pipeline-column ${stageIndex < 4 ? 'pipeline-column--primary' : 'pipeline-column--secondary'}${isDropTarget ? ' is-drop-target' : ''}`}>
+      <header className="pipeline-column-header"><span>{STAGE_ICONS[stageIndex]}</span><h3>{copy.stages[stageIndex]}</h3></header>
+      <div
+        className="pipeline-column-leads"
+        onDragEnter={(event) => { event.preventDefault(); onDragEnter?.(stageId) }}
+        onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }}
+        onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) onDragLeave?.() }}
+        onDrop={(event) => {
+          event.preventDefault()
+          onDragLeave?.()
+          const leadId = event.dataTransfer.getData('text/plain')
+          if (leadId) onStageChange?.(leadId, stageId)
+        }}
+      >
+        {stageViews.map((view) => (
+          <LeadCard key={view.leadId} view={view} copy={copy} pipeline onAction={onAction} onEditLead={onEditLead} onManageImages={onManageImages} mediaRevision={mediaRevision} onStageChange={onStageChange} />
+        ))}
+      </div>
+      <footer className="pipeline-column-footer"><strong>{stageViews.length}</strong></footer>
+    </article>
+  )
+}
+
 export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onRefreshLeads, navigation = null, onNavigationApplied }) {
   const { language, direction, t } = useLanguage(); const copy = COPY[language] || COPY.en; const finish = FINISH_COPY[language] || FINISH_COPY.en
-  const [revision, setRevision] = useState(0); const [goals, setGoals] = useState(loadCrmGoals); const [editingGoals, setEditingGoals] = useState(false); const [followUpTab, setFollowUpTab] = useState('overdue'); const [search, setSearch] = useState(''); const [stageFilter, setStageFilter] = useState('all'); const [sortBy, setSortBy] = useState('urgent'); const [dashboardLeadFilter, setDashboardLeadFilter] = useState(null); const [showManualLeadForm, setShowManualLeadForm] = useState(false); const [showGoogleMapsImport, setShowGoogleMapsImport] = useState(false); const [editingView, setEditingView] = useState(null); const [mediaView, setMediaView] = useState(null); const [mediaRevision, setMediaRevision] = useState(0)
+  const [revision, setRevision] = useState(0); const [goals, setGoals] = useState(loadCrmGoals); const [editingGoals, setEditingGoals] = useState(false); const [followUpTab, setFollowUpTab] = useState('overdue'); const [search, setSearch] = useState(''); const [stageFilter, setStageFilter] = useState('all'); const [sortBy, setSortBy] = useState('urgent'); const [dashboardLeadFilter, setDashboardLeadFilter] = useState(null); const [showManualLeadForm, setShowManualLeadForm] = useState(false); const [showGoogleMapsImport, setShowGoogleMapsImport] = useState(false); const [editingView, setEditingView] = useState(null); const [mediaView, setMediaView] = useState(null); const [mediaRevision, setMediaRevision] = useState(0); const [dragOverStage, setDragOverStage] = useState('')
   const revenueRef = useRef(null)
   const followUpsRef = useRef(null)
   const pipelineRef = useRef(null)
@@ -139,13 +180,33 @@ export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onR
   const stages = useMemo(() => CRM_STAGES.map((stage) => filteredViews.filter((view) => view.stage === stage)), [filteredViews])
   const pipelineEmptyMessage = views.length ? copy.noItems : copy.empty
   const metrics = [['leads', copy.leads], ['outreach', copy.outreach], ['calls', copy.calls], ['followUps', copy.followUps], ['deals', copy.deals]]; const tabs = [['overdue', copy.overdue], ['today', copy.today], ['upcoming', copy.upcoming], ['none', copy.none]]
+  function updateLeadStage(leadId, nextStage) {
+    const normalized = normalizeCrmStage(nextStage)
+    if (!leadId || !CRM_STAGES.includes(normalized)) return { ok: false, reason: 'invalid-stage' }
+    if (onUpdateLead) {
+      const result = onUpdateLead(leadId, {}, { status: normalized, archived: normalized === 'lost' })
+      if (result?.ok === false) return result
+      setRevision((value) => value + 1)
+      return result || { ok: true }
+    }
+    const existing = loadLeadCrm(leadId)
+    saveLeadCrm(leadId, {
+      ...existing,
+      status: normalized,
+      archived: normalized === 'lost',
+      stageChangedAt: new Date().toISOString(),
+    })
+    setRevision((value) => value + 1)
+    onRefreshLeads?.()
+    return { ok: true }
+  }
   function persistGoals() { setGoals(saveCrmGoals(goals)); setEditingGoals(false) }
   return <section className="crm-v2" dir={direction}><header className="crm-v2__header"><div><span>{copy.eyebrow}</span><h1>{t('crmSalesPipeline')}</h1><p>{copy.subtitle}</p></div><div className="crm-v2__toolbar"><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={finish.search} aria-label={finish.search} /><select value={stageFilter} onChange={(event) => setStageFilter(event.target.value)}><option value="all">{finish.allStages}</option>{CRM_STAGES.map((stage, index) => <option key={stage} value={stage}>{copy.stages[index]}</option>)}</select><select value={sortBy} onChange={(event) => setSortBy(event.target.value)}><option value="urgent">{finish.sortUrgent}</option><option value="follow-up">{finish.sortFollowUp}</option><option value="score">{finish.sortScore}</option><option value="updated">{finish.sortUpdated}</option><option value="name">{finish.sortName}</option></select></div></header>
     <section className="crm-v2__mission"><header><span>01</span><h2>{copy.mission}</h2><button type="button" onClick={() => editingGoals ? persistGoals() : setEditingGoals(true)}>{editingGoals ? copy.saveGoals : copy.editGoals}</button></header><div>{metrics.map(([key, label]) => <article key={key}><span>{label}</span><strong>{actuals[key]} / {editingGoals ? <input type="number" min="0" value={goals[key]} onChange={(event) => setGoals({ ...goals, [key]: event.target.value })} /> : goals[key]}</strong><i><b style={{ width: `${Math.min(100, goals[key] ? actuals[key] / goals[key] * 100 : 0)}%` }} /></i></article>)}</div></section>
     <section className="crm-v2__urgent"><header><div><span>02</span><h2>{copy.urgent}</h2><p>{copy.urgentHint}</p></div><strong>{urgent.length}</strong></header>{urgent.length ? <div>{urgent.slice(0, 6).map((view) => <article key={view.leadId} className={`is-priority-${view.urgency.rank}`}><i /><div><strong>{copy.urgency[view.urgency.type]}</strong><span>{view.businessName}</span></div><b>{view.lead.leadScore || '—'}</b></article>)}</div> : <p className="crm-v2__empty">{copy.noUrgent}</p>}</section>
     <section className="crm-v2__revenue" ref={revenueRef}><header><span>03</span><h2>{finish.revenue}</h2></header><div>{[[finish.openProposals, revenue.openProposals], [finish.proposalValue, `₪${revenue.proposalValue.toLocaleString()}`], [finish.wonDeals, revenue.wonDeals], [finish.paidRevenue, `₪${revenue.paidRevenue.toLocaleString()}`], [finish.awaitingPayment, revenue.awaitingPayment]].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div></section>
     <section className="crm-v2__followups" ref={followUpsRef}><header><span>04</span><h2>{copy.followUpBoard}</h2></header><nav>{tabs.map(([key, label]) => <button type="button" className={followUpTab === key ? 'is-active' : ''} key={key} onClick={() => setFollowUpTab(key)}>{label} <b>{followUpGroups[key].length}</b></button>)}</nav><div>{followUpGroups[followUpTab].length ? followUpGroups[followUpTab].map((view) => <article key={view.leadId}><strong>{view.businessName}</strong><span>{view.crm.nextFollowUp || copy.none}</span><button type="button" onClick={() => onAction?.('call', view.lead)} disabled={!view.phone}>{copy.call}</button></article>) : <p>{copy.noItems}</p>}</div></section>
-    <section className="crm-v2__pipeline" ref={pipelineRef}><header><span>05</span><h2>{copy.pipeline}</h2><div className="crm-v2__pipeline-actions"><button type="button" className="crm-v2__add-lead crm-v2__add-lead--secondary" onClick={() => setShowGoogleMapsImport(true)}>{t('importFromGoogleMaps')}</button><button type="button" className="crm-v2__add-lead" onClick={() => setShowManualLeadForm(true)}>{t('addLeadManually')}</button></div></header>{filteredViews.length ? <div className="crm-v2__stages"><div className="crm-v2__stages-row crm-v2__stages-row--primary">{stages.slice(0, 4).map((stageViews, index) => <article key={CRM_STAGES[index]} className="pipeline-column pipeline-column--primary"><header className="pipeline-column-header"><span>{STAGE_ICONS[index]}</span><h3>{copy.stages[index]}</h3></header><div className="pipeline-column-leads">{stageViews.map((view) => <LeadCard key={view.leadId} view={view} copy={copy} pipeline onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} mediaRevision={mediaRevision} />)}</div><footer className="pipeline-column-footer"><strong>{stageViews.length}</strong></footer></article>)}</div><div className="crm-v2__stages-row crm-v2__stages-row--secondary">{stages.slice(4).map((stageViews, index) => { const stageIndex = index + 4; return <article key={CRM_STAGES[stageIndex]} className="pipeline-column pipeline-column--secondary"><header className="pipeline-column-header"><span>{STAGE_ICONS[stageIndex]}</span><h3>{copy.stages[stageIndex]}</h3></header><div className="pipeline-column-leads">{stageViews.map((view) => <LeadCard key={view.leadId} view={view} copy={copy} pipeline onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} mediaRevision={mediaRevision} />)}</div><footer className="pipeline-column-footer"><strong>{stageViews.length}</strong></footer></article> })}</div></div> : <p className="crm-v2__empty">{pipelineEmptyMessage}</p>}</section>
+    <section className="crm-v2__pipeline" ref={pipelineRef}><header><span>05</span><h2>{copy.pipeline}</h2><div className="crm-v2__pipeline-actions"><button type="button" className="crm-v2__add-lead crm-v2__add-lead--secondary" onClick={() => setShowGoogleMapsImport(true)}>{t('importFromGoogleMaps')}</button><button type="button" className="crm-v2__add-lead" onClick={() => setShowManualLeadForm(true)}>{t('addLeadManually')}</button></div></header>{filteredViews.length ? <div className="crm-v2__stages"><div className="crm-v2__stages-row crm-v2__stages-row--primary">{stages.slice(0, 4).map((stageViews, index) => <PipelineColumn key={CRM_STAGES[index]} stageId={CRM_STAGES[index]} stageIndex={index} stageViews={stageViews} copy={copy} onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} mediaRevision={mediaRevision} onStageChange={updateLeadStage} isDropTarget={dragOverStage === CRM_STAGES[index]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} />)}</div><div className="crm-v2__stages-row crm-v2__stages-row--secondary">{stages.slice(4).map((stageViews, index) => { const stageIndex = index + 4; return <PipelineColumn key={CRM_STAGES[stageIndex]} stageId={CRM_STAGES[stageIndex]} stageIndex={stageIndex} stageViews={stageViews} copy={copy} onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} mediaRevision={mediaRevision} onStageChange={updateLeadStage} isDropTarget={dragOverStage === CRM_STAGES[stageIndex]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} /> })}</div></div> : <p className="crm-v2__empty">{pipelineEmptyMessage}</p>}</section>
     {showManualLeadForm && <ManualLeadForm existingLeads={leads} useLegacyManualStore={false} onClose={() => setShowManualLeadForm(false)} onSave={(lead, notes) => { if (onAddLead?.(lead, notes)) setShowManualLeadForm(false) }} />}
     {showGoogleMapsImport && <GoogleMapsImportForm existingLeads={leads} onClose={() => setShowGoogleMapsImport(false)} onSave={(lead, notes, options) => { if (onAddLead?.(lead, notes, options)) setShowGoogleMapsImport(false) }} />}
     {editingView && <LeadEditForm lead={editingView.lead} crm={editingView.crm} stageLabels={copy.stages} onClose={() => setEditingView(null)} onSave={(leadUpdates, crmUpdates) => { const result = onUpdateLead?.(editingView.leadId, leadUpdates, crmUpdates); if (result?.ok) setEditingView(null); return result }} />}

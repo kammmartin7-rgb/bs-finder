@@ -10,14 +10,14 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Sales added as a main Business OS navigation tab; opens the existing shared CRM & Sales Pipeline (`crm` screen) with no duplicate CRM or pipeline.
 - CRM & Sales Pipeline merged label and route: one workspace for pipeline stages, lead cards, manual entry, and Google Maps import.
 - Sales Pipeline layout: two fixed-height rows (primary 420px / secondary 270px); lead lists scroll inside each stage column; column headers and footers stay fixed.
-- Pipeline lead cards: content-driven dynamic height; always show business name, phone, and status; optional category, source, rating, website, and address only when present; click opens existing LeadEditForm.
+- Pipeline lead cards: content-driven dynamic height; always show business name, phone, and compact stage selector; optional category, source, rating, website, and address only when present; click opens existing LeadEditForm; drag-and-drop and selector share `updateLeadStage`.
 - Dashboard trimmed to compact actionable metrics and quick navigation; Ideas Vault linked from dashboard; Development Console linked from Settings.
 - Finance and Documents exposed as top-level navigation hubs using existing data and document panels.
 - Business OS migration step 1: Businesses hub shows BS Finder and BS Funds cards; sidebar highlights Businesses when BS Finder/BS Funds nested routes are open; Sales highlights when CRM is open.
 
 ### Fixed
 
-- LeadID normalization: CRM (`bs-hunter-crm:{leadId}`), action history, proposals (`bs-finder-proposal:{leadId}`), demos (`bs-finder-demo:lead-{leadId}`), media (`…:lead-{leadId}`), and real website projects (`project.leadId`) now join only on `lead.id`; legacy business-name / CRM-key / hash demo data migrates on load via `leadRelationMigration.js`.
+- Sales Pipeline stage movement: every pipeline lead card has a compact stage selector backed by existing `CRM_STAGES`; selector and drag-and-drop call shared `updateLeadStage` → `onUpdateLead` / `updatePersistedLead`; stage changes move cards immediately and persist across refresh. CRM (`bs-hunter-crm:{leadId}`), action history, proposals (`bs-finder-proposal:{leadId}`), demos (`bs-finder-demo:lead-{leadId}`), media (`…:lead-{leadId}`), and real website projects (`project.leadId`) now join only on `lead.id`; legacy business-name / CRM-key / hash demo data migrates on load via `leadRelationMigration.js`.
 - Lead persistence: one canonical store (`bs-hunter-real-leads` / `leadPersistence.js`) with legacy migration, stable IDs, change notifications, demo-table isolation, and dev verification helpers (`__bsHunterVerifyLeadPersistence`).
 - CRM/Sales Pipeline regression: pipeline empty state restored to distinguish “no persisted leads” vs active filters; CRM reloads `bs-hunter-real-leads` on mount; sidebar CRM/Sales clears stale navigation filters; Sales default navigation memoized to avoid effect churn.
 - Lead Search and Apify workflow: improved Apify field mapping (name, phone, website, address, placeId, category), duplicate upsert on repeat search, demo/real separation in UI/stats/export/persistence, clearer missing-token and network errors, and localhost CORS for dev ports beyond 5173.
