@@ -24,3 +24,7 @@
 22. Completion tracking must reuse shared storage utilities and stable lead IDs.
 23. Static deployment must work without the optional paid-search backend.
 24. Secrets must never be placed in frontend source or committed `.env` files.
+25. Business OS manages the entire business; BS Finder and BS Funds are business units inside it, not separate applications.
+26. All businesses share one CRM and one Sales Pipeline. Do not create duplicate CRM, pipeline, dashboard, or module instances per business.
+27. The Sales sidebar item routes to the existing `crm` screen and CRM component. There is no separate Sales module or second pipeline.
+28. Pipeline stage columns use fixed column height with internal lead-list scroll; lead cards size to their visible content and omit empty optional fields.

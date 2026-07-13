@@ -1,4 +1,6 @@
 // Owns the single localStorage collection for real paid-customer website projects.
+import { getLeadId } from '../../services/leadId'
+
 export const REAL_WEBSITE_STORAGE_KEY = 'business-os-real-website-projects-v1'
 export const REAL_WEBSITE_MEDIA_LIBRARY_KEY = 'business-os-real-website-media-library-v1'
 export const REAL_WEBSITE_ACTIVE_DRAFT_KEY = 'business-os-real-website-active-draft-v1'
@@ -61,10 +63,20 @@ export function saveRealWebsiteProject(project) {
   return next
 }
 
-export function createRealWebsiteProject(customer, sections, existingId, existingCreatedDate, status = 'draft') {
+export function createRealWebsiteProject(customer, sections, existingId, existingCreatedDate, status = 'draft', leadId = null) {
   const now = new Date().toISOString()
   const normalized = normalizeCustomer(customer)
-  return { id: existingId || `real-site-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, customer: normalized, selectedTemplate: normalized.preferredTemplate, generatedSections: sections, createdDate: existingCreatedDate || now, updatedDate: now, status }
+  const resolvedLeadId = leadId || customer.leadId || null
+  return {
+    id: existingId || `real-site-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    leadId: resolvedLeadId,
+    customer: { ...normalized, leadId: resolvedLeadId },
+    selectedTemplate: normalized.preferredTemplate,
+    generatedSections: sections,
+    createdDate: existingCreatedDate || now,
+    updatedDate: now,
+    status,
+  }
 }
 
 function readMediaItems(key) {
@@ -87,7 +99,14 @@ function mergeMediaItems(...collections) {
   return next
 }
 
-/** Stable per-business key. Unicode-safe so HE/AR/RU names stay isolated. */
+/** Canonical media library key — LeadID only. */
+export function leadMediaStorageKey(leadId) {
+  const id = String(leadId || '').trim()
+  if (!id) return `${REAL_WEBSITE_MEDIA_LIBRARY_KEY}:draft`
+  return `${REAL_WEBSITE_MEDIA_LIBRARY_KEY}:lead-${id}`
+}
+
+/** Legacy business-name key (migration only). */
 export function businessMediaStorageKey(businessName) {
   const name = String(businessName || '').trim().toLowerCase()
   if (!name) return `${REAL_WEBSITE_MEDIA_LIBRARY_KEY}:draft`
@@ -95,7 +114,7 @@ export function businessMediaStorageKey(businessName) {
   return `${REAL_WEBSITE_MEDIA_LIBRARY_KEY}:biz-${slug || encodeURIComponent(name).replace(/%/g, '').slice(0, 64)}`
 }
 
-function legacyMediaKeys(businessName, legacyProjectId = null) {
+export function legacyMediaKeysForBusinessName(businessName, legacyProjectId = null) {
   const keys = []
   const ascii = String(businessName || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48)
   if (ascii) keys.push(`${REAL_WEBSITE_MEDIA_LIBRARY_KEY}:${ascii}`)
@@ -106,41 +125,47 @@ function legacyMediaKeys(businessName, legacyProjectId = null) {
   return keys
 }
 
-export function loadBusinessMediaLibrary(businessName, legacyProjectId = null) {
-  const primaryKey = businessMediaStorageKey(businessName)
-  const primary = readMediaItems(primaryKey)
-  if (primary.length) return primary
-  const migrated = mergeMediaItems(...legacyMediaKeys(businessName, legacyProjectId).map(readMediaItems))
-  if (migrated.length && String(businessName || '').trim()) {
-    try { saveBusinessMediaLibrary(businessName, migrated) } catch { /* keep in-memory view if quota blocks migration write */ }
-    return migrated
-  }
-  return []
+function resolveLeadId(leadOrLeadId) {
+  return typeof leadOrLeadId === 'string' ? leadOrLeadId : getLeadId(leadOrLeadId)
 }
 
-export function saveBusinessMediaLibrary(businessName, items) {
-  if (!String(businessName || '').trim()) throw new Error('Enter a business name before saving media for this business.')
+export function loadLeadMediaLibrary(leadOrLeadId) {
+  const leadId = resolveLeadId(leadOrLeadId)
+  if (!leadId) return []
+  return readMediaItems(leadMediaStorageKey(leadId))
+}
+
+export function saveLeadMediaLibrary(leadOrLeadId, items) {
+  const leadId = resolveLeadId(leadOrLeadId)
+  if (!leadId) throw new Error('LeadID is required before saving media for this lead.')
   if (!Array.isArray(items)) throw new Error('Invalid media library data.')
   if (items.length > MEDIA_LIBRARY_MAX_ITEMS) throw new Error(`The media library supports up to ${MEDIA_LIBRARY_MAX_ITEMS} images.`)
   const serialized = JSON.stringify(items)
   if (serialized.length > MEDIA_LIBRARY_MAX_CHARACTERS) throw new Error('The media library storage limit is 3.5 MB. Delete unused images before uploading more.')
-  try { localStorage.setItem(businessMediaStorageKey(businessName), serialized); return items } catch { throw new Error('Browser storage is full. Delete unused images before uploading more.') }
+  try { localStorage.setItem(leadMediaStorageKey(leadId), serialized); return items } catch { throw new Error('Browser storage is full. Delete unused images before uploading more.') }
 }
 
-export function migrateBusinessMediaLibrary(fromName, toName) {
-  const from = String(fromName || '').trim()
-  const to = String(toName || '').trim()
-  if (!from || !to || from.toLowerCase() === to.toLowerCase()) return loadBusinessMediaLibrary(to)
-  const merged = mergeMediaItems(loadBusinessMediaLibrary(from), loadBusinessMediaLibrary(to))
-  if (!merged.length) return []
-  saveBusinessMediaLibrary(to, merged)
-  try { localStorage.removeItem(businessMediaStorageKey(from)) } catch { /* ignore */ }
-  return merged
+export function loadBusinessMediaLibrary(leadOrBusinessName, legacyProjectId = null) {
+  if (typeof leadOrBusinessName === 'object' && leadOrBusinessName !== null) {
+    return loadLeadMediaLibrary(leadOrBusinessName)
+  }
+  const leadId = String(leadOrBusinessName || '').trim()
+  if (leadId && leadId.startsWith('lead-')) return loadLeadMediaLibrary(leadId)
+  const legacyKeys = [businessMediaStorageKey(leadOrBusinessName), ...legacyMediaKeysForBusinessName(leadOrBusinessName, legacyProjectId)]
+  return mergeMediaItems(...legacyKeys.map(readMediaItems))
 }
 
-export function addImagesToBusinessMediaLibrary(businessName, images = [], category = 'general') {
-  if (!String(businessName || '').trim()) throw new Error('Enter a business name before uploading media for this business.')
-  const existing = loadBusinessMediaLibrary(businessName)
+export function saveBusinessMediaLibrary(leadOrLeadId, items) {
+  if (typeof leadOrLeadId === 'object' && leadOrLeadId !== null) {
+    return saveLeadMediaLibrary(leadOrLeadId, items)
+  }
+  return saveLeadMediaLibrary(String(leadOrLeadId || ''), items)
+}
+
+export function addImagesToLeadMediaLibrary(leadOrLeadId, images = [], category = 'general') {
+  const leadId = resolveLeadId(leadOrLeadId)
+  if (!leadId) throw new Error('LeadID is required before uploading media for this lead.')
+  const existing = loadLeadMediaLibrary(leadId)
   const stamped = images.map((image, index) => ({
     ...image,
     category: image.category || category,
@@ -148,11 +173,17 @@ export function addImagesToBusinessMediaLibrary(businessName, images = [], categ
     updatedAt: new Date().toISOString(),
   }))
   if (existing.length + stamped.length > MEDIA_LIBRARY_MAX_ITEMS) throw new Error(`The media library supports up to ${MEDIA_LIBRARY_MAX_ITEMS} images.`)
-  return saveBusinessMediaLibrary(businessName, mergeMediaItems(stamped, existing))
+  return saveLeadMediaLibrary(leadId, mergeMediaItems(stamped, existing))
 }
 
-export function syncCustomerImagesToBusinessMediaLibrary(businessName, images = {}) {
-  if (!String(businessName || '').trim()) return loadBusinessMediaLibrary(businessName)
+/** @deprecated Use addImagesToLeadMediaLibrary */
+export function addImagesToBusinessMediaLibrary(leadOrLeadId, images = [], category = 'general') {
+  return addImagesToLeadMediaLibrary(leadOrLeadId, images, category)
+}
+
+export function syncCustomerImagesToLeadMediaLibrary(leadOrLeadId, images = {}) {
+  const leadId = resolveLeadId(leadOrLeadId)
+  if (!leadId) return []
   const seeded = []
   IMAGE_SLOTS.forEach((slot) => {
     const value = images[slot]
@@ -166,14 +197,34 @@ export function syncCustomerImagesToBusinessMediaLibrary(businessName, images = 
       })
     })
   })
-  if (!seeded.length) return loadBusinessMediaLibrary(businessName)
-  try { return addImagesToBusinessMediaLibrary(businessName, seeded) } catch { return loadBusinessMediaLibrary(businessName) }
+  if (!seeded.length) return loadLeadMediaLibrary(leadId)
+  try { return addImagesToLeadMediaLibrary(leadId, seeded) } catch { return loadLeadMediaLibrary(leadId) }
 }
 
-export function loadMediaLibrary(businessName, legacyProjectId = null) {
-  return loadBusinessMediaLibrary(businessName, legacyProjectId)
+/** @deprecated LeadID is stable; business rename does not move media. */
+export function migrateBusinessMediaLibrary(_fromName, leadOrLeadId) {
+  return loadLeadMediaLibrary(leadOrLeadId)
 }
 
-export function saveMediaLibrary(items, businessName) {
-  return saveBusinessMediaLibrary(businessName, items)
+export function syncCustomerImagesToBusinessMediaLibrary(leadOrLeadId, images = {}) {
+  return syncCustomerImagesToLeadMediaLibrary(leadOrLeadId, images)
+}
+
+export function loadMediaLibrary(leadOrLeadId, legacyProjectId = null) {
+  if (typeof leadOrLeadId === 'object') return loadLeadMediaLibrary(leadOrLeadId)
+  return loadBusinessMediaLibrary(leadOrLeadId, legacyProjectId)
+}
+
+export function saveMediaLibrary(items, leadOrLeadId) {
+  return saveLeadMediaLibrary(leadOrLeadId, items)
+}
+
+export function findProjectForLead(projects, lead) {
+  const leadId = getLeadId(lead)
+  if (leadId) {
+    const byId = projects.find((project) => project.leadId === leadId)
+    if (byId) return byId
+  }
+  const name = String(lead?.businessName || lead?.title || '').trim().toLowerCase()
+  return name ? projects.find((project) => project.customer?.businessName?.trim().toLowerCase() === name) : null
 }

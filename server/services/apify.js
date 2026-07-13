@@ -2,14 +2,11 @@ const API_BASE = 'https://api.apify.com/v2'
 const POLL_INTERVAL_MS = 3000
 const MAX_POLL_MS = 5 * 60 * 1000
 
-function getToken() {
-  return process.env.APIFY_TOKEN?.trim() || process.env.VITE_APIFY_TOKEN?.trim()
-}
+function getToken() { return process.env.APIFY_TOKEN?.trim() }
 
 function getActorId() {
   const actorId =
     process.env.APIFY_ACTOR_ID ||
-    process.env.VITE_APIFY_ACTOR_ID ||
     'compass/crawler-google-places'
 
   return actorId.replace('/', '~')
@@ -57,14 +54,15 @@ function isFailure(status) {
   return status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT'
 }
 
-export async function fetchApifyLeads(businessType, city) {
+export async function fetchApifyLeads(businessType, city, country) {
   const actorId = getActorId()
+  const locationQuery = `${city.trim()}, ${country.trim()}`
 
   const runResponse = await apifyFetch(`/acts/${actorId}/runs`, {
     method: 'POST',
     body: JSON.stringify({
       searchStringsArray: [businessType.trim()],
-      locationQuery: city.trim(),
+      locationQuery,
       maxCrawledPlacesPerSearch: 50,
       language: 'en',
     }),
@@ -95,6 +93,6 @@ export async function fetchApifyLeads(businessType, city) {
     throw new Error(`Apify actor run ended with status: ${status}`)
   }
 
-  const items = await apifyFetch(`/datasets/${datasetId}/items?format=json`)
-  return Array.isArray(items) ? items : []
+  const items = await apifyFetch(`/datasets/${datasetId}/items?format=json&clean=true&limit=50`)
+  return Array.isArray(items) ? items.slice(0, 50) : []
 }

@@ -1,5 +1,7 @@
 // Stores per-lead sales action history and coordinates CRM/task completion through existing utilities.
-import { getLeadCrmKey, loadLeadCrm, saveLeadCrm } from './crmStorage'
+import { normalizeCrmStage } from '../CRM/crmSelectors'
+import { getLeadId } from '../../services/leadId'
+import { loadLeadCrm, saveLeadCrm } from './crmStorage'
 import { completeRoadmapTrackingTask } from '../BusinessOS/taskStorage'
 
 const STORAGE_KEY = 'bs-hunter-lead-action-history'
@@ -10,6 +12,8 @@ export const LEAD_ACTIONS = {
   PROPOSAL_OPENED: 'proposal-opened',
   SALES_PITCH_OPENED: 'sales-pitch-opened',
   WHATSAPP_OPENED: 'whatsapp-opened',
+  CALL_OPENED: 'call-opened',
+  FOLLOW_UP_COMPLETED: 'follow-up-completed',
 }
 
 export function loadLeadActionHistory() {
@@ -22,7 +26,7 @@ export function loadLeadActionHistory() {
 }
 
 export function getLeadActions(lead) {
-  return loadLeadActionHistory()[getLeadCrmKey(lead)] || []
+  return loadLeadActionHistory()[getLeadId(lead)] || []
 }
 
 export function hasLeadAction(lead, actionType) {
@@ -30,7 +34,7 @@ export function hasLeadAction(lead, actionType) {
 }
 
 export function recordLeadAction(lead, actionType) {
-  const leadId = getLeadCrmKey(lead)
+  const leadId = getLeadId(lead)
   const now = new Date()
   const history = loadLeadActionHistory()
   const record = {
@@ -47,10 +51,17 @@ export function recordLeadAction(lead, actionType) {
     return false
   }
 
-  if ([LEAD_ACTIONS.PROPOSAL_OPENED, LEAD_ACTIONS.WHATSAPP_OPENED].includes(actionType)) {
+  if ([LEAD_ACTIONS.PROPOSAL_OPENED, LEAD_ACTIONS.WHATSAPP_OPENED, LEAD_ACTIONS.DEMO_SITE_OPENED].includes(actionType)) {
     const crm = loadLeadCrm(leadId)
-    if (['new', 'contacted'].includes(crm.status)) {
-      saveLeadCrm(leadId, { ...crm, status: actionType === LEAD_ACTIONS.PROPOSAL_OPENED ? 'proposal-sent' : 'whatsapp-sent' })
+    const stage = normalizeCrmStage(crm.status)
+    const nowIso = new Date().toISOString()
+
+    if (actionType === LEAD_ACTIONS.PROPOSAL_OPENED && ['new', 'first-contact', 'demo-sent', 'follow-up'].includes(stage)) {
+      saveLeadCrm(leadId, { ...crm, status: 'proposal-sent', stageChangedAt: nowIso })
+    } else if (actionType === LEAD_ACTIONS.WHATSAPP_OPENED && stage === 'new') {
+      saveLeadCrm(leadId, { ...crm, status: 'first-contact', stageChangedAt: nowIso })
+    } else if (actionType === LEAD_ACTIONS.DEMO_SITE_OPENED && ['new', 'first-contact'].includes(stage)) {
+      saveLeadCrm(leadId, { ...crm, status: 'demo-sent', stageChangedAt: nowIso })
     }
   }
 

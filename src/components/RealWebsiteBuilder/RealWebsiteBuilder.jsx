@@ -1,9 +1,10 @@
 // Paid-customer website workspace: intake, premium previews, validation, and project persistence.
-import { cloneElement, useEffect, useMemo, useRef, useState } from 'react'
+import { cloneElement, useEffect, useMemo, useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
+import { getLeadId } from '../../services/leadId'
 import { generateRealWebsite, isReadyToPublish } from './realWebsiteGenerator'
 import { DEFAULT_REAL_TEMPLATE, REAL_WEBSITE_TEMPLATES } from './realWebsiteTemplates'
-import { clearActiveDraft, cloneCustomerImages, createRealWebsiteProject, loadActiveDraft, loadRealWebsiteProjects, migrateBusinessMediaLibrary, normalizeCustomer, saveActiveDraft, saveRealWebsiteProject, syncCustomerImagesToBusinessMediaLibrary } from './realWebsiteStorage'
+import { clearActiveDraft, cloneCustomerImages, createRealWebsiteProject, findProjectForLead, loadActiveDraft, loadRealWebsiteProjects, normalizeCustomer, saveActiveDraft, saveRealWebsiteProject, syncCustomerImagesToLeadMediaLibrary } from './realWebsiteStorage'
 import ImageManager from './ImageManager'
 import '../WebsiteBuilder/websiteDesignTokens.css'
 import './RealWebsiteBuilder.css'
@@ -13,15 +14,14 @@ const FIELDS = ['businessName', 'businessType', 'country', 'city', 'phone', 'wha
 const STATUSES = ['draft', 'in-progress', 'client-review', 'ready-to-publish', 'published']
 
 function customerFromLead(lead, language, projects = []) {
-  const base = { ...EMPTY_CUSTOMER, businessName: lead.businessName || lead.title || '', businessType: lead.category || lead.businessType || '', country: lead.country || '', city: lead.city || '', language, phone: lead.phone || '', whatsapp: lead.phone || '', email: lead.email || '', address: lead.address || '', currentWebsite: lead.website || '' }
-  const name = base.businessName.trim().toLowerCase()
-  const existing = name ? projects.find((project) => project.customer.businessName.trim().toLowerCase() === name) : null
-  return normalizeCustomer(existing ? { ...EMPTY_CUSTOMER, ...existing.customer, ...base, images: existing.customer.images } : base)
+  const base = { ...EMPTY_CUSTOMER, businessName: lead.businessName || lead.title || '', businessType: lead.category || lead.businessType || '', country: lead.country || '', city: lead.city || '', language, phone: lead.phone || '', whatsapp: lead.phone || '', email: lead.email || '', address: lead.address || '', currentWebsite: lead.website || '', leadId: getLeadId(lead) }
+  const existing = findProjectForLead(projects, lead)
+  return normalizeCustomer(existing ? { ...EMPTY_CUSTOMER, ...existing.customer, ...base, images: existing.customer.images, leadId: getLeadId(lead) } : base)
 }
 
-function findProjectForLead(projects, lead) {
-  const name = (lead.businessName || lead.title || '').trim().toLowerCase()
-  return name ? projects.find((project) => project.customer.businessName.trim().toLowerCase() === name) : null
+function syncLeadMedia(leadOrLeadId, images = {}) {
+  if (!leadOrLeadId) return
+  syncCustomerImagesToLeadMediaLibrary(leadOrLeadId, images)
 }
 function SafeImage({ src, alt, className }) { const [failed, setFailed] = useState(false); if (!src || failed) return <div className={`${className || ''} image-fallback`} role="img" aria-label={alt}><span>✦</span></div>; return <img className={className} src={src} alt={alt} onError={() => setFailed(true)} /> }
 
@@ -59,16 +59,16 @@ function initialBuilderState(language, initialLead, projects) {
   if (initialLead) {
     const existing = findProjectForLead(projects, initialLead)
     const customer = customerFromLead(initialLead, language, projects)
-    syncCustomerImagesToBusinessMediaLibrary(customer.businessName, customer.images)
-    return { customer, projectMeta: existing ? { id: existing.id, createdDate: existing.createdDate, status: existing.status } : { id: null, createdDate: null, status: 'draft' } }
+    syncLeadMedia(initialLead, customer.images)
+    return { customer, projectMeta: existing ? { id: existing.id, createdDate: existing.createdDate, status: existing.status, leadId: getLeadId(initialLead) } : { id: null, createdDate: null, status: 'draft', leadId: getLeadId(initialLead) } }
   }
   const draft = loadActiveDraft()
   if (draft) {
     const customer = normalizeCustomer({ ...EMPTY_CUSTOMER, language, ...draft.customer })
-    syncCustomerImagesToBusinessMediaLibrary(customer.businessName, customer.images)
-    return { customer, projectMeta: draft.projectMeta || { id: null, createdDate: null, status: 'draft' } }
+    if (customer.leadId) syncLeadMedia(customer.leadId, customer.images)
+    return { customer, projectMeta: { ...(draft.projectMeta || { id: null, createdDate: null, status: 'draft' }), leadId: customer.leadId || draft.projectMeta?.leadId || null } }
   }
-  return { customer: normalizeCustomer({ ...EMPTY_CUSTOMER, language }), projectMeta: { id: null, createdDate: null, status: 'draft' } }
+  return { customer: normalizeCustomer({ ...EMPTY_CUSTOMER, language }), projectMeta: { id: null, createdDate: null, status: 'draft', leadId: null } }
 }
 
 export default function RealWebsiteBuilder({ initialLead }) {
@@ -79,52 +79,42 @@ export default function RealWebsiteBuilder({ initialLead }) {
   const [projectMeta, setProjectMeta] = useState(() => initialBuilderState(language, initialLead, loadRealWebsiteProjects()).projectMeta)
   const [fullPreview, setFullPreview] = useState(false); const [viewport, setViewport] = useState('desktop'); const [notice, setNotice] = useState('')
   const [mediaEpoch, setMediaEpoch] = useState(0)
-  const previousBusinessNameRef = useRef(customer.businessName || '')
+  const activeLeadId = projectMeta.leadId || customer.leadId || (initialLead ? getLeadId(initialLead) : '')
   useEffect(() => {
     if (!initialLead) return
     const savedProjects = loadRealWebsiteProjects()
     const existing = findProjectForLead(savedProjects, initialLead)
     const next = customerFromLead(initialLead, language, savedProjects)
-    syncCustomerImagesToBusinessMediaLibrary(next.businessName, next.images)
+    syncLeadMedia(initialLead, next.images)
     setCustomer(next)
     setSite(generateRealWebsite(next))
-    setProjectMeta(existing ? { id: existing.id, createdDate: existing.createdDate, status: existing.status } : { id: null, createdDate: null, status: 'draft' })
-    previousBusinessNameRef.current = next.businessName || ''
+    setProjectMeta(existing ? { id: existing.id, createdDate: existing.createdDate, status: existing.status, leadId: getLeadId(initialLead) } : { id: null, createdDate: null, status: 'draft', leadId: getLeadId(initialLead) })
     setMediaEpoch((value) => value + 1)
   }, [initialLead, language])
   useEffect(() => { saveActiveDraft(customer, projectMeta) }, [customer, projectMeta])
-  useEffect(() => {
-    const previous = String(previousBusinessNameRef.current || '').trim()
-    const next = String(customer.businessName || '').trim()
-    if (previous && next && previous.toLowerCase() !== next.toLowerCase()) {
-      try { migrateBusinessMediaLibrary(previous, next); setMediaEpoch((value) => value + 1) } catch { /* migration is best-effort when storage is full */ }
-    }
-    previousBusinessNameRef.current = customer.businessName || ''
-  }, [customer.businessName])
   const liveSite = useMemo(() => generateRealWebsite(customer), [customer]); const activeSite = site || liveSite
   function update(field, value) { setCustomer((current) => normalizeCustomer({ ...current, [field]: value })); setSite(null); setNotice('') }
   function updateImages(slot, value) { setCustomer((current) => normalizeCustomer({ ...current, images: { ...cloneCustomerImages(current.images), [slot]: value } })); setSite(null); setNotice('') }
   function persist(status = projectMeta.status) {
     if (!customer.businessName.trim()) { setNotice(t('rwbBusinessRequired')); return }
     if (status === 'ready-to-publish' && !isReadyToPublish(customer, activeSite)) { setNotice(t('rwbReadinessError')); return }
-    const project = createRealWebsiteProject(customer, activeSite.sections, projectMeta.id, projectMeta.createdDate, status)
-    syncCustomerImagesToBusinessMediaLibrary(project.customer.businessName, project.customer.images)
+    const project = createRealWebsiteProject(customer, activeSite.sections, projectMeta.id, projectMeta.createdDate, status, activeLeadId)
+    syncLeadMedia(activeLeadId || initialLead, project.customer.images)
     setProjects(saveRealWebsiteProject(project))
-    setProjectMeta({ id: project.id, createdDate: project.createdDate, status: project.status })
+    setProjectMeta({ id: project.id, createdDate: project.createdDate, status: project.status, leadId: project.leadId })
     setSite(activeSite)
-    saveActiveDraft(normalizeCustomer(project.customer), { id: project.id, createdDate: project.createdDate, status: project.status })
+    saveActiveDraft(normalizeCustomer(project.customer), { id: project.id, createdDate: project.createdDate, status: project.status, leadId: project.leadId })
     setMediaEpoch((value) => value + 1)
     setNotice(t('rwbSaved'))
   }
   function loadProject(project) {
     if (!project) return
     const next = normalizeCustomer({ ...EMPTY_CUSTOMER, language, ...project.customer })
-    syncCustomerImagesToBusinessMediaLibrary(next.businessName, next.images)
+    syncLeadMedia(project.leadId || next.leadId, next.images)
     setCustomer(next)
     setSite(generateRealWebsite(next))
-    const meta = { id: project.id, createdDate: project.createdDate, status: project.status }
+    const meta = { id: project.id, createdDate: project.createdDate, status: project.status, leadId: project.leadId || next.leadId || null }
     setProjectMeta(meta)
-    previousBusinessNameRef.current = next.businessName || ''
     saveActiveDraft(next, meta)
     setMediaEpoch((value) => value + 1)
     setNotice('')
@@ -133,8 +123,7 @@ export default function RealWebsiteBuilder({ initialLead }) {
     clearActiveDraft()
     setCustomer(normalizeCustomer({ ...EMPTY_CUSTOMER, language }))
     setSite(null)
-    setProjectMeta({ id: null, createdDate: null, status: 'draft' })
-    previousBusinessNameRef.current = ''
+    setProjectMeta({ id: null, createdDate: null, status: 'draft', leadId: null })
     setMediaEpoch((value) => value + 1)
     setNotice('')
   }
@@ -142,7 +131,7 @@ export default function RealWebsiteBuilder({ initialLead }) {
     <div className="real-builder__body"><form className="real-builder__form" onSubmit={(event) => event.preventDefault()}><div className="real-builder__form-head"><h2>{t('rwbCustomerDetails')}</h2><select value={projectMeta.status} onChange={(event) => setProjectMeta((current) => ({ ...current, status: event.target.value }))}>{STATUSES.map((status) => <option key={status} value={status}>{t(`rwbStatus_${status}`)}</option>)}</select></div>
       <div className="real-builder__fields">{FIELDS.map((field) => <label key={field} className={['shortDescription', 'mainServices'].includes(field) ? 'is-wide' : ''}><span>{t(`rwbField_${field}`)}</span>{['shortDescription', 'mainServices'].includes(field) ? <textarea rows="2" value={customer[field]} onChange={(event) => update(field, event.target.value)} /> : <input type={field === 'email' ? 'email' : 'text'} value={customer[field]} onChange={(event) => update(field, event.target.value)} />}</label>)}</div>
       <div className="real-builder__selects"><label><span>{t('rwbField_language')}</span><select value={customer.language} onChange={(event) => update('language', event.target.value)}><option value="en">English</option><option value="he">עברית</option><option value="ar">العربية</option><option value="ru">Русский</option></select></label><label><span>{t('rwbField_primaryColor')}</span><input type="color" value={customer.primaryColor} onChange={(event) => update('primaryColor', event.target.value)} /></label><label><span>{t('rwbField_secondaryColor')}</span><input type="color" value={customer.secondaryColor} onChange={(event) => update('secondaryColor', event.target.value)} /></label></div>
-      <ImageManager images={customer.images || {}} onChange={updateImages} businessName={customer.businessName} legacyProjectId={projectMeta.id} libraryRefreshKey={mediaEpoch} />
+      <ImageManager images={customer.images || {}} onChange={updateImages} leadId={activeLeadId} businessName={customer.businessName} legacyProjectId={projectMeta.id} libraryRefreshKey={mediaEpoch} />
       <fieldset className="real-builder__templates"><legend>{t('rwbCompareTemplates')}</legend>{REAL_WEBSITE_TEMPLATES.map((template) => <button type="button" key={template.id} className={customer.preferredTemplate === template.id ? 'is-active' : ''} onClick={() => update('preferredTemplate', template.id)}><i className={template.className} /><strong>{t(template.nameKey)}</strong><small>{t(`${template.nameKey}Description`)}</small></button>)}</fieldset>
       <div className="real-builder__controls"><button type="button" onClick={() => projectMeta.id && loadProject(projects.find((project) => project.id === projectMeta.id))} disabled={!projectMeta.id}>{t('rwbLoadDraft')}</button><button type="button" onClick={reset}>{t('rwbReset')}</button><button type="button" onClick={() => setFullPreview(true)}>{t('rwbFullPreview')}</button></div>{notice && <p className="real-builder__notice">{notice}</p>}</form>
       <div className="real-builder__preview"><header><h2>{t('rwbLivePreview')}</h2><div>{['desktop', 'tablet', 'mobile'].map((size) => <button type="button" key={size} className={viewport === size ? 'is-active' : ''} onClick={() => setViewport(size)}>{t(`rwbViewport_${size}`)}</button>)}</div></header><div className={`preview-stage is-${viewport}`}><SitePreview customer={customer} site={activeSite} viewport={viewport} /></div></div>

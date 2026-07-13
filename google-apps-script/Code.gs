@@ -10,6 +10,9 @@ const HEADERS = [
   'Reviews Count',
   'Lead Score',
   'Google Maps URL',
+  'CRM Status',
+  'Proposal Status',
+  'Proposal Amount',
 ];
 
 function getSpreadsheet_() {
@@ -77,6 +80,9 @@ function leadToRow_(lead) {
     lead['Reviews Count'] || '-',
     lead['Lead Score'] || '-',
     lead['Google Maps URL'] || '-',
+    lead['CRM Status'] || '-',
+    lead['Proposal Status'] || '-',
+    lead['Proposal Amount'] || '-',
   ];
 }
 

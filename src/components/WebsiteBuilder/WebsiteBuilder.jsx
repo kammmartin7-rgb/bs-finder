@@ -1,8 +1,10 @@
 // Renders the complete one-page website model produced by the builder engine.
 // The component remains data-driven and independent from BS Hunter navigation and state.
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
+import { imageSource } from '../RealWebsiteBuilder/imageProcessing'
+import { loadLeadMediaLibrary } from '../RealWebsiteBuilder/realWebsiteStorage'
 import generateWebsite from './generator'
 import './WebsiteBuilder.css'
 import './websiteDesignTokens.css'
@@ -45,7 +47,7 @@ function Section({ section }) {
         <div className="website-builder__hero-grid" aria-hidden="true" />
         <div className="website-builder__container website-builder__hero-content">
           <div><span className="website-builder__eyebrow">{content.eyebrow}</span><p className="website-builder__business-name">{content.title}</p><h1>{content.headline}</h1><p className="website-builder__lead">{content.text}</p><div className="website-builder__hero-actions"><a className="website-builder__button" href={content.primaryAction.href}>{content.primaryAction.label}</a><a className="website-builder__button website-builder__button--outline" href={content.secondaryAction.href}>{content.secondaryAction.label}</a></div>{content.rating && <p className="website-builder__rating">★★★★★ <span>{content.rating.toFixed(1)}{content.reviewsCount ? ` · ${content.reviewsCount}` : ''}</span></p>}</div>
-          <aside className="website-builder__hero-proof"><span>{content.ui.proof}</span><strong>{content.title}</strong><p>{content.ui.proofText}</p><div><b>✓</b> {content.ui.clickCall}</div><div><b>✓</b> {content.ui.ready}</div><div><b>✓</b> {content.ui.easyDirections}</div></aside>
+          <aside className="website-builder__hero-proof">{content.heroImageUrl && <img className="website-builder__hero-photo" src={content.heroImageUrl} alt={content.title} loading="lazy" />}<span>{content.ui.proof}</span><strong>{content.title}</strong><p>{content.ui.proofText}</p><div><b>✓</b> {content.ui.clickCall}</div><div><b>✓</b> {content.ui.ready}</div><div><b>✓</b> {content.ui.easyDirections}</div></aside>
         </div>
       </section>
     )
@@ -101,9 +103,19 @@ function Section({ section }) {
   return <section className="website-builder__section website-builder__about"><div className="website-builder__container"><span className="website-builder__eyebrow">{content.eyebrow}</span><h2>{content.heading}</h2><p className="website-builder__lead">{content.text}</p><strong className="website-builder__highlight">{content.highlight}</strong></div></section>
 }
 
-export function WebsiteBuilder({ business, templateId, sectionIds, contentOverrides }) {
+export function WebsiteBuilder({ business, templateId, sectionIds, contentOverrides = {} }) {
   const { language } = useLanguage()
-  const website = generateWebsite({ business, templateId, sectionIds, contentOverrides, language: business.websiteLanguage || business.language || language })
+  const libraryOverrides = useMemo(() => {
+    const items = loadLeadMediaLibrary(business)
+    if (!items.length) return {}
+    const hero = items.find((item) => item.category === 'hero') || items[0]
+    const gallery = items.filter((item) => item.category === 'gallery').map(imageSource).filter(Boolean)
+    const overrides = {}
+    if (hero) overrides.hero = { heroImageUrl: imageSource(hero) }
+    if (gallery.length) overrides.about = { galleryImageUrls: gallery }
+    return overrides
+  }, [business])
+  const website = generateWebsite({ business, templateId, sectionIds, contentOverrides: { ...libraryOverrides, ...contentOverrides }, language: business.websiteLanguage || business.language || language })
   const theme = website.template.theme
   const style = { '--builder-background': theme.background, '--builder-surface': theme.surface, '--builder-text': theme.text, '--builder-muted-text': theme.mutedText, '--builder-primary': theme.primary, '--builder-accent': theme.accent, '--builder-font-family': theme.fontFamily }
 

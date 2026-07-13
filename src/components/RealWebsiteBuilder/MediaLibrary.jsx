@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
 import { compressImage, imageSource } from './imageProcessing'
-import { loadBusinessMediaLibrary, MEDIA_LIBRARY_MAX_ITEMS, saveBusinessMediaLibrary } from './realWebsiteStorage'
+import { loadLeadMediaLibrary, saveLeadMediaLibrary } from './realWebsiteStorage'
 import './MediaLibrary.css'
 
 const CATEGORIES = ['logos', 'hero', 'services', 'about', 'gallery', 'team', 'testimonials', 'general']
@@ -17,6 +17,7 @@ export default function MediaLibrary({
   targetSlot,
   onSelect,
   copy = {},
+  leadId = '',
   businessName = '',
   legacyProjectId = null,
   refreshKey = 0,
@@ -24,7 +25,7 @@ export default function MediaLibrary({
   const { language } = useLanguage()
   const labels = COPY[language] || COPY.en
   const inputRef = useRef(null)
-  const [items, setItems] = useState(() => loadBusinessMediaLibrary(businessName, legacyProjectId))
+  const [items, setItems] = useState(() => loadLeadMediaLibrary(leadId))
   const [category, setCategory] = useState('general')
   const [filter, setFilter] = useState('all')
   const [progress, setProgress] = useState(0)
@@ -32,16 +33,16 @@ export default function MediaLibrary({
   const [dragging, setDragging] = useState(false)
 
   useEffect(() => {
-    setItems(loadBusinessMediaLibrary(businessName, legacyProjectId))
+    setItems(loadLeadMediaLibrary(leadId))
     setFilter('all')
     setError('')
-  }, [businessName, legacyProjectId, refreshKey])
+  }, [leadId, legacyProjectId, refreshKey])
 
   const visible = filter === 'all' ? items : items.filter((item) => item.category === filter)
 
   function persist(next) {
     try {
-      setItems(saveBusinessMediaLibrary(businessName, next))
+      setItems(saveLeadMediaLibrary(leadId, next))
       setError('')
       return true
     } catch (storageError) {
@@ -51,7 +52,7 @@ export default function MediaLibrary({
   }
 
   async function upload(fileList) {
-    if (!String(businessName || '').trim()) {
+    if (!String(leadId || '').trim()) {
       setError(labels.needBusiness)
       return
     }

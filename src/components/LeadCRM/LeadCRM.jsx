@@ -1,41 +1,53 @@
 // Renders compact per-lead CRM controls while delegating persistence to crmStorage.js.
 import { useEffect, useMemo, useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
-import { getLeadCrmKey, loadLeadCrm, saveLeadCrm, subscribeToCrmChanges } from './crmStorage'
+import { CRM_STAGES, normalizeCrmStage } from '../CRM/crmSelectors'
+import { getLeadId } from '../../services/leadId'
+import { loadLeadCrm, saveLeadCrm, subscribeToCrmChanges } from './crmStorage'
 import './LeadCRM.css'
 
-const CRM_STATUSES = [
-  ['new', 'statusNew'],
-  ['contacted', 'statusContacted'],
-  ['whatsapp-sent', 'statusWhatsappSent'],
-  ['proposal-sent', 'statusProposalSent'],
-  ['negotiation', 'statusNegotiation'],
-  ['won', 'statusWon'],
-  ['lost', 'statusLost'],
-]
+function formatStageLabel(stage) {
+  return stage.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+}
 
 export function LeadCRM({ lead }) {
   const { t } = useLanguage()
-  const leadKey = useMemo(() => getLeadCrmKey(lead), [lead])
-  const [record, setRecord] = useState(() => loadLeadCrm(leadKey))
+  const leadId = useMemo(() => getLeadId(lead), [lead])
+  const [record, setRecord] = useState(() => loadLeadCrm(leadId))
 
-  useEffect(() => subscribeToCrmChanges(() => setRecord(loadLeadCrm(leadKey))), [leadKey])
+  useEffect(() => subscribeToCrmChanges(() => setRecord(loadLeadCrm(leadId))), [leadId])
+
+  useEffect(() => {
+    const loaded = loadLeadCrm(leadId)
+    const normalizedStatus = normalizeCrmStage(loaded.status)
+    if (normalizedStatus !== loaded.status) {
+      const migrated = { ...loaded, status: normalizedStatus }
+      saveLeadCrm(leadId, migrated)
+      setRecord(migrated)
+    }
+  }, [leadId])
 
   function updateRecord(field, value) {
     setRecord((currentRecord) => {
-      const nextRecord = { ...currentRecord, [field]: value }
-      saveLeadCrm(leadKey, nextRecord)
+      const nextRecord = {
+        ...currentRecord,
+        [field]: value,
+        ...(field === 'status' ? { stageChangedAt: new Date().toISOString() } : {}),
+      }
+      saveLeadCrm(leadId, nextRecord)
       return nextRecord
     })
   }
+
+  const currentStage = normalizeCrmStage(record.status)
 
   return (
     <div className="lead-crm">
       <label>
         <span>{t('crmStatus')}</span>
-        <select value={record.status} onChange={(event) => updateRecord('status', event.target.value)}>
-          {CRM_STATUSES.map(([value, translationKey]) => (
-            <option key={value} value={value}>{t(translationKey)}</option>
+        <select value={currentStage} onChange={(event) => updateRecord('status', event.target.value)}>
+          {CRM_STAGES.map((value) => (
+            <option key={value} value={value}>{formatStageLabel(value)}</option>
           ))}
         </select>
       </label>

@@ -1,7 +1,7 @@
 // Stable local persistence for owner-controlled Business OS interface preferences.
 export const SETTINGS_STORAGE_KEY = 'business-os-settings-v1'
 export const DEFAULT_SETTINGS = { language: 'en', theme: 'light', defaultScreen: 'dashboard', compactMode: false }
-export const DEFAULT_SCREEN_OPTIONS = ['dashboard', 'businesses', 'projects', 'crm', 'tasks', 'websites-assets', 'ideas-vault']
+export const DEFAULT_SCREEN_OPTIONS = ['dashboard', 'businesses', 'tasks', 'finance', 'documents', 'ai-center', 'settings']
 
 export function normalizeSettings(value = {}) {
   return {

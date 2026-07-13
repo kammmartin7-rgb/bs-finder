@@ -14,7 +14,15 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') })
 const app = express()
 const port = process.env.PORT || 3001
 
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      callback(null, true)
+      return
+    }
+    callback(new Error('Not allowed by CORS'))
+  },
+}))
 app.use(express.json({ limit: '20kb' }))
 
 app.get('/api/ai/status', (_req, res) => {
@@ -60,16 +68,22 @@ app.post('/api/ai/chat', async (req, res) => {
 })
 
 app.post('/api/leads/search', async (req, res) => {
-  const { businessType, city } = req.body || {}
+  const { businessType, city, country } = req.body || {}
 
-  if (!businessType?.trim() || !city?.trim()) {
+  if (![businessType, city, country].every((value) => typeof value === 'string' && value.trim())) {
     return res.status(400).json({
-      error: 'Please enter both Business Type and City.',
+      error: 'Please enter Business Type, City, and Country.',
+    })
+  }
+
+  if (!process.env.APIFY_TOKEN?.trim()) {
+    return res.status(503).json({
+      error: 'Apify token is missing. Add APIFY_TOKEN to .env and restart the server.',
     })
   }
 
   try {
-    const leads = await fetchApifyLeads(businessType, city)
+    const leads = await fetchApifyLeads(businessType, city, country)
     return res.json({ leads })
   } catch (err) {
     return res.status(500).json({

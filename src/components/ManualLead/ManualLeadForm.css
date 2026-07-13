@@ -7,6 +7,8 @@
 .manual-lead-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .manual-lead-grid label { display: grid; gap: 4px; color: #526276; font-size: 12px; font-weight: 750; }
 .manual-lead-grid input { width: 100%; min-width: 0; box-sizing: border-box; }
+.manual-lead-grid select { width: 100%; min-width: 0; box-sizing: border-box; font: inherit; }
+.manual-lead-grid textarea { width: 100%; min-width: 0; box-sizing: border-box; resize: vertical; font: inherit; }
 .manual-lead-wide { grid-column: 1 / -1; }
 .manual-lead-error { padding: 8px 10px; border-radius: 8px; background: #fef2f2; color: #b91c1c; font-size: 12px; }
 .manual-lead-form footer { display: flex; justify-content: flex-end; gap: 7px; margin-top: 15px; }

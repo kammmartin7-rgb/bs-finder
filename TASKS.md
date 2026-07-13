@@ -29,11 +29,13 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | BOS-021 | Complete AI Center Business OS integration | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-019 | Status endpoint, four AI actions, constrained context, navigation, validation, and no-key behavior verified. |
 | BOS-022 | Build Real Website Builder V1 | Real Website Builder | Business OS | GREEN | Completed | High | No | RWB-001,RWB-002 | Separate real-site workflow, lead handoff, previews, statuses, and local persistence verified. |
 | BOS-023 | Build Business OS Command Center v2 | Business OS | Business OS | GREEN | Completed | High | No | BOS-016 | Owner mission, project visibility, local facts, task actions, focus mode, themes, navigation, and responsive layout verified. |
-| BOS-024 | Restructure Business OS navigation hierarchy | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-023 | Final 13-category sidebar verified; BS Finder lives under Businesses, BS Funds under Websites & Assets, live business metrics display, and duplicate top-level tools/assets plus the dashboard BS Funds card are removed. |
+| BOS-024 | Restructure Business OS navigation hierarchy | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-023 | Final 10-item sidebar verified: Dashboard, Businesses, Sales, Finance, Tasks, AI Center, Documents, Users, Integrations, Settings. Projects/Websites/Ideas/Development relocated to business hubs or Settings; single shared CRM & Sales Pipeline. |
+| BOS-027 | Stabilize Sales pipeline layout and shared CRM access | Business OS | Business OS | GREEN | Completed | High | No | BOS-024 | Sales tab opens existing `crm` route; fixed-height pipeline rows with internal scroll; content-driven lead cards; build and lint passed. |
+| BOS-028 | Fully stabilize lead persistence E2E | Business OS | Business OS | RED | Open | High | Yes | BOS-027 | Verify manual creation, Google Maps import, editing, images, status changes, drag-and-drop, refresh, server restart; no leads disappear. |
 | BOS-025 | Build revenue-first Ideas Vault | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-023 | Compact CRUD, status changes, deterministic revenue scoring, shared localStorage persistence, translations, RTL/LTR, and light/dark styles verified. |
 | BOS-026 | Build owner Settings screen | Business OS | Business OS | GREEN | Completed | Low | No | BOS-023 | Language, theme, default opening screen, compact mode, reset, persistence, four-language UI, RTL/LTR, build, and lint verified. |
 | BSH-001 | Preserve existing BS Hunter module | BS Hunter | BS Hunter | GREEN | Completed | High | No | None | Existing workflows verified by build/lint. |
-| BSH-002 | Persist all real lead source results | BS Hunter | BS Hunter | ORANGE | Open | High | No | Cloud/local data design | Only manual leads persist fully. |
+| BSH-002 | Persist all real lead source results | BS Hunter | BS Hunter | GREEN | Completed | High | No | Cloud/local data design | CSV import and paid search merge/upsert into `bs-hunter-real-leads`; related CRM/proposal/media/demo/project data keys exclusively on LeadID with legacy migration. |
 | BSH-003 | Add lead deletion and archive | BS Hunter | BS Hunter | ORANGE | Open | Medium | No | Persistence | Preserve history. |
 | BSH-004 | Add bulk lead actions | BS Hunter | BS Hunter | GRAY | Future | Medium | No | Stable CRM | Bulk status and export. |
 | BSH-005 | Add lead detail drawer | BS Hunter | BS Hunter | ORANGE | Open | Medium | No | Component design | Reduce table density. |
@@ -42,7 +44,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | LSR-003 | Deploy paid search backend | Lead Search | BS Hunter | RED | Open | High | Yes | LSR-002 | Configure CORS and API URL. |
 | LSR-004 | Verify paid results in production | Lead Search | BS Hunter | RED | Open | High | Yes | LSR-003 | Never substitute demo data. |
 | LSR-005 | Add paid-search usage and cost limits | Lead Search | BS Hunter | ORANGE | Open | High | No | LSR-003 | Prevent runaway cost. |
-| CRM-001 | Maintain lead-level CRM controls | CRM | Business OS | GREEN | Completed | High | No | localStorage | Status, notes, follow-up verified. |
+| CRM-001 | Maintain lead-level CRM controls | CRM | Business OS | GREEN | Completed | High | No | localStorage | Status, notes, follow-up keyed by LeadID only; legacy CRM keys migrate on load. |
 | CRM-002 | Build full CRM pipeline screen | CRM | Business OS | GREEN | Completed | High | No | Data persistence | Tasks 1-4 verified: responsive shell, existing real lead/CRM/action data, pipeline cards, legacy-stage display mapping, and urgent-action ordering. |
 | CRM-003 | Add follow-up calendar view | CRM | Business OS | GREEN | Completed | High | No | CRM-002 | Overdue, today, upcoming, and no-date groups with existing-record date updates verified. |
 | CRM-004 | Add lead owner assignment | CRM | Business OS | ORANGE | Open | Medium | No | Authentication | Person or agent ownership. |
@@ -65,7 +67,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | RWB-001 | Create customer intake form | Real Website Builder | Business OS | GREEN | Completed | High | No | None | Manual and lead-prefilled customer intake verified. |
 | RWB-002 | Create real website project model | Real Website Builder | Business OS | GREEN | Completed | High | No | RWB-001 | Separate versioned localStorage project model verified. |
 | RWB-003 | Add page and section editor | Real Website Builder | Business OS | RED | Open | High | Yes | RWB-002 | Production-grade editing. |
-| RWB-004 | Add asset library | Real Website Builder | Business OS | GREEN | Completed | Medium | No | RWB-002 | Per-business Media Library, ImageManager slot sync, unicode-safe keys, draft/project persistence, and generator wiring verified. |
+| RWB-004 | Add asset library | Real Website Builder | Business OS | GREEN | Completed | Medium | No | RWB-002 | Per-lead Media Library (`lead-{leadId}`), ImageManager slot sync, legacy business-name key migration, and generator wiring verified. |
 | RWB-005 | Add customer approval workflow | Real Website Builder | Business OS | RED | Open | High | Yes | RWB-003 | Versioned approvals. |
 | DEP-001 | Keep Vite static build healthy | Deployment | Business OS | GREEN | Completed | High | No | None | Current build passes. |
 | DEP-002 | Keep top-level error boundary | Deployment | Business OS | GREEN | Completed | Medium | No | None | Prevents blank render failures. |
@@ -81,7 +83,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | PRP-002 | Create editable proposal templates | Proposals | Business OS | GREEN | Completed | High | No | PRP-001 | Basic, Business, and Premium templates with customer/date autofill, editable price/content, and local draft saving verified. |
 | PRP-003 | Add proposal PDF export | Proposals | Business OS | ORANGE | Open | High | No | PRP-002 | Shareable artifact. |
 | PRP-004 | Add proposal delivery confirmation | Proposals | Business OS | ORANGE | Open | High | No | Messaging/email | “Opened” is not delivery proof. |
-| PRP-005 | Add proposal acceptance state | Proposals | Business OS | RED | Open | High | Yes | PRP-002 | Feed payment workflow. |
+| PRP-005 | Add proposal acceptance state | Proposals | Business OS | RED | In Progress | High | Yes | PRP-002 | Acceptance now updates CRM to `deal-won` with proposal amount. |
 | WAP-001 | Maintain WhatsApp action | WhatsApp | BS Hunter | GREEN | Completed | High | No | Phone number | Personalized WhatsApp Web URL. |
 | WAP-002 | Maintain action history | WhatsApp | BS Hunter | GREEN | Completed | Medium | No | Lead IDs | Open events persist. |
 | WAP-003 | Verify message delivery externally | WhatsApp | Business OS | ORANGE | Open | High | No | WhatsApp API/provider | Open is not sent confirmation. |

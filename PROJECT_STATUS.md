@@ -6,88 +6,70 @@
 
 ## Current Main Goal
 
-Launch a working revenue-producing Business OS.
+Launch a working revenue-producing Business OS with one shared CRM and a stable lead system.
 
 ## Current Active Task
 
-Add Real Website Builder page and section editor (RWB-003).
+Fully stabilize lead persistence and verify manual lead creation, Google Maps import, lead editing, image upload, status changes, drag-and-drop, browser refresh, server restart, and that no leads disappear.
 
 ## Last Completed Task
 
-Finished Image Manager and per-business Media Library. Every Real Website Builder customer has an isolated media collection keyed by business name (unicode-safe for HE/AR/RU), slot uploads sync into that library, customer images persist via active draft and saved projects, and generated previews consume all eight image slots through the shared media system. Build and lint passed.
+Business OS navigation cleanup, Sales top-level tab, shared CRM & Sales Pipeline access, fixed-height pipeline columns with internal scroll, and content-driven dynamic lead cards. Build and lint passed.
+
+## Project Rules (Current)
+
+- Business OS manages the entire business.
+- BS Finder is one business inside Business OS.
+- All businesses use the same CRM and Sales Pipeline.
+- Do not create duplicate CRM, Pipeline, Dashboard, or modules.
+- Work on only one task at a time.
+- Do not add new features before lead-system stabilization is complete.
 
 ## What Is Working
 
 - Business OS shell with internal screen state and fixed RTL/LTR-aware sidebar.
+- Top-level navigation: Dashboard, Businesses, Sales, Finance, Tasks, AI Center, Documents, Users & Permissions, Integrations, Settings.
+- **Sales** sidebar tab opens the existing shared CRM & Sales Pipeline (`crm` screen); no duplicate CRM or pipeline was created.
+- Businesses hub lists BS Finder and BS Funds; BS Finder workspace links to Overview, Lead Sources, CRM & Sales Pipeline, Proposal, Demo Builder, Real Website Builder, Media Library, and Customers.
+- Projects, Websites & Assets, Ideas Vault, and Development remain accessible via business hubs, dashboard links, deep routes, or Settings — not as duplicate top-level modules.
+- Sales Pipeline uses two fixed-height rows (primary 420px / secondary 270px); lead lists scroll inside each stage column.
+- Pipeline lead cards use dynamic height from available data; empty optional fields do not reserve space.
 - Ideas Vault with revenue potential, time-to-revenue, effort, cost, status, next-action tracking, deterministic scoring, and local persistence shared with Dashboard quick capture.
-- Business OS Command Center v2 with a dominant task-backed mission, focus mode, local business overview, verified ecosystem facts, development/document panels, theme persistence, and compact responsive views.
-- Scalable 13-item system navigation: Dashboard, Businesses, Projects, Websites & Assets, CRM, Sales, Tasks, AI Center, Development, Documents, Users & Permissions, Integrations, and Settings.
-- Businesses landing page and BS Finder workspace linking to Lead Discovery, CRM, Sales, Proposal Generator, Demo Website Builder, and Real Website Builder.
-- Websites & Assets landing page containing BS Funds, Demo Websites, Customer Websites, Templates, Landing Pages, and Archived Websites with honest available/planned states.
-- Dashboard with real-lead metrics, clickable filters, BS Funds shortcut, and compact Mission Control.
+- Business OS Command Center with task-backed mission, focus mode, compact actionable dashboard metrics, and theme persistence.
+- Websites & Assets registry (BS Funds, BS Finder) with production URLs, GitHub repositories, and open/copy actions.
 - BS Hunter with paid, free Google Maps, CSV import, demo, and manual lead modes.
 - Paid search fails safely when no production API/billing is configured; it never substitutes fake leads.
-- Free Mode opens a correctly encoded `businessType city` Google Maps query.
-- CSV import maps supported columns into the existing lead format.
-- Manual real-lead entry, duplicate prevention, unique IDs, and localStorage persistence.
-- Demo leads remain a manual test option and are excluded from real dashboard statistics.
-- Lead scoring, search/filter/sort controls, CSV export, and Google Sheets export integration.
-- Lead CRM status, notes, and follow-up date persistence.
-- CRM V2 shell, real-data pipeline, detailed lead cards, legacy-status display compatibility, and urgency ordering for overdue/today/proposal/demo/new/payment follow-up.
-- CRM Next Action and secondary actions reuse existing App handlers; daily goals persist under one CRM goal key and count only recorded actions.
-- CRM follow-up center groups overdue, today, upcoming, and unscheduled leads and updates the existing CRM record.
-- CRM proposal/revenue summary reads existing proposal drafts/approvals and explicit CRM stages; Paid revenue is never inferred from a payment link.
-- CRM search, stage filtering, urgency/follow-up/score/update/name sorting, empty states, and mobile layouts.
-- Automatic lead-action history with CRM transitions for Proposal and WhatsApp.
-- Four lead actions in a compact 2x2 layout: Proposal, Demo Site, Sales Pitch, WhatsApp.
-- Demo Website Builder with templates, sections, responsive output, contact actions, and generated placeholder copy.
-- Shareable Demo Links with stable per-lead IDs, direct public hash routes, portable URL snapshots, same-browser localStorage persistence, copy/open controls, and a professional missing-demo state.
-- Separate Real Website Builder V1 with manual or BS Hunter lead intake, three professional templates, four website languages, RTL/LTR output, live/full previews, project statuses, localStorage drafts, Image Manager (eight slots), and per-business Media Library.
-- Real Website Builder Image Manager with upload/compress/replace/delete, drag-and-drop, library slot targeting, per-business media isolation, and generated-site wiring for logo, hero, about, services, gallery, team, testimonials, and contact images.
-- Business OS sticky topbar with InternalBackButton screen history and fixed LanguageSwitcher placement on all non-dashboard screens.
-- Proposal Generator modal.
-- Proposal Templates V1 with three predefined website offers, automatic customer/date details, editable commercial content, and per-business local draft persistence.
-- Sales Center with phone, WhatsApp, email, objection scripts, and copy buttons.
-- Tasks module with CRUD, filters, categories, progress, pagination, a one-time 100-task roadmap, and localStorage.
-- Mission Control shows the six highest-priority incomplete Tasks records.
-- Project Command Center shows live weighted progress, a focused active task, the next five tasks, blocking issues, revenue flow, and separate module/document tabs.
-- Known starter and generated roadmap task titles, descriptions, categories, statuses, priorities, and assignees are localized for display in all four languages while stored values remain unchanged.
-- BS Funds placeholder module and translated zero-state metrics.
-- AI Center with permanent Business OS navigation, backend configuration status, connection test, chat, four project actions, constrained project/task context, Responses API integration, and non-sensitive activity metadata.
-- Four-language system: English, Hebrew, Arabic, and Russian.
-- Global RTL/LTR document direction and persisted language selection.
-- Working Settings screen with immediate language/theme/compact changes, persisted default opening screen, reset confirmation, and success feedback.
-- Top-level production error boundary and static-host `_redirects` fallback.
-- Production build is static and Free Mode, CSV, Demo, CRM, and Tasks do not require the local backend.
+- Manual real-lead entry, duplicate prevention, unique IDs, and canonical `bs-hunter-real-leads` persistence via `leadPersistence.js`.
+- CRM/Sales Pipeline manual lead entry and Google Maps paste import with optional images into per-business Media Library.
+- CRM lead cards: click-to-edit, optional fields when present, LeadEditForm, Manage Images, persisted updates via `updatePersistedLead`.
+- LeadID-only joins for CRM, actions, proposals, demos, media, and real website projects with legacy migration on load.
+- CRM V2 pipeline, urgency ordering, follow-up center, revenue summary, search/filter/sort, and four-language UI.
+- Real Website Builder V1 with Image Manager, Media Library, templates, previews, and localStorage persistence.
+- Proposal Generator and Templates V1, Sales Center, Tasks module, Projects Command Center, AI Center, Settings, and four-language RTL/LTR support.
+- Production build is static; Free Mode, CSV, Demo, CRM, and Tasks do not require the local backend for basic operation.
 
 ## What Is Incomplete
 
+- Lead persistence E2E stabilization (next task): drag-and-drop verification, server-restart checks, and full regression across all lead entry paths.
 - No production deployment has been completed or verified on a real hosting provider.
 - Paid lead search still needs billing, a deployed backend, and `VITE_API_BASE_URL`.
-- BS Funds has no live data integration.
-- CRM remains localStorage-based and can only show leads currently available in the loaded lead collection; non-manual search/import results are not yet a unified persistent lead database.
-- Websites screen is still a placeholder; Real Website Builder is available through its own module.
-- Global Sales, Users & Permissions, and Integrations remain safe placeholder screens until their data or functionality is connected.
-- Demo Website Builder does not use AI, customer-specific business types, image generation, editing, publishing, domains, or hosting.
-- Real Website Builder V1 does not yet include section editing, client approvals, publishing, domains, hosting, or a payment-triggered delivery workflow.
+- BS Funds has no live data integration beyond the production website asset card.
+- Global Users & Permissions and Integrations remain placeholder screens.
+- Real Website Builder V1 does not yet include section editing, client approvals, publishing, domains, hosting, or payment-triggered delivery.
 - No payment integration exists.
 - Live AI responses remain unavailable until backend `OPENAI_API_KEY` billing/configuration is added.
-- Proposal and WhatsApp “opened” events are treated as sent CRM stages; delivery is not externally verified.
-- Manual leads persist, but paid searches, CSV imports, free-mode collections, and demo result sets are not all persisted as a unified database.
-- No authentication, users, cloud database, backups, audit permissions, analytics, or multi-device synchronization.
-- Generated sales and website business content is not translated.
-- No automated test suite exists beyond build and lint.
+- CRM remains localStorage-based.
+- No authentication, cloud database, backups, audit permissions, analytics, or multi-device synchronization.
+- No automated test suite exists beyond build, lint, and the optional `scripts/verify-lead-e2e.mjs` helper.
 
 ## Known Problems
 
+- Lead persistence must be re-verified end-to-end after navigation and pipeline UI changes (active task).
 - Paid lead search requires provider billing and a deployed backend.
-- Production deployment is prepared but not completed or smoke-tested on a public URL.
+- Production deployment is prepared but not smoke-tested on a public URL.
 - Demo website quality still requires improvement before it can be sold as a professional customer website.
 - Google Sheets requires a configured public Apps Script web-app endpoint.
 - All operational data currently relies on browser localStorage and can be lost if browser storage is cleared.
-- Ideas Vault data is local to the current browser and has no cloud backup or multi-device synchronization.
-- The local backend CORS configuration is development-specific (`http://localhost:5173`) and must be configured before a paid production API is deployed.
-- Mission Control is task-record based; it does not yet generate a separate per-lead sales workflow task for every action stage.
 - AI Center is safely disconnected because no OpenAI API key is currently configured.
 - There are no confirmed build or lint failures as of the timestamp above.
 
@@ -116,26 +98,24 @@ npm install
 npm start
 ```
 
+Optional lead persistence verification script (browser must be running with app loaded):
+
+```bash
+node scripts/verify-lead-e2e.mjs
+```
+
 ## Project Structure
 
-- `src/App.jsx` — existing BS Hunter interface, lead state, source modes, lead actions, and modals.
-- `src/components/BusinessOS/` — shell, sidebar, dashboard, BS Funds, Tasks, Mission Control, filters, and task storage.
-- `src/components/BusinessOS/NavigationHub.jsx` — category pages for Businesses, the BS Finder workspace, and Websites & Assets.
+- `src/App.jsx` — BS Hunter interface, lead state, source modes, lead actions, and modals.
+- `src/components/BusinessOS/` — shell, sidebar, dashboard, navigation hubs, Tasks, Mission Control, filters, and task storage.
+- `src/components/BusinessOS/NavigationHub.jsx` — Businesses, BS Finder workspace, BS Funds, Finance, Documents, and asset hubs.
+- `src/components/CRM/` — shared CRM & Sales Pipeline, lead cards, edit form, media modal, selectors.
+- `src/services/leadPersistence.js` — canonical real-lead store and change notifications.
+- `src/services/leadId.js`, `leadRelationMigration.js` — LeadID normalization and legacy migration.
+- `src/components/GoogleMapsImport/` — Google Maps paste import for CRM pipeline.
 - `src/components/Projects/` — project status dashboard and markdown-mirrored project facts.
-- `src/components/AICenter/` — secure AI frontend and non-sensitive activity log.
-- `src/components/LeadCRM/` — lead CRM UI, CRM storage, and lead-action history.
-- `src/components/WebsiteBuilder/` — demo-site model, templates, sections, renderer, and styles.
-- `src/components/RealWebsiteBuilder/` — paid-customer intake, deterministic generator, templates, previews, project statuses, and localStorage persistence.
-- `src/components/SalesCenter/` — outreach UI and deterministic sales copy.
-- `src/components/ManualLead/` — manual lead form, deduplication, and persistence.
-- `src/components/LanguageSwitcher/` — fixed global language selector.
-- `src/context/` and `src/i18n/` — language context, persistence, translations, and direction.
-- `src/services/` — paid lead API client and Google Sheets integration.
-- `src/utils/` — lead scoring and CSV parsing.
+- `src/components/RealWebsiteBuilder/` — paid-customer website builder, Image Manager, Media Library.
 - `server/` — optional Express/Apify paid-search backend.
-- `server/services/openaiService.js` — backend-only OpenAI SDK and Responses API service.
-- `google-apps-script/` — Google Sheets web-app receiver.
-- `public/` — static assets and deployment rewrite configuration.
 - `dist/` — generated production build; do not edit manually.
 
 ## Current Revenue Flow
@@ -155,22 +135,23 @@ The flow currently works through WhatsApp opening and local tracking. Payment, r
 
 ## Next 10 Tasks
 
-1. Add Real Website Builder page and section editor (RWB-003).
-2. Add customer approval workflow for generated websites (RWB-005).
-3. Restore and verify reliable real lead acquisition for multiple industries and cities.
-4. Select and configure the real payment provider and payment handoff.
-5. Perform full browser interaction QA for every CRM stage and action.
-6. Verify proposal acceptance and secure-payment handoff with a real configured URL.
-7. Deploy and smoke-test the customer-facing sales flow on a public URL.
-8. Add website publish/deploy pipeline after customer approval.
-9. Add revenue-critical follow-up reminders and outcome tracking.
-10. Browser-verify Image Manager and media library at desktop, tablet, and mobile widths.
+1. Fully stabilize lead persistence and verify manual creation, Google Maps import, editing, images, status changes, drag-and-drop, refresh, and server restart (no disappearing leads).
+2. Add Real Website Builder page and section editor (RWB-003).
+3. Add customer approval workflow for generated websites (RWB-005).
+4. Restore and verify reliable real lead acquisition for multiple industries and cities (production billing/deploy still required).
+5. Select and configure the real payment provider and payment handoff.
+6. Perform full browser interaction QA for every CRM stage and action.
+7. Verify proposal acceptance and secure-payment handoff with a real configured URL.
+8. Deploy and smoke-test the customer-facing sales flow on a public URL.
+9. Add website publish/deploy pipeline after customer approval.
+10. Add revenue-critical follow-up reminders and outcome tracking.
 
 ## Do Not Touch
 
 Do not change these stable areas without a specific task and verification plan:
 
-- Paid search service and server integration.
+- Canonical lead store key `bs-hunter-real-leads` and merge order in `leadPersistence.js`.
+- Paid search service and server integration (unless fixing lead acquisition).
 - Free Mode query construction and CSV import behavior.
 - Google Sheets payload and export behavior.
 - Demo-lead exclusion rules.
@@ -179,5 +160,4 @@ Do not change these stable areas without a specific task and verification plan:
 - WebsiteBuilder, ProposalGenerator, and SalesCenter contracts.
 - Language context, all four languages, and RTL/LTR behavior.
 - Business OS internal screen-state architecture.
-- Ideas Vault storage key `business-os-command-center-ideas-v1` and its compatibility with Dashboard quick capture.
 - Production error boundary and static-host fallback.

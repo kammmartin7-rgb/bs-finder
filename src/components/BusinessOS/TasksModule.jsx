@@ -1,17 +1,30 @@
 // Full local Tasks workspace with CRUD, completion, sorting, and filters.
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
 import { createTaskId, loadTasks, saveTasks, sortTasks, TASK_CATEGORIES } from './taskStorage'
 
 const EMPTY_TASK = { title: '', description: '', project: '', category: '', priority: 'important', status: 'open', dueDate: '', assignee: '', revenueImpact: 0, isBlocking: false, notes: '' }
+const DEFAULT_FILTERS = { priority: 'all', project: 'all', status: 'active', category: 'all', dueDate: 'all', blockingOnly: false }
 
-export default function TasksModule() {
+export default function TasksModule({ navigation = null, onNavigationApplied }) {
   const { t } = useLanguage()
   const [tasks, setTasks] = useState(loadTasks)
   const [draft, setDraft] = useState(EMPTY_TASK)
   const [editingId, setEditingId] = useState(null)
-  const [filters, setFilters] = useState({ priority: 'all', project: 'all', status: 'active', category: 'all' })
+  const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    if (!navigation) return
+    setFilters((current) => ({
+      ...current,
+      dueDate: navigation.dueDate || 'all',
+      blockingOnly: Boolean(navigation.blockingOnly),
+      status: 'active',
+    }))
+    setPage(1)
+    onNavigationApplied?.()
+  }, [navigation, onNavigationApplied])
 
   const options = useMemo(() => ({
     projects: [...new Set(tasks.map((task) => task.project).filter(Boolean))],
@@ -27,6 +40,8 @@ export default function TasksModule() {
     if (filters.category !== 'all' && task.category !== filters.category) return false
     if (filters.status === 'active' && task.status === 'completed') return false
     if (!['all', 'active'].includes(filters.status) && task.status !== filters.status) return false
+    if (filters.dueDate !== 'all' && String(task.dueDate || '').slice(0, 10) !== filters.dueDate) return false
+    if (filters.blockingOnly && !task.isBlocking) return false
     return true
   })), [filters, tasks])
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / 20))

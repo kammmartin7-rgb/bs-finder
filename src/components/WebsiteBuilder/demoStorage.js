@@ -1,4 +1,6 @@
 // Creates stable demo IDs, portable URL snapshots, and same-browser persistence.
+import { getLeadId } from '../../services/leadId'
+
 const STORAGE_PREFIX = 'bs-finder-demo:'
 
 function hash(value) {
@@ -32,7 +34,9 @@ function decode(value) {
 }
 
 export function saveShareableDemo(business) {
-  const record = { id: demoIdFor(business), business: portableSnapshot(business), updatedAt: new Date().toISOString() }
+  const leadId = getLeadId(business)
+  const id = leadId ? `lead-${leadId}` : demoIdFor(business)
+  const record = { id, leadId: leadId || null, business: portableSnapshot(business), updatedAt: new Date().toISOString() }
   localStorage.setItem(`${STORAGE_PREFIX}${record.id}`, JSON.stringify(record))
   return record
 }

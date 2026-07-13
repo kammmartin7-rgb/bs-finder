@@ -4,6 +4,34 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ## Unreleased
 
+### Changed
+
+- Business OS navigation cleanup: 10-item sidebar (Dashboard, Businesses, Sales, Finance, Tasks, AI Center, Documents, Users & Permissions, Integrations, Settings). Projects, Websites & Assets, Ideas Vault, and Development removed from top-level sidebar but preserved via business hubs, dashboard links, deep routes, or Settings.
+- Sales added as a main Business OS navigation tab; opens the existing shared CRM & Sales Pipeline (`crm` screen) with no duplicate CRM or pipeline.
+- CRM & Sales Pipeline merged label and route: one workspace for pipeline stages, lead cards, manual entry, and Google Maps import.
+- Sales Pipeline layout: two fixed-height rows (primary 420px / secondary 270px); lead lists scroll inside each stage column; column headers and footers stay fixed.
+- Pipeline lead cards: content-driven dynamic height; always show business name, phone, and status; optional category, source, rating, website, and address only when present; click opens existing LeadEditForm.
+- Dashboard trimmed to compact actionable metrics and quick navigation; Ideas Vault linked from dashboard; Development Console linked from Settings.
+- Finance and Documents exposed as top-level navigation hubs using existing data and document panels.
+- Business OS migration step 1: Businesses hub shows BS Finder and BS Funds cards; sidebar highlights Businesses when BS Finder/BS Funds nested routes are open; Sales highlights when CRM is open.
+
+### Fixed
+
+- LeadID normalization: CRM (`bs-hunter-crm:{leadId}`), action history, proposals (`bs-finder-proposal:{leadId}`), demos (`bs-finder-demo:lead-{leadId}`), media (`…:lead-{leadId}`), and real website projects (`project.leadId`) now join only on `lead.id`; legacy business-name / CRM-key / hash demo data migrates on load via `leadRelationMigration.js`.
+- Lead persistence: one canonical store (`bs-hunter-real-leads` / `leadPersistence.js`) with legacy migration, stable IDs, change notifications, demo-table isolation, and dev verification helpers (`__bsHunterVerifyLeadPersistence`).
+- CRM/Sales Pipeline regression: pipeline empty state restored to distinguish “no persisted leads” vs active filters; CRM reloads `bs-hunter-real-leads` on mount; sidebar CRM/Sales clears stale navigation filters; Sales default navigation memoized to avoid effect churn.
+- Lead Search and Apify workflow: improved Apify field mapping (name, phone, website, address, placeId, category), duplicate upsert on repeat search, demo/real separation in UI/stats/export/persistence, clearer missing-token and network errors, and localhost CORS for dev ports beyond 5173.
+- Lead status pipeline access: Sales sidebar and BS Finder Sales card route to the existing CRM pipeline; dashboard Lead pipeline card scrolls to the pipeline section.
+- Lead-to-pipeline flow: saved search/import/manual leads auto-create CRM records at stage `new`; CRM reloads persisted leads when opened; dashboard counters align with CRM V2 stages.
+- CRM manual lead entry: pipeline header button opens extended manual form; duplicate phone blocked; notes saved to CRM record.
+- Google Maps paste import: CRM pipeline button, review step, Media Library image upload, duplicate phone/URL/name+address checks.
+- Lead persistence: `addPersistedLead` and `persistLeadCollection` merge from stored real leads; legacy manual leads migrate into `bs-hunter-real-leads` on load; App reloads leads on mount/focus/storage events.
+- Lead-to-sale workflow: real leads from manual entry, CSV import, and paid search now persist in `bs-hunter-real-leads` and survive reload.
+- CRM and proposal storage now share the same LeadID via `getLeadId()`.
+- Proposal open/accept actions update CRM stage and proposal amount consistently.
+- Inline Lead CRM status dropdown uses CRM V2 stages instead of legacy values.
+- Google Sheets export filters demo leads, verifies JSON responses, and includes CRM/proposal columns.
+
 ### Added
 
 - Business OS application shell, fixed sidebar, dashboard, and internal screen navigation.
@@ -22,6 +50,9 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - WhatsApp Web action with personalized messages and cleaned phone numbers.
 - Paid API, Free Mode, CSV Import, Demo Leads, and manual lead source modes.
 - Manual real-lead form, deduplication, scoring, and persistence.
+- CRM/Sales Pipeline manual lead entry button with extended form fields and duplicate-phone prevention.
+- Google Maps paste import in CRM with review step, Media Library image storage, and shared images for Demo/Real Website Builder.
+- CRM lead card Edit Lead and Manage Images actions with persisted updates and per-business media linking.
 - CSV export and Google Sheets export integration.
 - English, Hebrew, Arabic, and Russian interface translations.
 - Global RTL/LTR direction and persisted language selector.
@@ -49,6 +80,8 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Per-business media isolation with unicode-safe storage keys, legacy key migration, business-name rename migration, and slot-upload sync into the shared Media Library.
 - Business OS InternalBackButton with screen history, sticky topbar placement, and RTL-aware chevron.
 - Global responsive containment to prevent page-level horizontal scrolling across shell, CRM pipeline, lead table, command center, and website builder layouts.
+- BS Funds website asset card in Websites & Assets with Name, Type, Status metadata and Open website action for the existing BS Funds site URL.
+- Reusable Websites & Assets registry with shared asset cards for BS Funds and BS Finder, including production URL, GitHub repository, and open actions; additional sites append to `websiteAssets.js` without layout changes.
 
 ### Changed
 
@@ -66,6 +99,6 @@ Exact completion dates for earlier work are not available. Verified existing wor
 ### Verified
 
 - Existing Shareable Demo Links: stable IDs, direct no-shell demo routes, new-tab portable loading, refresh persistence, missing-demo state, Vite module serving, build, and lint.
-- Latest application build passed with `npm run build` after Image Manager integration and responsive layout work.
-- Latest lint passed with `npm run lint` after Image Manager integration and responsive layout work.
+- Latest application build passed with `npm run build` after reusable website asset registry refactor.
+- Latest lint passed with `npm run lint` after reusable website asset registry refactor.
 - No-key AI status, connection test, chat failure, and empty-message validation passed against the running local backend.

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { searchLeads as fetchGoogleMapsLeads, mapPlace } from './services/leads'
 import { saveLeadsToGoogleSheets } from './services/googleSheets'
 import { calculateLeadScore, getLeadScoreClass } from './utils/leadScore'
@@ -12,7 +12,7 @@ import BusinessOS from './components/BusinessOS/BusinessOS'
 import { getDashboardFilterLabelKey, isDemoLead, matchesDashboardFilter } from './components/BusinessOS/dashboardFilters'
 import { parseLeadsCsv } from './utils/csvImport'
 import ManualLeadForm from './components/ManualLead/ManualLeadForm'
-import { loadManualLeads } from './components/ManualLead/manualLeadStorage'
+import { loadPersistedLeads, mergePersistedLeads, persistLeadCollection, addPersistedLead, updatePersistedLead, subscribeToLeadPersistenceChanges } from './services/leadPersistence'
 import { hasLeadAction, LEAD_ACTIONS, recordLeadAction, subscribeToLeadActionChanges } from './components/LeadCRM/leadActionStorage'
 import ShareableDemo from './components/WebsiteBuilder/ShareableDemo'
 import { createShareableDemoUrl, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
@@ -116,8 +116,8 @@ const DEMO_PLACES = [
   },
 ]
 
-function enrichLead(place, index) {
-  const lead = mapPlace(place, index)
+function enrichLead(place, index, searchContext = {}) {
+  const lead = place.businessName ? place : mapPlace(place, index, searchContext)
   return {
     ...lead,
     leadScore: calculateLeadScore(lead),
@@ -171,11 +171,14 @@ function App() {
   const { t, language } = useLanguage()
   const [businessType, setBusinessType] = useState('')
   const [city, setCity] = useState('')
+  const [country, setCountry] = useState('Israel')
   const [searchMode, setSearchMode] = useState('paid')
   const [csvText, setCsvText] = useState('')
   const [sourceNotice, setSourceNotice] = useState('')
   const [showManualLeadForm, setShowManualLeadForm] = useState(false)
-  const [leads, setLeads] = useState(loadManualLeads)
+  const [persistedLeads, setPersistedLeads] = useState(() => loadPersistedLeads())
+  const [tableLeads, setTableLeads] = useState(() => loadPersistedLeads())
+  const isDemoTableSessionRef = useRef(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
@@ -195,7 +198,50 @@ const [selectedSalesLead, setSelectedSalesLead] = useState(null)
 const [selectedRealWebsiteLead, setSelectedRealWebsiteLead] = useState(null)
 const [demoLinkNotice, setDemoLinkNotice] = useState('')
 
-  useEffect(() => subscribeToLeadActionChanges(() => setLeads((currentLeads) => [...currentLeads])), [])
+  function applyPersistedLeads(nextLeads) {
+    isDemoTableSessionRef.current = false
+    setPersistedLeads(nextLeads)
+    setTableLeads(nextLeads)
+  }
+
+  function handleAddLead(lead, notes = '', options = {}) {
+    const result = addPersistedLead(persistedLeads, lead, { notes, images: options.images || [] })
+    if (!result.ok) return false
+    applyPersistedLeads(result.leads)
+    return true
+  }
+
+  function handleUpdateLead(leadId, leadUpdates, crmUpdates) {
+    const result = updatePersistedLead(leadId, leadUpdates, { crm: crmUpdates })
+    if (!result.ok) return result
+    applyPersistedLeads(result.leads)
+    return result
+  }
+
+  const refreshLeadsFromStorage = useCallback(() => {
+    const nextLeads = loadPersistedLeads()
+    setPersistedLeads(nextLeads)
+    if (!isDemoTableSessionRef.current) setTableLeads(nextLeads)
+  }, [])
+
+  useEffect(() => {
+    refreshLeadsFromStorage()
+  }, [refreshLeadsFromStorage])
+
+  useEffect(() => subscribeToLeadPersistenceChanges(refreshLeadsFromStorage), [refreshLeadsFromStorage])
+
+  useEffect(() => {
+    function syncLeadsFromStorage() {
+      refreshLeadsFromStorage()
+    }
+
+    window.addEventListener('focus', syncLeadsFromStorage)
+    return () => {
+      window.removeEventListener('focus', syncLeadsFromStorage)
+    }
+  }, [refreshLeadsFromStorage])
+
+  useEffect(() => subscribeToLeadActionChanges(refreshLeadsFromStorage), [refreshLeadsFromStorage])
 
   function trackRealLeadAction(lead, actionType) {
     if (!isDemoLead(lead)) recordLeadAction(lead, actionType)
@@ -221,22 +267,53 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     }
   }
 
+  function handleCrmAction(action, lead) {
+    if (action === 'call') {
+      if (!lead.phone) return
+      trackRealLeadAction(lead, LEAD_ACTIONS.CALL_OPENED)
+      window.open(`tel:${String(lead.phone).replace(/[^+\d]/g, '')}`, '_self')
+    } else if (action === 'whatsapp') {
+      const whatsappUrl = createWhatsAppUrl(lead)
+      if (!whatsappUrl) return
+      trackRealLeadAction(lead, LEAD_ACTIONS.WHATSAPP_OPENED)
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+    } else if (action === 'demo') {
+      trackRealLeadAction(lead, LEAD_ACTIONS.DEMO_SITE_OPENED)
+      openDemoPreview(lead)
+    } else if (action === 'proposal') {
+      trackRealLeadAction(lead, LEAD_ACTIONS.PROPOSAL_OPENED)
+      setSelectedBusiness(lead)
+      setShowProposal(true)
+    } else if (action === 'real-website') {
+      setSelectedRealWebsiteLead({ ...lead })
+    } else if (action === 'payment') {
+      const paymentUrl = String(lead.paymentUrl || '')
+      if (/^https?:\/\//i.test(paymentUrl)) window.open(paymentUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   function loadDemoLeads() {
     setError('')
     setLoading(false)
     setHasSearched(true)
     setSearchText('')
-    setLeads(DEMO_PLACES.map(enrichLead))
+    setDashboardFilter(null)
+    isDemoTableSessionRef.current = true
+    setSourceNotice('Loaded demo leads for testing only. Demo leads are not saved and are not mixed with real search results.')
+    setTableLeads(DEMO_PLACES.map((place, index) => ({
+      ...enrichLead(mapPlace(place, index), index),
+      isDemo: true,
+    })))
   }
 
   function openFreeGoogleMapsSearch() {
     setError('')
     setSourceNotice('')
-    if (!businessType.trim() || !city.trim()) {
-      setError('Please enter both Business Type and City.')
+    if (!businessType.trim() || !city.trim() || !country.trim()) {
+      setError('Please enter Business Type, City, and Country.')
       return
     }
-    const query = `${businessType.trim()} ${city.trim()}`.trim()
+    const query = `${businessType.trim()} ${city.trim()} ${country.trim()}`.trim()
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank', 'noopener,noreferrer')
     setSourceNotice(`Opened Google Maps for: ${query}. Collect real business details, then paste or import them below.`)
   }
@@ -246,7 +323,9 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     setSourceNotice('')
     try {
       const importedLeads = parseLeadsCsv(csv).map((lead) => ({ ...lead, leadScore: calculateLeadScore(lead) }))
-      setLeads(importedLeads)
+      const mergedLeads = mergePersistedLeads(loadPersistedLeads(), importedLeads)
+      const savedLeads = persistLeadCollection(mergedLeads)
+      applyPersistedLeads(savedLeads)
       setHasSearched(true)
       setSearchText('')
       setDashboardFilter(null)
@@ -267,22 +346,26 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     setError('')
     setSourceNotice('')
     setHasSearched(false)
-    setLeads([])
     setSearchText('')
 
-    if (!businessType.trim() || !city.trim()) {
-      setError('Please enter both Business Type and City.')
+    if (!businessType.trim() || !city.trim() || !country.trim()) {
+      setError('Please enter Business Type, City, and Country.')
       return
     }
 
     setLoading(true)
 
     try {
-      const results = await fetchGoogleMapsLeads(businessType, city)
-      setLeads(results.map(enrichLead))
+      const results = await fetchGoogleMapsLeads(businessType, city, country)
+      const mergedLeads = mergePersistedLeads(loadPersistedLeads(), results)
+      const savedLeads = persistLeadCollection(mergedLeads)
+      applyPersistedLeads(savedLeads)
       setHasSearched(true)
-    } catch {
-      setError('Paid lead search is unavailable because billing is not enabled.')
+      setDashboardFilter(null)
+      const addedCount = results.length
+      setSourceNotice(`Found ${addedCount} real lead${addedCount === 1 ? '' : 's'} for "${businessType.trim()}" in ${city.trim()}, ${country.trim()}. ${savedLeads.length} total saved lead${savedLeads.length === 1 ? '' : 's'}.`)
+    } catch (searchError) {
+      setError(searchError?.message || 'Google Maps search failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -294,7 +377,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     setSheetsLoading(true)
 
     try {
-      await saveLeadsToGoogleSheets(leads)
+      await saveLeadsToGoogleSheets(persistedLeads)
       setSheetsNotice('Sent to Google Sheets. Check your sheet.')
       setSheetsNoticeType('success')
     } catch (err) {
@@ -310,7 +393,8 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
   function handleExportCsv() {
     const safeBusinessType = businessType.trim().replaceAll(' ', '-') || 'leads'
     const safeCity = city.trim().replaceAll(' ', '-') || 'city'
-    downloadCsv(`bs-hunter-${safeBusinessType}-${safeCity}.csv`, filteredLeads)
+    const exportLeads = filteredLeads.filter((lead) => !isDemoLead(lead))
+    downloadCsv(`bs-hunter-${safeBusinessType}-${safeCity}.csv`, exportLeads)
   }
 
   async function handleCopy(text, label) {
@@ -329,27 +413,28 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
   }
 
   const stats = useMemo(() => {
-    const withoutWebsite = leads.filter((lead) => !hasValue(lead.website)).length
-    const withPhone = leads.filter((lead) => hasValue(lead.phone)).length
-    const lowRating = leads.filter(
+    const realLeads = persistedLeads.filter((lead) => !isDemoLead(lead))
+    const withoutWebsite = realLeads.filter((lead) => !hasValue(lead.website)).length
+    const withPhone = realLeads.filter((lead) => hasValue(lead.phone)).length
+    const lowRating = realLeads.filter(
       (lead) => typeof lead.rating === 'number' && lead.rating < 4,
     ).length
-    const highScore = leads.filter((lead) => Number(lead.leadScore) >= 70).length
+    const highScore = realLeads.filter((lead) => Number(lead.leadScore) >= 70).length
 
     return {
-      total: leads.length,
+      total: realLeads.length,
       withoutWebsite,
       withPhone,
       lowRating,
       highScore,
     }
-  }, [leads])
+  }, [persistedLeads])
 
   const filteredLeads = useMemo(() => {
     const minRatingNumber = Number(minRating)
     const text = searchText.trim().toLowerCase()
 
-    return leads
+    return tableLeads
       .filter((lead) => {
         if (websiteFilter === 'withWebsite' && !hasValue(lead.website)) {
           return false
@@ -398,14 +483,14 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
 
         return (b.leadScore || 0) - (a.leadScore || 0)
       })
-  }, [dashboardFilter, leads, minRating, searchText, sortBy, websiteFilter])
+  }, [dashboardFilter, tableLeads, minRating, searchText, sortBy, websiteFilter])
 
   const shareableDemoRoute = parseShareableDemoRoute()
   if (shareableDemoRoute) return <ShareableDemo route={shareableDemoRoute} />
   const selectedDemoUrl = selectedDemoLead?.shareDemo ? createShareableDemoUrl(selectedDemoLead.shareDemo) : ''
 
   return (
-    <BusinessOS leads={leads} realWebsiteLead={selectedRealWebsiteLead} onDashboardFilterChange={setDashboardFilter} onMissionAction={handleMissionAction}>
+    <BusinessOS leads={persistedLeads} realWebsiteLead={selectedRealWebsiteLead} onDashboardFilterChange={setDashboardFilter} onMissionAction={handleMissionAction} onCrmAction={handleCrmAction} onRefreshLeads={refreshLeadsFromStorage} onAddLead={handleAddLead} onUpdateLead={handleUpdateLead}>
       <main className="page">
       <h1>BS Hunter</h1>
       <p className="subtitle">AI Lead Generation</p>
@@ -440,6 +525,17 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
             name="city"
             value={city}
             onChange={(event) => setCity(event.target.value)}
+            disabled={loading}
+          />
+        </label>
+
+        <label className="field">
+          <span>Country</span>
+          <input
+            type="text"
+            name="country"
+            value={country}
+            onChange={(event) => setCountry(event.target.value)}
             disabled={loading}
           />
         </label>
@@ -504,7 +600,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
         {error && <p className="apify-notice apify-error">{error}</p>}
       </form>
 
-      {hasSearched && !loading && leads.length === 0 && !error && (
+      {hasSearched && !loading && tableLeads.length === 0 && !error && (
         <section className="results">
           <div className="empty-state">
             <h2>No businesses found</h2>
@@ -513,7 +609,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
         </section>
       )}
 
-      {leads.length > 0 && (
+      {tableLeads.length > 0 && (
         <section className="results">
           {dashboardFilter && (
             <div className="dashboard-filter-notice">
@@ -525,7 +621,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
             <div className="results-title">
               <h2>Lead Results</h2>
               <span className="results-count">
-                Showing {filteredLeads.length} of {leads.length} businesses
+                Showing {filteredLeads.length} of {tableLeads.length} businesses
               </span>
             </div>
 
@@ -649,9 +745,10 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
                   const whatsappUrl = createWhatsAppUrl(lead)
 
                   return (
-                    <tr key={lead.id}>
+                    <tr key={lead.id} className={isDemoLead(lead) ? 'is-demo-lead' : undefined}>
                       <td className="cell-business" data-label="Business Name">
                         {displayValue(lead.businessName)}
+                        {isDemoLead(lead) && <span className="demo-lead-badge">Demo</span>}
                       </td>
                       <td className="cell-website" data-label="Website">
                         {websiteUrl ? (
@@ -813,10 +910,13 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
 
       {showManualLeadForm && (
         <ManualLeadForm
-          existingLeads={leads}
+          existingLeads={persistedLeads}
+          useLegacyManualStore={false}
           onClose={() => setShowManualLeadForm(false)}
-          onSave={(lead) => {
-            setLeads((currentLeads) => [...currentLeads, lead])
+          onSave={(lead, notes) => {
+            const result = addPersistedLead(persistedLeads, lead, { notes })
+            if (!result.ok) return
+            applyPersistedLeads(result.leads)
             setHasSearched(true)
             setDashboardFilter(null)
             setSourceNotice(t('manualLeadSaved'))

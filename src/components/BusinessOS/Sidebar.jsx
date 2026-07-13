@@ -4,23 +4,36 @@ import { useLanguage } from '../../context/LanguageContext'
 const MENU_ITEMS = [
   ['dashboard', 'dashboard', '⌂'],
   ['businesses', 'businesses', '◎'],
-  ['ideas-vault', 'ideasVault', '◇'],
-  ['projects', 'projects', '▦'],
-  ['websites-assets', 'websitesAssets', '◇'],
-  ['crm', 'crm', '◫'],
-  ['sales', 'sales', '↗'],
+  ['sales', 'sales', '◫'],
+  ['finance', 'finance', '₪'],
   ['tasks', 'tasks', '✓'],
   ['ai-center', 'aiCenter', '✦'],
-  ['development', 'developmentNav', '⌘'],
   ['documents', 'documentsNav', '▤'],
   ['users', 'usersPermissions', '♙'],
   ['integrations', 'integrationsNav', '⌁'],
   ['settings', 'settings', '⚙'],
 ]
 
+const BUSINESS_SCREENS = new Set([
+  'bs-hunter',
+  'bs-finder-workspace',
+  'bs-finder-projects',
+  'real-website-builder',
+  'bs-funds',
+  'websites-assets',
+  'projects',
+  'ideas-vault',
+])
+
+function sidebarCategory(activeScreen) {
+  if (activeScreen === 'crm' || activeScreen === 'sales') return 'sales'
+  if (BUSINESS_SCREENS.has(activeScreen)) return 'businesses'
+  return activeScreen
+}
+
 export default function Sidebar({ activeScreen, onSelect }) {
   const { t } = useLanguage()
-  const activeCategory = ['bs-hunter', 'bs-finder-workspace', 'real-website-builder'].includes(activeScreen) ? 'businesses' : activeScreen === 'bs-funds' ? 'websites-assets' : activeScreen
+  const activeCategory = sidebarCategory(activeScreen)
 
   return (
     <aside className="business-os__sidebar">
@@ -32,7 +45,7 @@ export default function Sidebar({ activeScreen, onSelect }) {
           </button>
         ))}
       </nav>
-      <p className="business-os__sidebar-footer">Business OS · BS Finder</p>
+      <p className="business-os__sidebar-footer">Business OS</p>
     </aside>
   )
 }

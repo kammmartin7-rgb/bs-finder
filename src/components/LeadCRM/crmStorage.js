@@ -1,6 +1,22 @@
-// Provides stable lead identifiers and localStorage persistence for lead-level CRM data.
+// CRM metadata keyed exclusively by LeadID (lead.id).
+import { getLeadId } from '../../services/leadId'
+
 const STORAGE_PREFIX = 'bs-hunter-crm:'
 const CRM_CHANGE_EVENT = 'bs-hunter-crm-change'
+
+export const CRM_STAGES = ['new', 'first-contact', 'demo-sent', 'proposal-sent', 'follow-up', 'deal-won', 'paid', 'website-in-progress', 'completed', 'lost']
+
+const LEGACY_STAGE_MAP = {
+  contacted: 'first-contact',
+  'whatsapp-sent': 'first-contact',
+  negotiation: 'follow-up',
+  won: 'deal-won',
+}
+
+export function normalizeCrmStage(status) {
+  if (CRM_STAGES.includes(status)) return status
+  return LEGACY_STAGE_MAP[status] || 'new'
+}
 
 export const DEFAULT_CRM_RECORD = {
   status: 'new',
@@ -12,34 +28,57 @@ export const DEFAULT_CRM_RECORD = {
   updatedAt: '',
 }
 
+/** @deprecated Use getLeadId */
 export function getLeadCrmKey(lead = {}) {
-  if (lead.placeId) return String(lead.placeId)
-  if (lead.id) return String(lead.id)
-
-  const fallbackParts = [lead.businessName, lead.name, lead.address, lead.phone, lead.website, lead.mapsUrl]
-    .filter(Boolean)
-    .map((value) => String(value).trim().toLowerCase())
-
-  return fallbackParts.length > 0 ? fallbackParts.join('|') : 'unknown-lead'
+  return getLeadId(lead)
 }
 
-export function loadLeadCrm(leadKey) {
+export function loadLeadCrm(leadOrLeadId) {
+  const leadId = typeof leadOrLeadId === 'string' ? leadOrLeadId : getLeadId(leadOrLeadId)
+  if (!leadId) return { ...DEFAULT_CRM_RECORD }
+
   try {
-    const savedRecord = JSON.parse(window.localStorage.getItem(`${STORAGE_PREFIX}${leadKey}`))
+    const savedRecord = JSON.parse(window.localStorage.getItem(`${STORAGE_PREFIX}${leadId}`))
     return { ...DEFAULT_CRM_RECORD, ...(savedRecord || {}) }
   } catch {
     return { ...DEFAULT_CRM_RECORD }
   }
 }
 
-export function saveLeadCrm(leadKey, record) {
+export function saveLeadCrm(leadOrLeadId, record) {
+  const leadId = typeof leadOrLeadId === 'string' ? leadOrLeadId : getLeadId(leadOrLeadId)
+  if (!leadId) return false
+
   try {
     const nextRecord = { ...DEFAULT_CRM_RECORD, ...record, updatedAt: new Date().toISOString() }
-    window.localStorage.setItem(`${STORAGE_PREFIX}${leadKey}`, JSON.stringify(nextRecord))
-    window.dispatchEvent(new CustomEvent(CRM_CHANGE_EVENT, { detail: { leadKey, record: nextRecord } }))
+    window.localStorage.setItem(`${STORAGE_PREFIX}${leadId}`, JSON.stringify(nextRecord))
+    window.dispatchEvent(new CustomEvent(CRM_CHANGE_EVENT, { detail: { leadId, record: nextRecord } }))
     return true
   } catch {
     return false
+  }
+}
+
+export function ensureLeadCrmRecord(lead) {
+  const leadId = getLeadId(lead)
+  if (!leadId) return { ...DEFAULT_CRM_RECORD }
+
+  if (window.localStorage.getItem(`${STORAGE_PREFIX}${leadId}`)) {
+    return loadLeadCrm(leadId)
+  }
+
+  const createdAt = lead.createdAt || new Date().toISOString()
+  saveLeadCrm(leadId, {
+    ...DEFAULT_CRM_RECORD,
+    status: 'new',
+    stageChangedAt: createdAt,
+  })
+  return loadLeadCrm(leadId)
+}
+
+export function ensureCrmRecordsForLeads(leads = []) {
+  for (const lead of leads) {
+    ensureLeadCrmRecord(lead)
   }
 }
 

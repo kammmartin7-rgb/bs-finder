@@ -2,6 +2,9 @@
 import { useMemo, useState } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 import { applyProposalTemplate, createProposalDraft, getProposalTemplate, PROPOSAL_TEMPLATES, proposalFeatures } from './proposalTemplates'
+import { getProposalStorageKey, loadProposalApproval, notifyProposalChange } from './proposalStorage'
+import { getLeadId } from '../services/leadId'
+import { loadLeadCrm, saveLeadCrm } from './LeadCRM/crmStorage'
 import './ProposalGenerator.css'
 
 const FEATURE_HE = {
@@ -20,24 +23,16 @@ const EDIT_COPY = {
   he: { contactName: 'שם איש קשר', proposalDate: 'תאריך ההצעה', choose: 'בחירת תבנית להצעה', launch: 'אתר בסיסי', growth: 'אתר לעסק', pro: 'אתר פרימיום', editProposal: 'עריכת ההצעה', previewProposal: 'תצוגת ההצעה', saveDraft: 'שמירת טיוטת הצעה', draftSaved: 'טיוטת ההצעה נשמרה.', editableDetails: 'פרטי הצעה לעריכה', price: 'מחיר', delivery: 'זמן מסירה', features: 'פריטים כלולים — אחד בכל שורה', select: 'שימוש בתבנית' },
 }
 
-function proposalKey(business) {
-  return `bs-finder-proposal:${business?.placeId || business?.id || `${business?.businessName || business?.name || 'customer'}-${business?.phone || ''}`}`
-}
-
 function loadDraft(key, business, templateId) {
   try { const stored = JSON.parse(localStorage.getItem(`${key}:draft`)); return stored?.businessName ? { ...createProposalDraft(business, templateId), ...stored } : createProposalDraft(business, templateId) } catch { return createProposalDraft(business, templateId) }
-}
-
-function loadApproval(key) {
-  try { return JSON.parse(localStorage.getItem(key)) || null } catch { return null }
 }
 
 export default function ProposalGenerator({ business, onClose }) {
   const { language } = useLanguage()
   const copy = { ...(COPY[language] || COPY.en), ...(EDIT_COPY[language] || EDIT_COPY.en) }
   const direction = language === 'he' ? 'rtl' : 'ltr'
-  const key = useMemo(() => proposalKey(business), [business])
-  const storedApproval = useMemo(() => loadApproval(key), [key])
+  const key = useMemo(() => getProposalStorageKey(business), [business])
+  const storedApproval = useMemo(() => loadProposalApproval(business), [business])
   const initialTemplateId = storedApproval?.packageId || 'growth'
   const [draft, setDraft] = useState(() => loadDraft(key, business, initialTemplateId))
   const [editing, setEditing] = useState(false)
@@ -52,11 +47,28 @@ export default function ProposalGenerator({ business, onClose }) {
 
   function selectTemplate(templateId) { if (approval) return; setDraft((current) => applyProposalTemplate(current, templateId)); setEditing(true); setDraftNotice('') }
   function updateDraft(field, value) { setDraft((current) => ({ ...current, [field]: value })); setDraftNotice('') }
-  function saveDraft() { localStorage.setItem(`${key}:draft`, JSON.stringify(draft)); setDraftNotice(copy.draftSaved); setEditing(false) }
+  function saveDraft() {
+    localStorage.setItem(`${key}:draft`, JSON.stringify(draft))
+    const leadId = getLeadId(business)
+    const crm = loadLeadCrm(leadId)
+    saveLeadCrm(leadId, { ...crm, proposalAmount: selectedPackage.price, stageChangedAt: crm.stageChangedAt || new Date().toISOString() })
+    notifyProposalChange(business)
+    setDraftNotice(copy.draftSaved)
+    setEditing(false)
+  }
 
   function acceptProposal() {
     const record = { status: 'accepted', packageId: selectedPackage.id, price: selectedPackage.price, acceptedAt: new Date().toISOString(), businessName: name }
     localStorage.setItem(key, JSON.stringify(record))
+    const leadId = getLeadId(business)
+    const crm = loadLeadCrm(leadId)
+    saveLeadCrm(leadId, {
+      ...crm,
+      status: 'deal-won',
+      proposalAmount: selectedPackage.price,
+      stageChangedAt: new Date().toISOString(),
+    })
+    notifyProposalChange(business)
     setApproval(record)
   }
 

@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
 import { compressImage, imageSource } from './imageProcessing'
-import { addImagesToBusinessMediaLibrary } from './realWebsiteStorage'
+import { addImagesToLeadMediaLibrary } from './realWebsiteStorage'
 import MediaLibrary from './MediaLibrary'
 import './ImageManager.css'
 
@@ -35,7 +35,7 @@ const SLOTS = [
   { key: 'contact', multiple: false },
 ]
 
-function ImageSlot({ slot, images, copy, onChange, onOpenLibrary, isTarget, businessName, onLibrarySync }) {
+function ImageSlot({ slot, images, copy, onChange, onOpenLibrary, isTarget, leadId, onLibrarySync }) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -44,7 +44,7 @@ function ImageSlot({ slot, images, copy, onChange, onOpenLibrary, isTarget, busi
   const items = slot.multiple ? (Array.isArray(value) ? value : []) : (value ? [value] : [])
 
   async function addFiles(fileList, replaceIndex = null) {
-    if (!String(businessName || '').trim()) {
+    if (!String(leadId || '').trim()) {
       setError(copy.needBusiness)
       return
     }
@@ -66,7 +66,7 @@ function ImageSlot({ slot, images, copy, onChange, onOpenLibrary, isTarget, busi
         onChange(slot.key, processed[0])
       }
       try {
-        addImagesToBusinessMediaLibrary(businessName, processed, SLOT_CATEGORIES[slot.key] || 'general')
+        addImagesToLeadMediaLibrary(leadId, processed, SLOT_CATEGORIES[slot.key] || 'general')
         onLibrarySync?.()
       } catch (libraryError) {
         setError(libraryError.message)
@@ -142,6 +142,7 @@ function ImageSlot({ slot, images, copy, onChange, onOpenLibrary, isTarget, busi
 export default function ImageManager({
   images = {},
   onChange,
+  leadId = '',
   businessName = '',
   legacyProjectId = null,
   libraryRefreshKey = 0,
@@ -178,6 +179,7 @@ export default function ImageManager({
         targetSlot={targetSlot}
         onSelect={selectFromLibrary}
         copy={copy}
+        leadId={leadId}
         businessName={businessName}
         legacyProjectId={legacyProjectId}
         refreshKey={refreshKey}
@@ -192,7 +194,7 @@ export default function ImageManager({
             onChange={onChange}
             onOpenLibrary={setTargetSlot}
             isTarget={targetSlot?.key === slot.key}
-            businessName={businessName}
+            leadId={leadId}
             onLibrarySync={() => setLocalLibraryRefreshKey((value) => value + 1)}
           />
         ))}
