@@ -1,20 +1,24 @@
-export function mapPlace(place, index) {
+export function mapPlace(place, index, searchContext = {}) {
   const website = place.website?.trim()
+  const businessName = place.title?.trim() || place.name?.trim() || place.businessName?.trim() || ''
 
   return {
-    id: place.placeId || place.url || `${place.title}-${index}`,
-    businessName: place.title?.trim() || '',
+    id: place.placeId || place.place_id || place.url || `${businessName}-${index}`,
+    businessName,
     website: website || '',
-    phone: place.phone?.trim() || '',
-    address: place.address?.trim() || '',
-    rating: typeof place.totalScore === 'number' ? place.totalScore : null,
-    reviewsCount:
-      typeof place.reviewsCount === 'number' ? place.reviewsCount : null,
-    mapsUrl: place.url?.trim() || '',
+    phone: place.phone?.trim() || place.phoneUnformatted?.trim() || place.phoneNumber?.trim() || '',
+    address: place.address?.trim() || place.street?.trim() || '',
+    rating: typeof place.totalScore === 'number' ? place.totalScore : (typeof place.rating === 'number' ? place.rating : null),
+    reviewsCount: typeof place.reviewsCount === 'number' ? place.reviewsCount : (typeof place.reviews === 'number' ? place.reviews : null),
+    mapsUrl: place.url?.trim() || place.mapsUrl?.trim() || '',
+    category: place.categoryName?.trim() || place.categories?.[0]?.trim() || place.category?.trim() || '',
+    city: place.city?.trim() || searchContext.city?.trim() || '',
+    country: place.countryCode?.trim() || place.country?.trim() || searchContext.country?.trim() || '',
+    source: 'Apify Google Maps',
   }
 }
 
-export async function searchLeads(businessType, city) {
+export async function searchLeads(businessType, city, country) {
   const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim()
   const apiBaseUrl = configuredApiUrl || (import.meta.env.DEV ? '' : null)
 
@@ -30,6 +34,7 @@ export async function searchLeads(businessType, city) {
     body: JSON.stringify({
       businessType,
       city,
+      country,
     }),
   })
 
@@ -45,5 +50,6 @@ export async function searchLeads(businessType, city) {
   }
 
   const data = await response.json()
-  return Array.isArray(data.leads) ? data.leads : []
+  const searchContext = { city, country }
+  return Array.isArray(data.leads) ? data.leads.map((place, index) => mapPlace(place, index, searchContext)) : []
 }

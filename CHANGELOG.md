@@ -40,6 +40,15 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Proposal Templates V1 with Basic, Business, and Premium website offers, customer/contact/date autofill, editable prices and scope details, and per-business local draft saving.
 - Working Business OS Settings screen for language, light/dark theme, default opening screen, compact mode, reset confirmation, and immediate persisted preferences.
 - CRM V2 sales shell connected to existing real leads, CRM records, and action history, with ten-stage pipeline cards and deterministic urgent-action ordering.
+- CRM V2 Next Action and secondary controls using existing call, WhatsApp, demo, proposal, payment-link, and real-website handlers.
+- Persisted editable CRM daily goals with actual counts sourced only from existing leads and recorded activity.
+- CRM follow-up center, proposal/revenue summary, search, stage filters, sorting, translated labels, responsive states, and shared proposal storage utilities.
+- Real Website Builder Image Manager with eight customer image slots, browser-side WebP compression, drag-and-drop upload, replace/delete, and per-business Media Library (80 images / 3.5 MB cap).
+- Image slot targeting from library to customer project with visual slot selection and four-language labels.
+- Generated real websites now consume uploaded images for logo, hero, about/gallery/team gallery, service cards, testimonial avatars, and contact section imagery.
+- Per-business media isolation with unicode-safe storage keys, legacy key migration, business-name rename migration, and slot-upload sync into the shared Media Library.
+- Business OS InternalBackButton with screen history, sticky topbar placement, and RTL-aware chevron.
+- Global responsive containment to prevent page-level horizontal scrolling across shell, CRM pipeline, lead table, command center, and website builder layouts.
 
 ### Changed
 
@@ -49,6 +58,7 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Paid API production flow now fails safely when billing/backend configuration is absent.
 - Paid API failures no longer replace results with demo leads.
 - AI Center now loads backend configuration status and sends the selected language separately from its constrained project context.
+- Proposal Generator now uses a shared storage accessor and emits local proposal-change events so CRM values refresh without duplicating proposal state.
 - BS Hunter can open Real Website Builder with a copied lead payload while preserving the original lead and existing demo-site workflow.
 - Business OS now opens on the owner Command Center while preserving direct BS Hunter, BS Funds, Projects, Tasks, AI Center, and Real Website Builder navigation.
 - Replaced the mixed sidebar of businesses, assets, and individual builders with 13 system categories. BS Finder moved under Businesses; BS Funds, demo sites, and customer sites moved under Websites & Assets; lead-specific builders remain accessible from the BS Finder workspace. The BS Finder card uses existing live counts, BS Funds is absent from Dashboard project cards, and display-only Open BS Hunter text now reads Open BS Finder.
@@ -56,6 +66,6 @@ Exact completion dates for earlier work are not available. Verified existing wor
 ### Verified
 
 - Existing Shareable Demo Links: stable IDs, direct no-shell demo routes, new-tab portable loading, refresh persistence, missing-demo state, Vite module serving, build, and lint.
-- Latest application build passed with `npm run build` after this documentation task.
-- Latest lint passed with `npm run lint` after this documentation task.
+- Latest application build passed with `npm run build` after Image Manager integration and responsive layout work.
+- Latest lint passed with `npm run lint` after Image Manager integration and responsive layout work.
 - No-key AI status, connection test, chat failure, and empty-message validation passed against the running local backend.

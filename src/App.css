@@ -11,8 +11,11 @@ body {
 
 .page {
   max-width: 1400px;
+  width: min(1400px, 100%);
   margin: 0 auto;
   padding: 40px 24px;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 h1 {
@@ -178,7 +181,8 @@ select {
 }
 
 .table-wrapper {
-  overflow-x: visible;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .leads-table {
@@ -312,6 +316,7 @@ select {
   }
 
   .table-wrapper {
-    overflow-x: auto;
+    overflow-x: hidden;
+    max-width: 100%;
   }
 }

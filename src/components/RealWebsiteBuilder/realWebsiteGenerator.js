@@ -1,4 +1,5 @@
 // Generates business-type-aware, SEO-ready website content without AI or external data.
+import { firstImageUrl, imageDataUrls } from './imageProcessing'
 import { getRealWebsiteTemplate } from './realWebsiteTemplates'
 
 const common = {
@@ -40,9 +41,22 @@ export function generateRealWebsite(customer) {
   const headline = language === 'he' ? `${name}: ${angle}${location ? ` ב${location.trim()}` : ''}` : language === 'ar' ? `${name}: ${angle}${location ? ` في${location}` : ''}` : `${name}: ${angle}${location ? ` in${location}` : ''}`
   const description = customer.shortDescription?.trim() || text.fallback
   const template = getRealWebsiteTemplate(customer.preferredTemplate)
+  const images = customer.images || {}
+  const serviceImages = imageDataUrls(images, 'services')
+  const teamImages = imageDataUrls(images, 'team')
+  const testimonialImages = imageDataUrls(images, 'testimonials')
+  const gallery = [
+    firstImageUrl(images, 'about'),
+    ...imageDataUrls(images, 'gallery'),
+    ...teamImages,
+    ...String(customer.galleryImageUrls || '').split(/[\n,]/).map((url) => url.trim()),
+  ].filter(Boolean).slice(0, 12)
+  const heroImage = firstImageUrl(images, 'hero', customer.heroImageUrl || '')
+  const logoImage = firstImageUrl(images, 'logo', customer.logoUrl || '')
+  const contactImage = firstImageUrl(images, 'contact')
   return { schemaVersion: 2, direction: ['he', 'ar'].includes(language) ? 'rtl' : 'ltr', template,
-    seo: { title: `${name} | ${customer.businessType || text.local}`, metaDescription: description.slice(0, 155), openGraph: { title: headline, description, image: customer.heroImageUrl || '' }, localBusinessSchema: { '@context': 'https://schema.org', '@type': 'LocalBusiness', name, telephone: customer.phone || '', email: customer.email || '', address: customer.address || '', url: customer.currentWebsite || '' } },
-    sections: { header: { name, initials: initials(name), nav: text.nav }, hero: { eyebrow: customer.businessType || text.local, headline, description, primary: text.primary, secondary: text.secondary, image: customer.heroImageUrl || '', trust: [text.response, text.local, text.quality] }, about: { title: text.about, text: description }, services: { title: text.services, items: services.map((title, index) => ({ title, text: `${title} — ${description}`, number: String(index + 1).padStart(2, '0') })) }, why: { title: text.why, items: [text.response, text.local, text.quality] }, process: { title: text.process, items: text.stepTitles.map((title, index) => ({ title, text: index === 0 ? text.message : index === 1 ? text.fallback : text.primary })) }, highlights: { title: text.highlights, items: [{ value: '3+', label: text.quality }, { value: '100%', label: text.local }, { value: '24h', label: text.response }] }, reviews: { title: text.reviews, items: [text.fallback, description, text.fallback] }, faq: { title: text.faq, items: text.faqFallback }, finalCta: { title: text.finalTitle, text: description, button: text.primary }, contact: { title: text.contact, call: text.call, form: text.form, name: text.name, message: text.message, maps: text.map }, footer: { text: `© ${new Date().getFullYear()} ${name}`, nav: text.nav }, gallery: String(customer.galleryImageUrls || '').split(/[\n,]/).map((url) => url.trim()).filter(Boolean).slice(0, 6) },
+    seo: { title: `${name} | ${customer.businessType || text.local}`, metaDescription: description.slice(0, 155), openGraph: { title: headline, description, image: heroImage }, localBusinessSchema: { '@context': 'https://schema.org', '@type': 'LocalBusiness', name, telephone: customer.phone || '', email: customer.email || '', address: customer.address || '', url: customer.currentWebsite || '', image: logoImage || heroImage || undefined } },
+    sections: { header: { name, initials: initials(name), nav: text.nav, logo: logoImage }, hero: { eyebrow: customer.businessType || text.local, headline, description, primary: text.primary, secondary: text.secondary, image: heroImage, trust: [text.response, text.local, text.quality] }, about: { title: text.about, text: description, image: firstImageUrl(images, 'about') }, services: { title: text.services, items: services.map((title, index) => ({ title, text: `${title} — ${description}`, number: String(index + 1).padStart(2, '0'), image: serviceImages[index] || '' })) }, why: { title: text.why, items: [text.response, text.local, text.quality] }, process: { title: text.process, items: text.stepTitles.map((title, index) => ({ title, text: index === 0 ? text.message : index === 1 ? text.fallback : text.primary })) }, highlights: { title: text.highlights, items: [{ value: '3+', label: text.quality }, { value: '100%', label: text.local }, { value: '24h', label: text.response }] }, reviews: { title: text.reviews, items: [text.fallback, description, text.fallback].map((reviewText, index) => ({ text: reviewText, image: testimonialImages[index] || '' })) }, faq: { title: text.faq, items: text.faqFallback }, finalCta: { title: text.finalTitle, text: description, button: text.primary }, contact: { title: text.contact, call: text.call, form: text.form, name: text.name, message: text.message, maps: text.map, image: contactImage }, footer: { text: `© ${new Date().getFullYear()} ${name}`, nav: text.nav }, gallery, team: { images: teamImages } },
   }
 }
 

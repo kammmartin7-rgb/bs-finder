@@ -19,7 +19,7 @@
 .projects-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
 .projects-tabs button { padding: 5px 10px; border: 1px solid #d9e2e9; border-radius: 8px; background: #fff; color: #46576b; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
 .projects-tabs button.is-active { border-color: #173f57; background: #173f57; color: #fff; }
-.projects-content { min-height: 0; overflow: auto; }
+.projects-content { min-height: 0; overflow-x: hidden; overflow-y: auto; }
 .projects-overview { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .projects-active-task, .projects-revenue { padding: 11px 13px; border: 1px solid #dfe7ed; border-radius: 12px; background: #fff; }
 .projects-active-task { grid-column: 1 / -1; }

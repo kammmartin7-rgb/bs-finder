@@ -44,9 +44,9 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | LSR-005 | Add paid-search usage and cost limits | Lead Search | BS Hunter | ORANGE | Open | High | No | LSR-003 | Prevent runaway cost. |
 | CRM-001 | Maintain lead-level CRM controls | CRM | Business OS | GREEN | Completed | High | No | localStorage | Status, notes, follow-up verified. |
 | CRM-002 | Build full CRM pipeline screen | CRM | Business OS | GREEN | Completed | High | No | Data persistence | Tasks 1-4 verified: responsive shell, existing real lead/CRM/action data, pipeline cards, legacy-stage display mapping, and urgent-action ordering. |
-| CRM-003 | Add follow-up calendar view | CRM | Business OS | ORANGE | Open | High | No | CRM-002 | Overdue/today/upcoming. |
+| CRM-003 | Add follow-up calendar view | CRM | Business OS | GREEN | Completed | High | No | CRM-002 | Overdue, today, upcoming, and no-date groups with existing-record date updates verified. |
 | CRM-004 | Add lead owner assignment | CRM | Business OS | ORANGE | Open | Medium | No | Authentication | Person or agent ownership. |
-| CRM-005 | Add CRM history timeline | CRM | Business OS | ORANGE | Open | Medium | No | Action events | Combine actions, notes, statuses. |
+| CRM-005 | Add CRM history timeline | CRM | Business OS | ORANGE | In Progress | Medium | No | Action events | Latest recorded activity is visible; a complete chronological timeline remains future work. |
 | TSK-001 | Maintain Tasks CRUD | Tasks | Business OS | GREEN | Completed | Medium | No | localStorage | Add/edit/delete/complete verified. |
 | TSK-002 | Maintain 100-task roadmap migration | Tasks | Business OS | GREEN | Completed | Medium | No | Storage flag | Deduplicates six starters. |
 | TSK-003 | Add cloud task synchronization | Tasks | Business OS | ORANGE | Open | Medium | No | BOS-008 | Multi-device tasks. |
@@ -65,7 +65,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | RWB-001 | Create customer intake form | Real Website Builder | Business OS | GREEN | Completed | High | No | None | Manual and lead-prefilled customer intake verified. |
 | RWB-002 | Create real website project model | Real Website Builder | Business OS | GREEN | Completed | High | No | RWB-001 | Separate versioned localStorage project model verified. |
 | RWB-003 | Add page and section editor | Real Website Builder | Business OS | RED | Open | High | Yes | RWB-002 | Production-grade editing. |
-| RWB-004 | Add asset library | Real Website Builder | Business OS | ORANGE | Open | Medium | No | RWB-002 | Logos/photos/files. |
+| RWB-004 | Add asset library | Real Website Builder | Business OS | GREEN | Completed | Medium | No | RWB-002 | Per-business Media Library, ImageManager slot sync, unicode-safe keys, draft/project persistence, and generator wiring verified. |
 | RWB-005 | Add customer approval workflow | Real Website Builder | Business OS | RED | Open | High | Yes | RWB-003 | Versioned approvals. |
 | DEP-001 | Keep Vite static build healthy | Deployment | Business OS | GREEN | Completed | High | No | None | Current build passes. |
 | DEP-002 | Keep top-level error boundary | Deployment | Business OS | GREEN | Completed | Medium | No | None | Prevents blank render failures. |

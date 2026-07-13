@@ -1,17 +1,28 @@
 // Paid-customer website workspace: intake, premium previews, validation, and project persistence.
-import { cloneElement, useEffect, useMemo, useState } from 'react'
+import { cloneElement, useEffect, useMemo, useRef, useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
 import { generateRealWebsite, isReadyToPublish } from './realWebsiteGenerator'
 import { DEFAULT_REAL_TEMPLATE, REAL_WEBSITE_TEMPLATES } from './realWebsiteTemplates'
-import { createRealWebsiteProject, loadRealWebsiteProjects, saveRealWebsiteProject } from './realWebsiteStorage'
+import { clearActiveDraft, cloneCustomerImages, createRealWebsiteProject, loadActiveDraft, loadRealWebsiteProjects, migrateBusinessMediaLibrary, normalizeCustomer, saveActiveDraft, saveRealWebsiteProject, syncCustomerImagesToBusinessMediaLibrary } from './realWebsiteStorage'
+import ImageManager from './ImageManager'
 import '../WebsiteBuilder/websiteDesignTokens.css'
 import './RealWebsiteBuilder.css'
 
-const EMPTY_CUSTOMER = { businessName: '', businessType: '', country: '', city: '', language: 'en', phone: '', whatsapp: '', email: '', address: '', currentWebsite: '', logoUrl: '', heroImageUrl: '', galleryImageUrls: '', primaryColor: '#0f766e', secondaryColor: '#f59e0b', shortDescription: '', mainServices: '', preferredTemplate: DEFAULT_REAL_TEMPLATE }
-const FIELDS = ['businessName', 'businessType', 'country', 'city', 'phone', 'whatsapp', 'email', 'address', 'currentWebsite', 'logoUrl', 'heroImageUrl', 'galleryImageUrls', 'shortDescription', 'mainServices']
+const EMPTY_CUSTOMER = { businessName: '', businessType: '', country: '', city: '', language: 'en', phone: '', whatsapp: '', email: '', address: '', currentWebsite: '', logoUrl: '', heroImageUrl: '', galleryImageUrls: '', images: {}, primaryColor: '#0f766e', secondaryColor: '#f59e0b', shortDescription: '', mainServices: '', preferredTemplate: DEFAULT_REAL_TEMPLATE }
+const FIELDS = ['businessName', 'businessType', 'country', 'city', 'phone', 'whatsapp', 'email', 'address', 'currentWebsite', 'shortDescription', 'mainServices']
 const STATUSES = ['draft', 'in-progress', 'client-review', 'ready-to-publish', 'published']
 
-function customerFromLead(lead, language) { return { ...EMPTY_CUSTOMER, businessName: lead.businessName || lead.title || '', city: lead.city || '', language, phone: lead.phone || '', whatsapp: lead.phone || '', address: lead.address || '', currentWebsite: lead.website || '' } }
+function customerFromLead(lead, language, projects = []) {
+  const base = { ...EMPTY_CUSTOMER, businessName: lead.businessName || lead.title || '', businessType: lead.category || lead.businessType || '', country: lead.country || '', city: lead.city || '', language, phone: lead.phone || '', whatsapp: lead.phone || '', email: lead.email || '', address: lead.address || '', currentWebsite: lead.website || '' }
+  const name = base.businessName.trim().toLowerCase()
+  const existing = name ? projects.find((project) => project.customer.businessName.trim().toLowerCase() === name) : null
+  return normalizeCustomer(existing ? { ...EMPTY_CUSTOMER, ...existing.customer, ...base, images: existing.customer.images } : base)
+}
+
+function findProjectForLead(projects, lead) {
+  const name = (lead.businessName || lead.title || '').trim().toLowerCase()
+  return name ? projects.find((project) => project.customer.businessName.trim().toLowerCase() === name) : null
+}
 function SafeImage({ src, alt, className }) { const [failed, setFailed] = useState(false); if (!src || failed) return <div className={`${className || ''} image-fallback`} role="img" aria-label={alt}><span>✦</span></div>; return <img className={className} src={src} alt={alt} onError={() => setFailed(true)} /> }
 
 function SitePreview({ customer, site, viewport = 'desktop', full = false, onClose }) {
@@ -22,21 +33,21 @@ function SitePreview({ customer, site, viewport = 'desktop', full = false, onClo
   const style = { '--site-primary': customer.primaryColor, '--site-secondary': customer.secondaryColor, '--site-radius': site.template.radius, '--site-font': site.template.font, '--site-display': site.template.displayFont }
   const sectionRenderers = {
     trust: <section className="premium-site__trust" id="trust"><div>{site.sections.hero.trust.map((item) => <span key={item}>✓ {item}</span>)}</div></section>,
-    about: <section className="premium-site__about" id="about"><div><span className="section-kicker">01 / {site.sections.about.title}</span><h2>{site.sections.about.title}</h2><p>{site.sections.about.text}</p></div><div className="premium-site__gallery">{(site.sections.gallery.length ? site.sections.gallery.slice(0, 2) : ['', '']).map((image, index) => <SafeImage key={`${image}-${index}`} src={image} alt={`${customer.businessName} ${index + 1}`} />)}</div></section>,
-    services: <section className="premium-site__services" id="services"><header><span className="section-kicker">02 / {site.sections.services.title}</span><h2>{site.sections.services.title}</h2></header><div className="premium-site__cards">{site.sections.services.items.map((item) => <article key={item.number}><span>{item.number}</span><h3>{item.title}</h3><p>{item.text}</p><a href="#contact">→</a></article>)}</div></section>,
+    about: <section className="premium-site__about" id="about"><div><span className="section-kicker">01 / {site.sections.about.title}</span><h2>{site.sections.about.title}</h2><p>{site.sections.about.text}</p></div><div className="premium-site__gallery">{(site.sections.gallery.length ? site.sections.gallery.slice(0, 4) : ['']).map((image, index) => <SafeImage key={`${image}-${index}`} src={image} alt={`${customer.businessName} ${index + 1}`} />)}</div></section>,
+    services: <section className="premium-site__services" id="services"><header><span className="section-kicker">02 / {site.sections.services.title}</span><h2>{site.sections.services.title}</h2></header><div className="premium-site__cards">{site.sections.services.items.map((item) => <article key={item.number} className={item.image ? 'has-image' : ''}>{item.image && <SafeImage className="premium-site__card-image" src={item.image} alt={item.title} />}<span>{item.number}</span><h3>{item.title}</h3><p>{item.text}</p><a href="#contact">→</a></article>)}</div></section>,
     process: <section className="premium-site__process" id="process"><header><span className="section-kicker">03 / {site.sections.process.title}</span><h2>{site.sections.process.title}</h2></header><div>{site.sections.process.items.map((item, index) => <article key={item.title}><strong>{index + 1}</strong><h3>{item.title}</h3><p>{item.text}</p></article>)}</div></section>,
     highlights: <section className="premium-site__highlights"><h2>{site.sections.highlights.title}</h2><div>{site.sections.highlights.items.map((item) => <article key={item.label}><strong>{item.value}</strong><span>{item.label}</span></article>)}</div></section>,
-    reviews: <section className="premium-site__reviews" id="reviews"><header><span className="section-kicker">04 / {site.sections.reviews.title}</span><h2>{site.sections.reviews.title}</h2></header><div>{site.sections.reviews.items.map((item, index) => <blockquote key={`${item}-${index}`}><span>★★★★★</span><p>“{item}”</p><footer>— {customer.businessName || site.sections.header.name}</footer></blockquote>)}</div></section>,
+    reviews: <section className="premium-site__reviews" id="reviews"><header><span className="section-kicker">04 / {site.sections.reviews.title}</span><h2>{site.sections.reviews.title}</h2></header><div>{site.sections.reviews.items.map((item, index) => { const reviewText = typeof item === 'string' ? item : item.text; const image = typeof item === 'string' ? '' : item.image; return <blockquote key={`${reviewText}-${index}`} className={image ? 'has-image' : ''}>{image && <SafeImage className="premium-site__review-image" src={image} alt="" />}<span>★★★★★</span><p>“{reviewText}”</p><footer>— {customer.businessName || site.sections.header.name}</footer></blockquote> })}</div></section>,
     faq: <section className="premium-site__faq"><header><span className="section-kicker">05 / {site.sections.faq.title}</span><h2>{site.sections.faq.title}</h2></header><div>{site.sections.faq.items.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>,
   }
   const content = <article className={`premium-site ${site.template.className} viewport-${viewport}`} dir={site.direction} style={style}>
-    <header className="premium-site__header"><a className="premium-site__brand" href="#top">{customer.logoUrl ? <SafeImage src={customer.logoUrl} alt={`${site.sections.header.name} logo`} /> : <span>{site.sections.header.initials}</span>}<strong>{site.sections.header.name}</strong></a><nav aria-label="Main navigation">{site.sections.header.nav.map((item, index) => <a key={item} href={['#about', '#services', '#process', '#reviews', '#contact'][index]}>{item}</a>)}</nav><a className="site-button header-cta" href="#contact">{site.sections.hero.primary}</a><button type="button" className="premium-site__menu" aria-label="Toggle navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>☰</button>{menuOpen && <nav className="premium-site__mobile-nav">{site.sections.header.nav.map((item, index) => <a key={item} href={['#about', '#services', '#process', '#reviews', '#contact'][index]} onClick={() => setMenuOpen(false)}>{item}</a>)}</nav>}</header>
+    <header className="premium-site__header"><a className="premium-site__brand" href="#top">{site.sections.header.logo ? <SafeImage src={site.sections.header.logo} alt={`${site.sections.header.name} logo`} /> : <span>{site.sections.header.initials}</span>}<strong>{site.sections.header.name}</strong></a><nav aria-label="Main navigation">{site.sections.header.nav.map((item, index) => <a key={item} href={['#about', '#services', '#process', '#reviews', '#contact'][index]}>{item}</a>)}</nav><a className="site-button header-cta" href="#contact">{site.sections.hero.primary}</a><button type="button" className="premium-site__menu" aria-label="Toggle navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>☰</button>{menuOpen && <nav className="premium-site__mobile-nav">{site.sections.header.nav.map((item, index) => <a key={item} href={['#about', '#services', '#process', '#reviews', '#contact'][index]} onClick={() => setMenuOpen(false)}>{item}</a>)}</nav>}</header>
     <main id="top"><section className={`premium-site__hero hero-${site.template.heroLayout}`}><div className="premium-site__hero-copy"><span className="section-kicker">{site.sections.hero.eyebrow}</span><h1>{site.sections.hero.headline}</h1><p>{site.sections.hero.description}</p><div><a className="site-button" href="#contact">{site.sections.hero.primary}</a><a className="site-button site-button--ghost" href="#services">{site.sections.hero.secondary}</a></div><small>★★★★★ · {site.sections.hero.trust.join(' · ')}</small></div><SafeImage className="premium-site__hero-image" src={site.sections.hero.image} alt={`${site.sections.header.name} — ${site.sections.hero.eyebrow}`} /></section>
       {site.template.sectionOrder.map((id) => cloneElement(sectionRenderers[id], { key: id }))}
       <section className="premium-site__why"><div><span className="section-kicker">{site.sections.why.title}</span><h2>{site.sections.why.title}</h2></div><div>{site.sections.why.items.map((item, index) => <article key={item}><strong>0{index + 1}</strong><span>{item}</span></article>)}</div></section>
       <section className="premium-site__areas"><header><span className="section-kicker">{isHebrew ? 'אזורי שירות' : 'Service areas'}</span><h2>{customer.city ? (isHebrew ? `שירות מקומי ב${customer.city} והסביבה` : `Local service in ${customer.city} and nearby`) : (isHebrew ? 'שירות מקומי, קרוב אליכם' : 'Local service, close to you')}</h2><p>{isHebrew ? 'זמינות ברורה, מענה מהיר ושירות מקצועי באזור שלכם.' : 'Clear availability, a fast response, and professional service in your area.'}</p></header><div>{[customer.city || (isHebrew ? 'האזור המקומי' : 'Local area'), isHebrew ? 'יישובים סמוכים' : 'Nearby communities', isHebrew ? 'האזור והסביבה' : 'Surrounding areas'].map((area) => <span key={area}>✓ {area}</span>)}</div></section>
       <section className="premium-site__final"><span>✦</span><h2>{site.sections.finalCta.title}</h2><p>{site.sections.finalCta.text}</p><a className="site-button" href="#contact">{site.sections.finalCta.button}</a></section>
-      <section className="premium-site__contact" id="contact"><div><span className="section-kicker">{site.sections.contact.title}</span><h2>{site.sections.contact.title}</h2><p>{customer.email}<br />{customer.phone}<br />{customer.address}</p><div className="premium-site__contact-actions">{phone && <a className="site-button" href={`tel:${phone}`}>{site.sections.contact.call}</a>}{whatsapp && <a className="site-button whatsapp" href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer">WhatsApp</a>}{maps && <a href={maps} target="_blank" rel="noreferrer">{site.sections.contact.maps} ↗</a>}</div></div><form onSubmit={(event) => event.preventDefault()} aria-label={site.sections.contact.form}><label><span>{site.sections.contact.name}</span><input name="name" /></label><label><span>{isHebrew ? 'דוא״ל' : 'Email'}</span><input type="email" name="email" /></label><label><span>{site.sections.contact.message}</span><textarea rows="4" name="message" /></label><button className="site-button" type="submit">{site.sections.contact.form}</button></form></section>
+      <section className="premium-site__contact" id="contact"><div>{site.sections.contact.image && <SafeImage className="premium-site__contact-image" src={site.sections.contact.image} alt={site.sections.contact.title} />}<span className="section-kicker">{site.sections.contact.title}</span><h2>{site.sections.contact.title}</h2><p>{customer.email}<br />{customer.phone}<br />{customer.address}</p><div className="premium-site__contact-actions">{phone && <a className="site-button" href={`tel:${phone}`}>{site.sections.contact.call}</a>}{whatsapp && <a className="site-button whatsapp" href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer">WhatsApp</a>}{maps && <a href={maps} target="_blank" rel="noreferrer">{site.sections.contact.maps} ↗</a>}</div></div><form onSubmit={(event) => event.preventDefault()} aria-label={site.sections.contact.form}><label><span>{site.sections.contact.name}</span><input name="name" /></label><label><span>{isHebrew ? 'דוא״ל' : 'Email'}</span><input type="email" name="email" /></label><label><span>{site.sections.contact.message}</span><textarea rows="4" name="message" /></label><button className="site-button" type="submit">{site.sections.contact.form}</button></form></section>
     </main><footer className="premium-site__footer"><div className="premium-site__brand"><span>{site.sections.header.initials}</span><strong>{site.sections.header.name}</strong></div><nav>{site.sections.footer.nav.map((item) => <a key={item} href="#top">{item}</a>)}</nav><small>{site.sections.footer.text}</small></footer>
     <aside className="premium-site__sticky-cta" aria-label={isHebrew ? 'פעולות מהירות' : 'Quick actions'}>{phone && <a href={`tel:${phone}`}>{site.sections.contact.call}</a>}{whatsapp && <a className="whatsapp" href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer">WhatsApp</a>}{maps && <a href={maps} target="_blank" rel="noreferrer">{site.sections.contact.maps}</a>}</aside>
   </article>
@@ -44,19 +55,94 @@ function SitePreview({ customer, site, viewport = 'desktop', full = false, onClo
   return <div className="real-site-modal" role="dialog" aria-modal="true"><button type="button" aria-label="Close preview" onClick={onClose}>×</button><div>{content}</div></div>
 }
 
+function initialBuilderState(language, initialLead, projects) {
+  if (initialLead) {
+    const existing = findProjectForLead(projects, initialLead)
+    const customer = customerFromLead(initialLead, language, projects)
+    syncCustomerImagesToBusinessMediaLibrary(customer.businessName, customer.images)
+    return { customer, projectMeta: existing ? { id: existing.id, createdDate: existing.createdDate, status: existing.status } : { id: null, createdDate: null, status: 'draft' } }
+  }
+  const draft = loadActiveDraft()
+  if (draft) {
+    const customer = normalizeCustomer({ ...EMPTY_CUSTOMER, language, ...draft.customer })
+    syncCustomerImagesToBusinessMediaLibrary(customer.businessName, customer.images)
+    return { customer, projectMeta: draft.projectMeta || { id: null, createdDate: null, status: 'draft' } }
+  }
+  return { customer: normalizeCustomer({ ...EMPTY_CUSTOMER, language }), projectMeta: { id: null, createdDate: null, status: 'draft' } }
+}
+
 export default function RealWebsiteBuilder({ initialLead }) {
-  const { language, t } = useLanguage(); const [customer, setCustomer] = useState(() => initialLead ? customerFromLead(initialLead, language) : { ...EMPTY_CUSTOMER, language }); const [site, setSite] = useState(null)
-  const [projects, setProjects] = useState(loadRealWebsiteProjects); const [projectMeta, setProjectMeta] = useState({ id: null, createdDate: null, status: 'draft' }); const [fullPreview, setFullPreview] = useState(false); const [viewport, setViewport] = useState('desktop'); const [notice, setNotice] = useState('')
-  useEffect(() => { if (initialLead) { const next = customerFromLead(initialLead, language); setCustomer(next); setSite(generateRealWebsite(next)); setProjectMeta({ id: null, createdDate: null, status: 'draft' }) } }, [initialLead, language])
+  const { language, t } = useLanguage()
+  const [projects, setProjects] = useState(loadRealWebsiteProjects)
+  const [customer, setCustomer] = useState(() => initialBuilderState(language, initialLead, loadRealWebsiteProjects()).customer)
+  const [site, setSite] = useState(null)
+  const [projectMeta, setProjectMeta] = useState(() => initialBuilderState(language, initialLead, loadRealWebsiteProjects()).projectMeta)
+  const [fullPreview, setFullPreview] = useState(false); const [viewport, setViewport] = useState('desktop'); const [notice, setNotice] = useState('')
+  const [mediaEpoch, setMediaEpoch] = useState(0)
+  const previousBusinessNameRef = useRef(customer.businessName || '')
+  useEffect(() => {
+    if (!initialLead) return
+    const savedProjects = loadRealWebsiteProjects()
+    const existing = findProjectForLead(savedProjects, initialLead)
+    const next = customerFromLead(initialLead, language, savedProjects)
+    syncCustomerImagesToBusinessMediaLibrary(next.businessName, next.images)
+    setCustomer(next)
+    setSite(generateRealWebsite(next))
+    setProjectMeta(existing ? { id: existing.id, createdDate: existing.createdDate, status: existing.status } : { id: null, createdDate: null, status: 'draft' })
+    previousBusinessNameRef.current = next.businessName || ''
+    setMediaEpoch((value) => value + 1)
+  }, [initialLead, language])
+  useEffect(() => { saveActiveDraft(customer, projectMeta) }, [customer, projectMeta])
+  useEffect(() => {
+    const previous = String(previousBusinessNameRef.current || '').trim()
+    const next = String(customer.businessName || '').trim()
+    if (previous && next && previous.toLowerCase() !== next.toLowerCase()) {
+      try { migrateBusinessMediaLibrary(previous, next); setMediaEpoch((value) => value + 1) } catch { /* migration is best-effort when storage is full */ }
+    }
+    previousBusinessNameRef.current = customer.businessName || ''
+  }, [customer.businessName])
   const liveSite = useMemo(() => generateRealWebsite(customer), [customer]); const activeSite = site || liveSite
-  function update(field, value) { setCustomer((current) => ({ ...current, [field]: value })); setSite(null); setNotice('') }
-  function persist(status = projectMeta.status) { if (!customer.businessName.trim()) { setNotice(t('rwbBusinessRequired')); return } if (status === 'ready-to-publish' && !isReadyToPublish(customer, activeSite)) { setNotice(t('rwbReadinessError')); return } const project = createRealWebsiteProject(customer, activeSite.sections, projectMeta.id, projectMeta.createdDate, status); setProjects(saveRealWebsiteProject(project)); setProjectMeta({ id: project.id, createdDate: project.createdDate, status: project.status }); setSite(activeSite); setNotice(t('rwbSaved')) }
-  function loadProject(project) { if (!project) return; setCustomer({ ...EMPTY_CUSTOMER, ...project.customer }); setSite(generateRealWebsite({ ...EMPTY_CUSTOMER, ...project.customer })); setProjectMeta({ id: project.id, createdDate: project.createdDate, status: project.status }); setNotice('') }
-  function reset() { setCustomer({ ...EMPTY_CUSTOMER, language }); setSite(null); setProjectMeta({ id: null, createdDate: null, status: 'draft' }); setNotice('') }
+  function update(field, value) { setCustomer((current) => normalizeCustomer({ ...current, [field]: value })); setSite(null); setNotice('') }
+  function updateImages(slot, value) { setCustomer((current) => normalizeCustomer({ ...current, images: { ...cloneCustomerImages(current.images), [slot]: value } })); setSite(null); setNotice('') }
+  function persist(status = projectMeta.status) {
+    if (!customer.businessName.trim()) { setNotice(t('rwbBusinessRequired')); return }
+    if (status === 'ready-to-publish' && !isReadyToPublish(customer, activeSite)) { setNotice(t('rwbReadinessError')); return }
+    const project = createRealWebsiteProject(customer, activeSite.sections, projectMeta.id, projectMeta.createdDate, status)
+    syncCustomerImagesToBusinessMediaLibrary(project.customer.businessName, project.customer.images)
+    setProjects(saveRealWebsiteProject(project))
+    setProjectMeta({ id: project.id, createdDate: project.createdDate, status: project.status })
+    setSite(activeSite)
+    saveActiveDraft(normalizeCustomer(project.customer), { id: project.id, createdDate: project.createdDate, status: project.status })
+    setMediaEpoch((value) => value + 1)
+    setNotice(t('rwbSaved'))
+  }
+  function loadProject(project) {
+    if (!project) return
+    const next = normalizeCustomer({ ...EMPTY_CUSTOMER, language, ...project.customer })
+    syncCustomerImagesToBusinessMediaLibrary(next.businessName, next.images)
+    setCustomer(next)
+    setSite(generateRealWebsite(next))
+    const meta = { id: project.id, createdDate: project.createdDate, status: project.status }
+    setProjectMeta(meta)
+    previousBusinessNameRef.current = next.businessName || ''
+    saveActiveDraft(next, meta)
+    setMediaEpoch((value) => value + 1)
+    setNotice('')
+  }
+  function reset() {
+    clearActiveDraft()
+    setCustomer(normalizeCustomer({ ...EMPTY_CUSTOMER, language }))
+    setSite(null)
+    setProjectMeta({ id: null, createdDate: null, status: 'draft' })
+    previousBusinessNameRef.current = ''
+    setMediaEpoch((value) => value + 1)
+    setNotice('')
+  }
   return <section className="real-builder"><header><div><span>Business OS</span><h1>{t('realWebsiteBuilder')}</h1><p>{t('rwbSubtitle')}</p></div><div className="real-builder__header-actions"><button type="button" onClick={() => { setSite(liveSite); setNotice(t('rwbCreated')) }}>{t('rwbCreate')}</button><button type="button" onClick={() => persist('draft')}>{t('rwbSaveDraft')}</button><button type="button" onClick={() => persist('ready-to-publish')}>{t('rwbMarkReady')}</button></div></header>
     <div className="real-builder__body"><form className="real-builder__form" onSubmit={(event) => event.preventDefault()}><div className="real-builder__form-head"><h2>{t('rwbCustomerDetails')}</h2><select value={projectMeta.status} onChange={(event) => setProjectMeta((current) => ({ ...current, status: event.target.value }))}>{STATUSES.map((status) => <option key={status} value={status}>{t(`rwbStatus_${status}`)}</option>)}</select></div>
-      <div className="real-builder__fields">{FIELDS.map((field) => <label key={field} className={['shortDescription', 'mainServices', 'galleryImageUrls'].includes(field) ? 'is-wide' : ''}><span>{t(`rwbField_${field}`)}</span>{['shortDescription', 'mainServices', 'galleryImageUrls'].includes(field) ? <textarea rows="2" value={customer[field]} onChange={(event) => update(field, event.target.value)} /> : <input type={field === 'email' ? 'email' : 'text'} value={customer[field]} onChange={(event) => update(field, event.target.value)} />}</label>)}</div>
+      <div className="real-builder__fields">{FIELDS.map((field) => <label key={field} className={['shortDescription', 'mainServices'].includes(field) ? 'is-wide' : ''}><span>{t(`rwbField_${field}`)}</span>{['shortDescription', 'mainServices'].includes(field) ? <textarea rows="2" value={customer[field]} onChange={(event) => update(field, event.target.value)} /> : <input type={field === 'email' ? 'email' : 'text'} value={customer[field]} onChange={(event) => update(field, event.target.value)} />}</label>)}</div>
       <div className="real-builder__selects"><label><span>{t('rwbField_language')}</span><select value={customer.language} onChange={(event) => update('language', event.target.value)}><option value="en">English</option><option value="he">עברית</option><option value="ar">العربية</option><option value="ru">Русский</option></select></label><label><span>{t('rwbField_primaryColor')}</span><input type="color" value={customer.primaryColor} onChange={(event) => update('primaryColor', event.target.value)} /></label><label><span>{t('rwbField_secondaryColor')}</span><input type="color" value={customer.secondaryColor} onChange={(event) => update('secondaryColor', event.target.value)} /></label></div>
+      <ImageManager images={customer.images || {}} onChange={updateImages} businessName={customer.businessName} legacyProjectId={projectMeta.id} libraryRefreshKey={mediaEpoch} />
       <fieldset className="real-builder__templates"><legend>{t('rwbCompareTemplates')}</legend>{REAL_WEBSITE_TEMPLATES.map((template) => <button type="button" key={template.id} className={customer.preferredTemplate === template.id ? 'is-active' : ''} onClick={() => update('preferredTemplate', template.id)}><i className={template.className} /><strong>{t(template.nameKey)}</strong><small>{t(`${template.nameKey}Description`)}</small></button>)}</fieldset>
       <div className="real-builder__controls"><button type="button" onClick={() => projectMeta.id && loadProject(projects.find((project) => project.id === projectMeta.id))} disabled={!projectMeta.id}>{t('rwbLoadDraft')}</button><button type="button" onClick={reset}>{t('rwbReset')}</button><button type="button" onClick={() => setFullPreview(true)}>{t('rwbFullPreview')}</button></div>{notice && <p className="real-builder__notice">{notice}</p>}</form>
       <div className="real-builder__preview"><header><h2>{t('rwbLivePreview')}</h2><div>{['desktop', 'tablet', 'mobile'].map((size) => <button type="button" key={size} className={viewport === size ? 'is-active' : ''} onClick={() => setViewport(size)}>{t(`rwbViewport_${size}`)}</button>)}</div></header><div className={`preview-stage is-${viewport}`}><SitePreview customer={customer} site={activeSite} viewport={viewport} /></div></div>

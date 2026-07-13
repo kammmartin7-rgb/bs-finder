@@ -1,6 +1,6 @@
 # Project Operational Memory
 
-Last updated: 2026-07-12
+Last updated: 2026-07-13
 Memory status: Current as of this session  
 Update rule: Update this file after every completed work session using verified facts only.
 
@@ -119,26 +119,35 @@ Chronology is recorded only where verified. Exact dates for earlier application 
 - Added ten pipeline stages, detailed lead cards, backward-compatible legacy-stage display mapping, and urgent ordering for overdue and current sales work.
 - Verified build and lint. Next Action handlers, daily-goal calculations, follow-up editing, revenue integration, search, filters, and sorting remain pending.
 
+### 2026-07-12 — CRM V2 Tasks 5-9
+
+- Added status-driven Next Action controls and quick actions while reusing App-level call, WhatsApp, demo, proposal, payment-link, and Real Website Builder handlers.
+- Added editable persisted daily goals (50 leads, 20 outreach attempts, 10 calls, 7 follow-ups, 2 deals) and actual progress based only on existing lead/action records.
+- Added overdue, today, upcoming, and no-date follow-up groups with inline CRM note/date editing.
+- Added shared proposal storage access, open-proposal and explicit-stage revenue summaries, and no inferred payment state.
+- Added search, stage filters, five sorting modes, safe empty states, four-language labels, and responsive CRM layouts.
+- Verified production build, lint, and Vite serving for App, CRM, and Proposal Generator modules. No commit or push was performed for Tasks 5-9.
+
 ---
 
 ## Current Active Task
 
-**CRM V2 is active. Tasks 1-4 are verified complete; Task 5, the Next Action engine, is next.**
+**Add Real Website Builder page and section editor (RWB-003). Image Manager and per-business Media Library are finished and build/lint verified.**
 
 ---
 
 ## Next 10 Tasks
 
-1. Add the CRM Next Action engine using existing handlers.
-2. Add CRM follow-up editing and overdue/today/upcoming groups.
-3. Add editable persisted daily goals and verified activity progress.
-4. Integrate existing proposal values and approval state.
-5. Add explicit deal, payment, and website-production state transitions.
-6. Add CRM search, filters, and urgency sorting.
-7. Verify all CRM workflows on desktop and mobile.
-8. Verify all four languages, RTL/LTR, and light/dark mode.
-9. Regression-test every existing BS Finder module.
-10. Complete CRM V2 documentation and final verified push.
+1. Add Real Website Builder page and section editor (RWB-003).
+2. Add customer approval workflow for generated websites (RWB-005).
+3. Persist all real lead-source results in one lead collection.
+4. Add externally verified proposal delivery instead of equating open with sent.
+5. Connect an approved payment provider and verified payment state.
+6. Perform full browser interaction QA for every CRM stage and action.
+7. Add a complete chronological CRM activity timeline.
+8. Add sales outcome tracking for calls and replies.
+9. Browser-verify Image Manager and media library at desktop, tablet, and mobile widths.
+10. Commit and push verified changes when approved.
 
 ---
 
@@ -287,69 +296,50 @@ Future businesses are independent managed projects with verified repositories, d
 
 ---
 
+### 2026-07-13 — Per-business Image Manager / Media Library finish
+
+- Finished Real Website Builder media system: unicode-safe per-business Media Library keys, slot uploads sync into the shared library, draft/project image persistence, rename migration, and generator wiring for all eight slots.
+- Verified production build and lint. No commit or push was performed.
+
+### 2026-07-13 — Image Manager and responsive shell
+
+- Completed Real Website Builder Image Manager integration: eight customer slots, WebP compression, Global Media Library, slot targeting, and generator/preview wiring for all image types.
+- Added global page-level horizontal scroll containment, sticky Business OS topbar, and InternalBackButton with RTL chevron.
+- Verified production build and lint. No commit or push was performed.
+
+---
+
 ## Last Session Summary
 
-The latest completed work session added the minimal Ideas Vault:
+The latest completed work session finished the per-business Image Manager / Media Library priority:
 
-- Added Ideas Vault to the existing state-based Business OS sidebar.
-- Reused `business-os-command-center-ideas-v1` so Dashboard quick capture and the full Vault share one source.
-- Added add, edit, delete, status changes, next action, and compact revenue decision fields.
-- Added deterministic scoring weighted toward faster revenue, higher potential, lower effort, and lower cost.
-- Added Fast Money, High Potential, Review, and Later labels.
-- Verified CRUD, persistence, status updates, sorting, build, lint, RTL/LTR code paths, and light/dark styles.
-- No commit or push was performed.
+- Replaced projectId-first media keys with stable unicode-safe business-name keys so HE/AR/RU businesses keep isolated collections.
+- Slot uploads and project load/save sync into the shared Media Library; customer images remain in project/draft state for generated websites.
+- Verified build and lint. No commit or push was performed.
 
 ---
 
 ## Next Session Prompt
 
 ```text
-EXECUTE MIGRATION PHASE 1 ONLY — READ-ONLY REPOSITORY INSPECTION
-
-Project ecosystem:
-- Current combined source: /Users/sdfghjklpoiuytrewq/my-website/bs-hunter
-- Separate Business OS starter: /Users/sdfghjklpoiuytrewq/my-website/business-os
-- BS Funds checkout: /Users/sdfghjklpoiuytrewq/my-website/first ever
+Continue Real Website Builder from the verified Image Manager / Media Library baseline.
 
 Read first:
 - PROJECT_MEMORY.md
-- PROJECT_AUDIT.md
-- MASTER_ARCHITECTURE.md
-- MIGRATION_PLAN.md
-- BACKUP_REPORT.md
+- PROJECT_STATUS.md
+- TASKS.md
 - DEVELOPMENT_STANDARD.md
 
 Goal:
-Execute Phase 1 only. Inspect repository contents and histories without changing any active project or remote.
-
-Required inspection:
-1. Inspect https://github.com/kammmartin7-rgb/business-os.git in a new isolated read-only inspection folder outside all active projects.
-2. Inspect the local and remote BS Funds Git state using read-only commands.
-3. Recheck whether kammmartin7-rgb/bs-finder or kammmartin7-rgb/bs-hunter now exists.
-4. Compare repository identities, branches, latest commits, package names, documentation, and top-level source structure.
-5. Do not display or inspect secret values.
-
-Allowed writes:
-- One isolated inspection clone directory approved by the Owner.
-- One report in the current bs-hunter root named REPOSITORY_INSPECTION_REPORT.md.
-- Update PROJECT_MEMORY.md after the session only if inspection completes successfully.
-
-Forbidden:
-- No application-code changes.
-- No Git write commands in active project folders.
-- No remote add, pull, push, merge, reset, init, commit, branch, tag, rename, move, deletion, or cleanup.
-- Do not begin Phase 2.
+Implement RWB-003 page/section editor only. Do not start CRM work until website builder editing is complete.
 
 Verification:
-- Record exact remote URLs, branches, HEAD hashes, latest commit messages where safely available, repository visibility where verified, package identity, and whether each repository is empty.
-- Confirm active project folders remain unchanged.
-- Clearly label unknowns.
+- npm run build
+- npm run lint
+- Browser check of editor + image preview at desktop/tablet/mobile
 
-Stop condition:
-Stop after the Phase 1 report and memory update. Report any mapping conflict requiring Owner approval.
+Do not commit or push unless explicitly approved.
 ```
-
-The Owner must approve the isolated inspection-folder path and private remote clone before using this prompt.
 
 ---
 

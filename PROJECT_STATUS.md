@@ -2,7 +2,7 @@
 
 ## Last Updated
 
-2026-07-12 IDT
+2026-07-13 IDT
 
 ## Current Main Goal
 
@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS.
 
 ## Current Active Task
 
-CRM V2 implementation is active. Tasks 1-4 are complete: the responsive sales shell now uses existing real lead, CRM, and activity records, renders the sales pipeline and lead cards, and prioritizes urgent actions.
+Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-CRM V2 Tasks 1-4. The former CRM placeholder is now a four-language, RTL/LTR, light/dark sales workspace connected to existing local lead and CRM data. Build and lint passed.
+Finished Image Manager and per-business Media Library. Every Real Website Builder customer has an isolated media collection keyed by business name (unicode-safe for HE/AR/RU), slot uploads sync into that library, customer images persist via active draft and saved projects, and generated previews consume all eight image slots through the shared media system. Build and lint passed.
 
 ## What Is Working
 
@@ -34,11 +34,17 @@ CRM V2 Tasks 1-4. The former CRM placeholder is now a four-language, RTL/LTR, li
 - Lead scoring, search/filter/sort controls, CSV export, and Google Sheets export integration.
 - Lead CRM status, notes, and follow-up date persistence.
 - CRM V2 shell, real-data pipeline, detailed lead cards, legacy-status display compatibility, and urgency ordering for overdue/today/proposal/demo/new/payment follow-up.
+- CRM Next Action and secondary actions reuse existing App handlers; daily goals persist under one CRM goal key and count only recorded actions.
+- CRM follow-up center groups overdue, today, upcoming, and unscheduled leads and updates the existing CRM record.
+- CRM proposal/revenue summary reads existing proposal drafts/approvals and explicit CRM stages; Paid revenue is never inferred from a payment link.
+- CRM search, stage filtering, urgency/follow-up/score/update/name sorting, empty states, and mobile layouts.
 - Automatic lead-action history with CRM transitions for Proposal and WhatsApp.
 - Four lead actions in a compact 2x2 layout: Proposal, Demo Site, Sales Pitch, WhatsApp.
 - Demo Website Builder with templates, sections, responsive output, contact actions, and generated placeholder copy.
 - Shareable Demo Links with stable per-lead IDs, direct public hash routes, portable URL snapshots, same-browser localStorage persistence, copy/open controls, and a professional missing-demo state.
-- Separate Real Website Builder V1 with manual or BS Hunter lead intake, three professional templates, four website languages, RTL/LTR output, live/full previews, project statuses, and localStorage drafts.
+- Separate Real Website Builder V1 with manual or BS Hunter lead intake, three professional templates, four website languages, RTL/LTR output, live/full previews, project statuses, localStorage drafts, Image Manager (eight slots), and per-business Media Library.
+- Real Website Builder Image Manager with upload/compress/replace/delete, drag-and-drop, library slot targeting, per-business media isolation, and generated-site wiring for logo, hero, about, services, gallery, team, testimonials, and contact images.
+- Business OS sticky topbar with InternalBackButton screen history and fixed LanguageSwitcher placement on all non-dashboard screens.
 - Proposal Generator modal.
 - Proposal Templates V1 with three predefined website offers, automatic customer/date details, editable commercial content, and per-business local draft persistence.
 - Sales Center with phone, WhatsApp, email, objection scripts, and copy buttons.
@@ -59,7 +65,7 @@ CRM V2 Tasks 1-4. The former CRM placeholder is now a four-language, RTL/LTR, li
 - No production deployment has been completed or verified on a real hosting provider.
 - Paid lead search still needs billing, a deployed backend, and `VITE_API_BASE_URL`.
 - BS Funds has no live data integration.
-- CRM V2 still needs Next Action handlers, editable daily goals, follow-up controls, proposal/revenue integration, search, filters, and sorting.
+- CRM remains localStorage-based and can only show leads currently available in the loaded lead collection; non-manual search/import results are not yet a unified persistent lead database.
 - Websites screen is still a placeholder; Real Website Builder is available through its own module.
 - Global Sales, Users & Permissions, and Integrations remain safe placeholder screens until their data or functionality is connected.
 - Demo Website Builder does not use AI, customer-specific business types, image generation, editing, publishing, domains, or hosting.
@@ -149,16 +155,16 @@ The flow currently works through WhatsApp opening and local tracking. Payment, r
 
 ## Next 10 Tasks
 
-1. Restore and verify reliable real lead acquisition for multiple industries and cities.
-2. Select and configure the real payment provider and payment handoff.
-3. Build the focused CRM pipeline required to close the first customer.
-4. Add controlled sales follow-up automation for real prospects.
-5. Verify the complete customer journey from lead through payment.
+1. Add Real Website Builder page and section editor (RWB-003).
+2. Add customer approval workflow for generated websites (RWB-005).
+3. Restore and verify reliable real lead acquisition for multiple industries and cities.
+4. Select and configure the real payment provider and payment handoff.
+5. Perform full browser interaction QA for every CRM stage and action.
 6. Verify proposal acceptance and secure-payment handoff with a real configured URL.
 7. Deploy and smoke-test the customer-facing sales flow on a public URL.
-8. Complete the paid-customer website delivery and approval workflow.
+8. Add website publish/deploy pipeline after customer approval.
 9. Add revenue-critical follow-up reminders and outcome tracking.
-10. Add focused tests for lead, proposal, payment, and delivery workflows.
+10. Browser-verify Image Manager and media library at desktop, tablet, and mobile widths.
 
 ## Do Not Touch
 
