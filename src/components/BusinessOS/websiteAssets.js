@@ -18,7 +18,16 @@ export const WEBSITE_ASSETS = [
     productionUrl: import.meta.env.VITE_BS_FINDER_WEBSITE_URL?.trim() || 'http://localhost:5173',
     repositoryUrl: 'https://github.com/kammmartin7-rgb/bs-finder',
     screen: 'bs-hunter',
+  },  {
+    id: 'plumber-demo',
+    name: 'אתר אינסטלטור – דמו למכירה',
+    icon: '🔧',
+    typeKey: 'assetTypeWebsite',
+    statusKey: 'assetStatusActive',
+    productionUrl: 'https://plumber-pro-israel.kammmartin7.chatgpt.site',
+    repositoryUrl: '',
   },
+
 ]
 
 export function repositoryLabel(url = '') {

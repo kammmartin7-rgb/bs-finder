@@ -11,6 +11,7 @@ function openExternal(url) {
 export default function WebsiteAssetCard({ asset, onOpenScreen }) {
   const { t } = useLanguage()
   const [productionReachable, setProductionReachable] = useState(false)
+  const hasRepository = Boolean(String(asset.repositoryUrl || '').trim())
 
   useEffect(() => {
     let active = true
@@ -39,13 +40,13 @@ export default function WebsiteAssetCard({ asset, onOpenScreen }) {
         <dl>
           <div><dt>{t('assetStatus')}</dt><dd>{t(asset.statusKey)}</dd></div>
           <div className="is-wide"><dt>{t('assetProductionUrl')}</dt><dd title={asset.productionUrl}>{asset.productionUrl}</dd></div>
-          <div className="is-wide"><dt>{t('assetRepository')}</dt><dd title={asset.repositoryUrl}>{repositoryLabel(asset.repositoryUrl)}</dd></div>
+          {hasRepository && <div className="is-wide"><dt>{t('assetRepository')}</dt><dd title={asset.repositoryUrl}>{repositoryLabel(asset.repositoryUrl)}</dd></div>}
         </dl>
         <div className="website-asset-card__actions">
           <button type="button" onClick={openWebsite}>{t('openWebsite')}</button>
-          <button type="button" className="is-secondary" onClick={() => openExternal(asset.repositoryUrl)}>{t('openRepository')}</button>
+          {hasRepository && <button type="button" className="is-secondary" onClick={() => openExternal(asset.repositoryUrl)}>{t('openRepository')}</button>}
           <button type="button" className="is-secondary" onClick={() => copyAssetUrl(asset.productionUrl)}>{t('copyWebsiteUrl')}</button>
-          <button type="button" className="is-secondary" onClick={() => copyAssetUrl(asset.repositoryUrl)}>{t('copyRepositoryUrl')}</button>
+          {hasRepository && <button type="button" className="is-secondary" onClick={() => copyAssetUrl(asset.repositoryUrl)}>{t('copyRepositoryUrl')}</button>}
         </div>
       </div>
     </article>

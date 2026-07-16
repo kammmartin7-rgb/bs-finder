@@ -2,7 +2,7 @@
 
 ## Last Updated
 
-2026-07-13 IDT
+2026-07-16 IDT
 
 ## Current Main Goal
 
@@ -14,7 +14,7 @@ Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google M
 
 ## Last Completed Task
 
-Supabase demo sharing: generated demos persist to the existing `demos` table using 8-character public IDs, new links use `/#/demo/<id>` with no query payload, public routes load across browser contexts and survive refresh, and legacy localStorage / `?data=` links remain compatible. Build and lint passed. The configured `VITE_PUBLIC_APP_URL` is still localhost and must be changed to the deployed origin before customer use.
+Added “אתר אינסטלטור – דמו למכירה” to the existing Businesses hub beside BS Finder and BS Funds, backed by the shared website asset registry and its verified public Sites URL. Repository controls are optional for hosted assets without a GitHub repository.
 
 ## Project Rules (Current)
 
@@ -41,6 +41,7 @@ Supabase demo sharing: generated demos persist to the existing `demos` table usi
 - Ideas Vault with revenue potential, time-to-revenue, effort, cost, status, next-action tracking, deterministic scoring, and local persistence shared with Dashboard quick capture.
 - Business OS Command Center with task-backed mission, focus mode, compact actionable dashboard metrics, and theme persistence.
 - Websites & Assets registry (BS Funds, BS Finder) with production URLs, GitHub repositories, and open/copy actions.
+- Plumber sales demo appears in the Businesses hub as an active portfolio asset with its verified public URL.
 - BS Hunter with paid, free Google Maps, CSV import, demo, and manual lead modes.
 - Paid search fails safely when no production API/billing is configured; it never substitutes fake leads.
 - Manual real-lead entry, duplicate prevention, unique IDs, and canonical `bs-hunter-real-leads` persistence via `leadPersistence.js`.

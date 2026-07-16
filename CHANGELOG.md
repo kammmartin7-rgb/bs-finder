@@ -39,6 +39,8 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- Businesses hub now includes “אתר אינסטלטור – דמו למכירה” beside BS Finder and BS Funds, linked to its verified public Sites URL; hosted assets without a repository hide repository-only controls.
+
 - Sales Pipeline Send Demo action: opens a normalized `wa.me` draft with the required Hebrew sales message and the lead's existing shareable demo URL; missing demos show `יש ליצור אתר דמו לפני השליחה` and do not open WhatsApp.
 - Business OS application shell, fixed sidebar, dashboard, and internal screen navigation.
 - BS Hunter as the first complete Business OS module.
