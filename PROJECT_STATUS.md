@@ -14,7 +14,7 @@ Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google M
 
 ## Last Completed Task
 
-Sales Pipeline stage movement: compact stage selector on every pipeline lead card, shared `updateLeadStage` handler for selector and drag-and-drop, persistence through existing `updatePersistedLead`. Build and lint passed; selector and DnD persistence verified with Playwright.
+Supabase demo sharing: generated demos persist to the existing `demos` table using 8-character public IDs, new links use `/#/demo/<id>` with no query payload, public routes load across browser contexts and survive refresh, and legacy localStorage / `?data=` links remain compatible. Build and lint passed. The configured `VITE_PUBLIC_APP_URL` is still localhost and must be changed to the deployed origin before customer use.
 
 ## Project Rules (Current)
 
@@ -34,6 +34,10 @@ Sales Pipeline stage movement: compact stage selector on every pipeline lead car
 - Projects, Websites & Assets, Ideas Vault, and Development remain accessible via business hubs, dashboard links, deep routes, or Settings — not as duplicate top-level modules.
 - Sales Pipeline uses two fixed-height rows (primary 420px / secondary 270px); lead lists scroll inside each stage column.
 - Pipeline lead cards use dynamic height from available data; compact stage selector on every card; drag-and-drop and selector share `updateLeadStage`; empty optional fields do not reserve space.
+- Pipeline phone numbers and CRM call actions open WhatsApp in a new tab and normalize Israeli local numbers with or without a leading zero to country code `972`.
+- Pipeline lead cards include a compact Send Demo action that reuses the existing shareable demo record and shared WhatsApp normalization; it never creates a second demo.
+- Demo Website selected images use a responsive full-cover hero background with dark readability layers, desktop right-copy/left-form layout, and mobile stacked copy/actions/form layout.
+- Shareable demos persist complete payloads to Supabase `demos.payload`; new links contain only an 8-character ID, while localStorage remains a cache and legacy-link fallback.
 - Ideas Vault with revenue potential, time-to-revenue, effort, cost, status, next-action tracking, deterministic scoring, and local persistence shared with Dashboard quick capture.
 - Business OS Command Center with task-backed mission, focus mode, compact actionable dashboard metrics, and theme persistence.
 - Websites & Assets registry (BS Funds, BS Finder) with production URLs, GitHub repositories, and open/copy actions.
@@ -67,6 +71,7 @@ Sales Pipeline stage movement: compact stage selector on every pipeline lead car
 - Lead persistence must be re-verified end-to-end after navigation and pipeline UI changes (active task); pipeline stage selector and DnD persistence verified; full E2E script still fails on pipeline Edit Lead button (cards open edit on click, not via button).
 - Paid lead search requires provider billing and a deployed backend.
 - Production deployment is prepared but not smoke-tested on a public URL.
+- `VITE_PUBLIC_APP_URL` currently resolves to localhost; configure the public Vercel origin before sending customer demo links.
 - Demo website quality still requires improvement before it can be sold as a professional customer website.
 - Google Sheets requires a configured public Apps Script web-app endpoint.
 - All operational data currently relies on browser localStorage and can be lost if browser storage is cleared.

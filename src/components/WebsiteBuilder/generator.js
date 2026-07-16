@@ -3,10 +3,11 @@
 
 import { getWebsiteSection } from './sections'
 import { DEFAULT_TEMPLATE_ID, getWebsiteTemplate } from './templates'
+import { formatIsraeliAddress } from '../../services/israeliAddress'
 
 const FALLBACK_BUSINESS = {
-  name: 'Your Business',
-  location: 'your area',
+  name: 'העסק שלך',
+  location: 'האזור שלך',
   phone: '',
   address: '',
   website: '',
@@ -27,7 +28,7 @@ export function normalizeBusiness(business = {}) {
     rating: typeof business.rating === 'number' ? business.rating : business.totalScore,
     reviewsCount: business.reviewsCount ?? FALLBACK_BUSINESS.reviewsCount,
     email: business.email || '',
-    language: business.websiteLanguage || business.language || 'en',
+    language: business.websiteLanguage || business.language || 'he',
   }
 }
 
@@ -40,6 +41,8 @@ export function generateWebsite({
 } = {}) {
   const normalizedBusiness = normalizeBusiness(business)
   normalizedBusiness.language = language || normalizedBusiness.language
+  normalizedBusiness.location = formatIsraeliAddress(normalizedBusiness.location)
+  normalizedBusiness.address = formatIsraeliAddress(normalizedBusiness.address)
   const template = getWebsiteTemplate(templateId)
   const requestedSections = sectionIds || template.defaultSections
 

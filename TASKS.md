@@ -31,7 +31,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | BOS-023 | Build Business OS Command Center v2 | Business OS | Business OS | GREEN | Completed | High | No | BOS-016 | Owner mission, project visibility, local facts, task actions, focus mode, themes, navigation, and responsive layout verified. |
 | BOS-024 | Restructure Business OS navigation hierarchy | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-023 | Final 10-item sidebar verified: Dashboard, Businesses, Sales, Finance, Tasks, AI Center, Documents, Users, Integrations, Settings. Projects/Websites/Ideas/Development relocated to business hubs or Settings; single shared CRM & Sales Pipeline. |
 | BOS-027 | Stabilize Sales pipeline layout and shared CRM access | Business OS | Business OS | GREEN | Completed | High | No | BOS-024 | Sales tab opens existing `crm` route; fixed-height pipeline rows with internal scroll; content-driven lead cards; build and lint passed. |
-| BOS-028 | Fully stabilize lead persistence E2E | Business OS | Business OS | RED | Open | High | Yes | BOS-027 | Verify manual creation, Google Maps import, editing, images, status changes, drag-and-drop, refresh, server restart; no leads disappear. |
+| BOS-028 | Fully stabilize lead persistence E2E | Business OS | Business OS | RED | Open | High | Yes | BOS-027 | Pipeline phone/call actions share normalized Israeli `wa.me`; Send Demo reuses the existing LeadID demo URL and blocks when absent. Still verify manual creation, Google Maps import, editing, images, status changes, drag-and-drop, refresh, server restart, and that no leads disappear. |
 | BOS-025 | Build revenue-first Ideas Vault | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-023 | Compact CRUD, status changes, deterministic revenue scoring, shared localStorage persistence, translations, RTL/LTR, and light/dark styles verified. |
 | BOS-026 | Build owner Settings screen | Business OS | Business OS | GREEN | Completed | Low | No | BOS-023 | Language, theme, default opening screen, compact mode, reset, persistence, four-language UI, RTL/LTR, build, and lint verified. |
 | BSH-001 | Preserve existing BS Hunter module | BS Hunter | BS Hunter | GREEN | Completed | High | No | None | Existing workflows verified by build/lint. |
@@ -61,9 +61,9 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | MC-005 | Add daily digest | Mission Control | Business OS | GRAY | Future | Medium | No | Notifications | Top priorities summary. |
 | DEM-001 | Maintain demo Website Builder engine | Demo Websites | BS Hunter | GREEN | Completed | High | No | Lead data | Templates and sections exist. |
 | DEM-002 | Improve demo copy by business type | Demo Websites | BS Hunter | ORANGE | Open | High | No | Business taxonomy | Current content is generic. |
-| DEM-003 | Add professional images and branding | Demo Websites | BS Hunter | ORANGE | Open | High | No | Asset strategy | Improve sales quality. |
+| DEM-003 | Add professional images and branding | Demo Websites | BS Hunter | ORANGE | Open | High | No | Asset strategy | Selected per-lead images now use a verified responsive full-cover hero with dark overlays and glass contact form; broader branding controls remain open. |
 | DEM-004 | Add demo customization controls | Demo Websites | BS Hunter | ORANGE | Open | Medium | No | DEM-002 | Colors, services, content. |
-| DEM-005 | Add shareable demo links | Demo Websites | BS Hunter | GREEN | Completed | High | No | Demo Website Builder | Stable IDs, direct hash routes, portable snapshots, localStorage refresh persistence, copy/open controls, and missing-demo handling verified. |
+| DEM-005 | Add shareable demo links | Demo Websites | BS Hunter | GREEN | Completed | High | No | Demo Website Builder | Supabase-backed `demos` payloads, random 8-character ID-only routes, cross-browser load, refresh persistence, selected-image data, local cache, and legacy `?data=` compatibility verified. Public app URL still needs the deployed Vercel origin. |
 | RWB-001 | Create customer intake form | Real Website Builder | Business OS | GREEN | Completed | High | No | None | Manual and lead-prefilled customer intake verified. |
 | RWB-002 | Create real website project model | Real Website Builder | Business OS | GREEN | Completed | High | No | RWB-001 | Separate versioned localStorage project model verified. |
 | RWB-003 | Add page and section editor | Real Website Builder | Business OS | RED | Open | High | Yes | RWB-002 | Production-grade editing. |
@@ -87,7 +87,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | WAP-001 | Maintain WhatsApp action | WhatsApp | BS Hunter | GREEN | Completed | High | No | Phone number | Personalized WhatsApp Web URL. |
 | WAP-002 | Maintain action history | WhatsApp | BS Hunter | GREEN | Completed | Medium | No | Lead IDs | Open events persist. |
 | WAP-003 | Verify message delivery externally | WhatsApp | Business OS | ORANGE | Open | High | No | WhatsApp API/provider | Open is not sent confirmation. |
-| WAP-004 | Add approved message templates | WhatsApp | Business OS | ORANGE | Open | Medium | No | WAP-003 | Localized templates. |
+| WAP-004 | Add approved message templates | WhatsApp | Business OS | ORANGE | Open | Medium | No | WAP-003 | Send Demo now uses the approved concise Hebrew sales copy with the existing demo URL; broader localized templates remain open. |
 | WAP-005 | Add reply tracking | WhatsApp | Business OS | GRAY | Future | High | No | WAP-003 | CRM automation. |
 | PAY-001 | Select payment provider | Payments | Business OS | RED | Open | High | Yes | Business/legal choice | Compare fees and regions. |
 | PAY-002 | Build secure checkout | Payments | Business OS | RED | Open | High | Yes | PAY-001 | Server-side secrets only. |

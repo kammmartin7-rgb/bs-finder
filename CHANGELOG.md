@@ -6,6 +6,9 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Changed
 
+- Demo persistence now saves complete records to the existing Supabase `demos` table and generates 8-character `/#/demo/<id>` links without embedded JSON or base64; public routes load from Supabase, localStorage remains a cache/legacy fallback, and old `?data=` links continue to parse.
+- Sales Pipeline Send Demo message now uses the approved concise Hebrew copy, contains no emojis, and keeps the existing demo URL and pre-filled WhatsApp flow.
+- Demo Website hero: selected per-lead business images now fill the existing hero with `cover`, layered dark readability gradients, responsive portrait positioning, right-aligned Hebrew copy and CTA controls, and the existing WhatsApp contact form in a glass panel; the no-image blue gradient fallback remains.
 - Business OS navigation cleanup: 10-item sidebar (Dashboard, Businesses, Sales, Finance, Tasks, AI Center, Documents, Users & Permissions, Integrations, Settings). Projects, Websites & Assets, Ideas Vault, and Development removed from top-level sidebar but preserved via business hubs, dashboard links, deep routes, or Settings.
 - Sales added as a main Business OS navigation tab; opens the existing shared CRM & Sales Pipeline (`crm` screen) with no duplicate CRM or pipeline.
 - CRM & Sales Pipeline merged label and route: one workspace for pipeline stages, lead cards, manual entry, and Google Maps import.
@@ -17,6 +20,8 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Fixed
 
+- Shareable demo freeze: selected base64 hero images remain in the existing LeadID demo record but are no longer duplicated into View Demo / Send Demo URLs; oversized legacy route payloads are ignored in favor of the saved record, preventing multi-megabyte hash parsing from blocking the browser.
+- Sales Pipeline phone action: clicking a pipeline lead phone number or CRM call action opens WhatsApp in a new tab through `https://wa.me/`; Israeli numbers with or without a leading zero normalize to country code `972`. Removed the remaining CRM `tel:` handler that caused Chrome to offer FaceTime.
 - Sales Pipeline stage movement: every pipeline lead card has a compact stage selector backed by existing `CRM_STAGES`; selector and drag-and-drop call shared `updateLeadStage` → `onUpdateLead` / `updatePersistedLead`; stage changes move cards immediately and persist across refresh. CRM (`bs-hunter-crm:{leadId}`), action history, proposals (`bs-finder-proposal:{leadId}`), demos (`bs-finder-demo:lead-{leadId}`), media (`…:lead-{leadId}`), and real website projects (`project.leadId`) now join only on `lead.id`; legacy business-name / CRM-key / hash demo data migrates on load via `leadRelationMigration.js`.
 - Lead persistence: one canonical store (`bs-hunter-real-leads` / `leadPersistence.js`) with legacy migration, stable IDs, change notifications, demo-table isolation, and dev verification helpers (`__bsHunterVerifyLeadPersistence`).
 - CRM/Sales Pipeline regression: pipeline empty state restored to distinguish “no persisted leads” vs active filters; CRM reloads `bs-hunter-real-leads` on mount; sidebar CRM/Sales clears stale navigation filters; Sales default navigation memoized to avoid effect churn.
@@ -34,6 +39,7 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- Sales Pipeline Send Demo action: opens a normalized `wa.me` draft with the required Hebrew sales message and the lead's existing shareable demo URL; missing demos show `יש ליצור אתר דמו לפני השליחה` and do not open WhatsApp.
 - Business OS application shell, fixed sidebar, dashboard, and internal screen navigation.
 - BS Hunter as the first complete Business OS module.
 - BS Funds placeholder module and dashboard shortcut.

@@ -13,6 +13,7 @@ import { getDashboardFilterLabelKey, isDemoLead, matchesDashboardFilter } from '
 import { parseLeadsCsv } from './utils/csvImport'
 import ManualLeadForm from './components/ManualLead/ManualLeadForm'
 import { loadPersistedLeads, mergePersistedLeads, persistLeadCollection, addPersistedLead, updatePersistedLead, subscribeToLeadPersistenceChanges } from './services/leadPersistence'
+import { createIsraeliWhatsAppUrl } from './services/whatsapp'
 import { hasLeadAction, LEAD_ACTIONS, recordLeadAction, subscribeToLeadActionChanges } from './components/LeadCRM/leadActionStorage'
 import ShareableDemo from './components/WebsiteBuilder/ShareableDemo'
 import { createShareableDemoUrl, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
@@ -250,7 +251,8 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
   function openDemoPreview(lead) {
     const shareDemo = saveShareableDemo({ ...lead, websiteLanguage: language })
     setDemoLinkNotice('')
-    setSelectedDemoLead({ ...lead, shareDemo })
+    setSelectedDemoLead({ ...lead, ...shareDemo.business, shareDemo })
+    return shareDemo
   }
 
   function handleMissionAction(task) {
@@ -270,8 +272,10 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
   function handleCrmAction(action, lead) {
     if (action === 'call') {
       if (!lead.phone) return
-      trackRealLeadAction(lead, LEAD_ACTIONS.CALL_OPENED)
-      window.open(`tel:${String(lead.phone).replace(/[^+\d]/g, '')}`, '_self')
+      const whatsappUrl = createIsraeliWhatsAppUrl(lead.phone)
+      if (!whatsappUrl) return
+      trackRealLeadAction(lead, LEAD_ACTIONS.WHATSAPP_OPENED)
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
     } else if (action === 'whatsapp') {
       const whatsappUrl = createWhatsAppUrl(lead)
       if (!whatsappUrl) return
@@ -279,7 +283,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
     } else if (action === 'demo') {
       trackRealLeadAction(lead, LEAD_ACTIONS.DEMO_SITE_OPENED)
-      openDemoPreview(lead)
+      return openDemoPreview(lead)
     } else if (action === 'proposal') {
       trackRealLeadAction(lead, LEAD_ACTIONS.PROPOSAL_OPENED)
       setSelectedBusiness(lead)
