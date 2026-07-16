@@ -15,7 +15,7 @@ export const WEBSITE_ASSETS = [
     icon: '◎',
     typeKey: 'assetTypeWebsite',
     statusKey: 'assetStatusActive',
-    productionUrl: import.meta.env.VITE_BS_FINDER_WEBSITE_URL?.trim() || 'http://localhost:5173',
+    productionUrl: import.meta.env.VITE_BS_FINDER_WEBSITE_URL?.trim() || 'https://bs-finder.vercel.app',
     repositoryUrl: 'https://github.com/kammmartin7-rgb/bs-finder',
     screen: 'bs-hunter',
   },  {
