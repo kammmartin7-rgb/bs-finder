@@ -26,6 +26,15 @@ function HubHeader({ eyebrow, title, description, onBack }) {
 const BS_FINDER_ASSET = WEBSITE_ASSETS.find((asset) => asset.id === 'bs-finder')
 const BS_FUNDS_ASSET = WEBSITE_ASSETS.find((asset) => asset.id === 'bs-funds')
 const PLUMBER_DEMO_ASSET = WEBSITE_ASSETS.find((asset) => asset.id === 'plumber-demo')
+const KIDNEY_CAMPAIGN_ASSET = {
+  id: 'kidney-help-campaign',
+  name: 'התרמה להשתלת כליה',
+  icon: '❤️',
+  typeKey: 'assetTypeWebsite',
+  statusKey: 'assetStatusActive',
+  productionUrl: 'https://kidney-help-campaign.kammmartin7.chatgpt.site',
+  repositoryUrl: '',
+}
 const BS_FUNDS_PROJECT = ecosystemProjects.find((project) => project.id === 'bs-funds')
 
 export function BusinessesHub({ leads, onOpenScreen }) {
@@ -62,6 +71,7 @@ export function BusinessesHub({ leads, onOpenScreen }) {
           </div>
         </button>
         {PLUMBER_DEMO_ASSET && <WebsiteAssetCard asset={PLUMBER_DEMO_ASSET} onOpenScreen={onOpenScreen} />}
+        <WebsiteAssetCard asset={KIDNEY_CAMPAIGN_ASSET} onOpenScreen={onOpenScreen} />
       </div>
     </section>
   )
