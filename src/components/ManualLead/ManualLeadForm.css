@@ -10,6 +10,9 @@
 .manual-lead-grid select { width: 100%; min-width: 0; box-sizing: border-box; font: inherit; }
 .manual-lead-grid textarea { width: 100%; min-width: 0; box-sizing: border-box; resize: vertical; font: inherit; }
 .manual-lead-wide { grid-column: 1 / -1; }
+.manual-lead-sales { margin: 0; padding: 12px; border: 1px solid #dce5eb; border-radius: 12px; background: #f7fafc; }
+.manual-lead-sales legend { padding: 0 6px; color: #16718d; font-size: 12px; font-weight: 850; }
+.manual-lead-grid--sales { margin-top: 8px; }
 .manual-lead-error { padding: 8px 10px; border-radius: 8px; background: #fef2f2; color: #b91c1c; font-size: 12px; }
 .manual-lead-form footer { display: flex; justify-content: flex-end; gap: 7px; margin-top: 15px; }
 .manual-lead-form footer button { padding: 8px 13px; border: 0; border-radius: 8px; background: #173f57; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }

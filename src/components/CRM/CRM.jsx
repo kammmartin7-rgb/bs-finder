@@ -1,8 +1,7 @@
 // Sales-first CRM V2 workspace built on the existing lead, CRM, proposal-action, and language architecture.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useLanguage } from '../../context/LanguageContext'
 import { loadLeadCrm, saveLeadCrm, subscribeToCrmChanges } from '../LeadCRM/crmStorage'
-import { LEAD_ACTIONS, recordLeadAction, subscribeToLeadActionChanges } from '../LeadCRM/leadActionStorage'
+import { subscribeToLeadActionChanges } from '../LeadCRM/leadActionStorage'
 import { subscribeToProposalChanges } from '../proposalStorage'
 import { matchesDashboardFilter } from '../BusinessOS/dashboardFilters'
 import { loadCrmGoals, saveCrmGoals } from './crmGoalsStorage'
@@ -12,8 +11,6 @@ import GoogleMapsImportForm from '../GoogleMapsImport/GoogleMapsImportForm'
 import LeadEditForm from './LeadEditForm'
 import LeadMediaModal from './LeadMediaModal'
 import DemoImageModal from './DemoImageModal'
-import { loadLeadMediaLibrary } from '../RealWebsiteBuilder/realWebsiteStorage'
-import { imageSource } from '../RealWebsiteBuilder/imageProcessing'
 import { createIsraeliWhatsAppUrl } from '../../services/whatsapp'
 import { createDemoOpenUrl, createShareableDemoUrl, loadShareableDemo } from '../WebsiteBuilder/demoStorage'
 import PipelineFilterSort from './PipelineFilterSort'
@@ -52,7 +49,6 @@ const PIPELINE_METADATA_HE = {
 }
 
 const STAGE_ICONS = ['🔥', '📞', '🌐', '📄', '📅', '🤝', '💳', '🏗', '✅', '◌']
-const PRIMARY_ACTIONS = ['call', 'demo', 'proposal', 'schedule', 'call', 'payment', 'real-website', 'complete', 'archive', 'restore']
 const FINISH_COPY = {
   en: { search: 'Search leads', allStages: 'All stages', sortUrgent: 'Urgency', sortFollowUp: 'Next follow-up', sortScore: 'Lead score', sortUpdated: 'Last updated', sortName: 'Business name', revenue: 'Revenue Summary', openProposals: 'Open proposals', proposalValue: 'Proposal value', wonDeals: 'Won deals', paidRevenue: 'Paid revenue', awaitingPayment: 'Awaiting payment' },
   he: { search: 'חיפוש לידים', allStages: 'כל השלבים', sortUrgent: 'דחיפות', sortFollowUp: 'מעקב הבא', sortScore: 'ציון ליד', sortUpdated: 'עדכון אחרון', sortName: 'שם העסק', revenue: 'סיכום הכנסות', openProposals: 'הצעות פתוחות', proposalValue: 'שווי הצעות', wonDeals: 'עסקאות שנסגרו', paidRevenue: 'הכנסה ששולמה', awaitingPayment: 'ממתינים לתשלום' },
@@ -60,7 +56,6 @@ const FINISH_COPY = {
   ru: { search: 'Поиск лидов', allStages: 'Все этапы', sortUrgent: 'Срочность', sortFollowUp: 'Следующий контакт', sortScore: 'Оценка лида', sortUpdated: 'Последнее обновление', sortName: 'Название компании', revenue: 'Сводка выручки', openProposals: 'Открытые предложения', proposalValue: 'Сумма предложений', wonDeals: 'Выигранные сделки', paidRevenue: 'Оплаченная выручка', awaitingPayment: 'Ожидают оплаты' },
 }
 function display(value, fallback) { return value === 0 || value ? value : fallback }
-function amount(value, fallback) { const number = Number(value); return Number.isFinite(number) && number > 0 ? `₪${number.toLocaleString()}` : fallback }
 function fieldText(value) { if (value === 0) return '0'; return String(value ?? '').trim() }
 function pipelineMetadata(value) { const text = fieldText(value); return PIPELINE_METADATA_HE[text] || text }
 function leadAddress(view) { return [view.lead?.address, view.city].map(fieldText).filter(Boolean).join(', ') }
@@ -86,29 +81,11 @@ ${demoUrl}
 
 אשמח לשמוע מה דעתכם.`
 
-function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImage, mediaRevision, onStageChange, pipeline = false, selected = false, onSelect }) {
-  const { t } = useLanguage()
-  const [editor, setEditor] = useState('')
-  const [notes, setNotes] = useState(view.crm.notes)
-  const [followUp, setFollowUp] = useState(view.crm.nextFollowUp)
+function PipelineLeadCard({ view, copy, onAction, onEditLead, onDemoImage, onStageChange, selected = false, onSelect }) {
   const [demoRecord, setDemoRecord] = useState(() => loadShareableDemo(view.lead))
-  const mediaItems = useMemo(() => {
-    void mediaRevision
-    try {
-      return loadLeadMediaLibrary(view.lead)
-    } catch {
-      return []
-    }
-  }, [view.lead, mediaRevision])
-  const mediaPreview = mediaItems[0] ? imageSource(mediaItems[0]) : ''
-  const stageIndex = CRM_STAGES.indexOf(view.stage)
-  function update(updates) { saveLeadCrm(view.leadId, { ...view.crm, ...updates }) }
   function openDetails(event) {
-    if (event?.target?.closest('a, select, option')) return
-    if (pipeline && !selected) {
-      onSelect?.(view.leadId)
-      return
-    }
+    if (event?.target?.closest('a, select, option, button')) return
+    onSelect?.(view.leadId)
     onEditLead?.(view)
   }
   function changeStage(event) {
@@ -119,86 +96,64 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImag
     event.dataTransfer.setData('text/plain', view.leadId)
     event.dataTransfer.effectAllowed = 'move'
   }
-  if (pipeline) {
-    const businessName = display(view.businessName, copy.unknown)
-    const phone = display(view.phone, copy.unknown)
-    const batchLabel = fieldText(view.batchLabel)
-    const whatsappUrl = createIsraeliWhatsAppUrl(view.phone)
-    const rating = Number(view.lead?.leadScore)
-    const optionalFields = [
-      fieldText(view.category) ? [copy.category, pipelineMetadata(view.category)] : null,
-      fieldText(view.source) ? [copy.source, pipelineMetadata(view.source)] : null,
-      Number.isFinite(rating) && rating > 0 ? [copy.rating, rating] : null,
-      fieldText(view.website) ? [copy.website, view.website] : null,
-      leadAddress(view) ? [copy.address, leadAddress(view)] : null,
-    ].filter(Boolean)
-    function createOrViewDemo(event) {
-      stopCardOpen(event)
-      const existingDemo = demoRecord || loadShareableDemo(view.lead)
-      if (existingDemo) {
-        window.open(createDemoOpenUrl(existingDemo), '_blank', 'noopener,noreferrer')
-        return
-      }
-      const createdDemo = onAction?.('demo', view.lead)
-      if (createdDemo) setDemoRecord(createdDemo)
+  const businessName = display(view.businessName, copy.unknown)
+  const phone = display(view.phone, copy.unknown)
+  const batchLabel = fieldText(view.batchLabel)
+  const whatsappUrl = createIsraeliWhatsAppUrl(view.phone)
+  const rating = Number(view.lead?.leadScore)
+  const optionalFields = [
+    fieldText(view.category) ? [copy.category, pipelineMetadata(view.category)] : null,
+    fieldText(view.source) ? [copy.source, pipelineMetadata(view.source)] : null,
+    Number.isFinite(rating) && rating > 0 ? [copy.rating, rating] : null,
+    fieldText(view.website) ? [copy.website, view.website] : null,
+    leadAddress(view) ? [copy.address, leadAddress(view)] : null,
+  ].filter(Boolean)
+  function createOrViewDemo(event) {
+    stopCardOpen(event)
+    const existingDemo = demoRecord || loadShareableDemo(view.lead)
+    if (existingDemo) {
+      window.open(createDemoOpenUrl(existingDemo), '_blank', 'noopener,noreferrer')
+      return
     }
-    function sendDemo(event) {
-      stopCardOpen(event)
-      const demo = demoRecord || loadShareableDemo(view.lead)
-      if (!demo) {
-        window.alert('יש ליצור אתר דמו לפני השליחה')
-        return
-      }
-      if (!whatsappUrl) return
-      const demoUrl = createShareableDemoUrl(demo)
-      window.open(`${whatsappUrl}?text=${encodeURIComponent(SEND_DEMO_MESSAGE(demoUrl))}`, '_blank', 'noopener,noreferrer')
+    const createdDemo = onAction?.('demo', view.lead)
+    if (createdDemo) setDemoRecord(createdDemo)
+  }
+  function sendDemo(event) {
+    stopCardOpen(event)
+    const demo = demoRecord || loadShareableDemo(view.lead)
+    if (!demo) {
+      window.alert('יש ליצור אתר דמו לפני השליחה')
+      return
     }
-    function openDemoImage(event) {
-      stopCardOpen(event)
-      onDemoImage(view)
-    }
-    return (
-      <article className={`crm-lead-card crm-lead-card--pipeline${selected ? ' is-selected' : ''}`} role="button" aria-pressed={selected} tabIndex={0} draggable onDragStart={startDrag} onClick={openDetails} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetails(event) } }}>
-        <div className="crm-lead-card__content">
-          <strong className="crm-lead-card__name">{businessName}</strong>
-          <div className="crm-lead-card__meta">
-            {whatsappUrl ? <a className="crm-lead-card__phone" href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={stopCardOpen}>{phone}</a> : <span className="crm-lead-card__phone">{phone}</span>}
-            {batchLabel ? <span className="crm-lead-card__batch" title={batchLabel}>{batchLabel}</span> : null}
-          </div>
-          <StageSelect value={view.stage} copy={copy} className="crm-lead-card__stage crm-lead-card__stage--pipeline" onMouseDown={stopCardOpen} onClick={stopCardOpen} onChange={changeStage} />
-          {optionalFields.map(([label, value]) => <span className="crm-lead-card__field" key={label}><b>{label}</b> {value}</span>)}
-          <div className="crm-lead-card__demo-actions">
-            <button type="button" onClick={createOrViewDemo}>{demoRecord ? copy.viewDemo : copy.createDemo}</button>
-            <button className="crm-lead-card__send-demo" type="button" disabled={!whatsappUrl} onClick={sendDemo}>{copy.sendDemo}</button>
-            <button type="button" onClick={openDemoImage}>תמונת דמו</button>
-          </div>
+    if (!whatsappUrl) return
+    const demoUrl = createShareableDemoUrl(demo)
+    window.open(`${whatsappUrl}?text=${encodeURIComponent(SEND_DEMO_MESSAGE(demoUrl))}`, '_blank', 'noopener,noreferrer')
+  }
+  function openDemoImage(event) {
+    stopCardOpen(event)
+    onDemoImage(view)
+  }
+  return (
+    <article className={`crm-lead-card crm-lead-card--pipeline${selected ? ' is-selected' : ''}`} role="button" aria-pressed={selected} tabIndex={0} draggable onDragStart={startDrag} onClick={openDetails} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetails(event) } }}>
+      <div className="crm-lead-card__content">
+        <strong className="crm-lead-card__name">{businessName}</strong>
+        <div className="crm-lead-card__meta">
+          {whatsappUrl ? <a className="crm-lead-card__phone" href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={stopCardOpen}>{phone}</a> : <span className="crm-lead-card__phone">{phone}</span>}
+          {batchLabel ? <span className="crm-lead-card__batch" title={batchLabel}>{batchLabel}</span> : null}
         </div>
-      </article>
-    )
-  }
-  function primary() {
-    const action = PRIMARY_ACTIONS[stageIndex]
-    if (action === 'schedule') return setEditor('follow-up')
-    if (action === 'complete') return update({ status: 'completed', stageChangedAt: new Date().toISOString() })
-    if (action === 'archive') return update({ status: 'lost', archived: true, stageChangedAt: new Date().toISOString() })
-    if (action === 'restore') return update({ status: 'new', archived: false, stageChangedAt: new Date().toISOString() })
-    if (action === 'real-website') update({ status: 'website-in-progress', stageChangedAt: new Date().toISOString() })
-    if (action === 'call' && view.stage === 'follow-up') recordLeadAction(view.lead, LEAD_ACTIONS.FOLLOW_UP_COMPLETED)
-    onAction?.(action, view.lead)
-  }
-  function saveEditor() { update(editor === 'notes' ? { notes } : { nextFollowUp: followUp }); setEditor('') }
-  const paymentBlocked = view.stage === 'deal-won' && !/^https?:\/\//i.test(String(view.lead.paymentUrl || ''))
-  return <article className="crm-lead-card"><header><div>{mediaPreview ? <img className="crm-lead-card__thumb" src={mediaPreview} alt="" loading="lazy" /> : null}<h4>{display(view.businessName, copy.unknown)}</h4><span>{display(view.contactName, copy.unknown)}</span>{mediaItems.length ? <small className="crm-lead-card__media-count">{mediaItems.length} {t('leadImageCount')}</small> : null}</div><strong>{Number(view.lead.leadScore) || '—'}</strong></header>
-    <StageSelect value={view.stage} copy={copy} className="crm-lead-card__stage" onChange={changeStage} />
-    <dl><div><dt>{copy.phone}</dt><dd>{display(view.phone, copy.unknown)}</dd></div><div><dt>{copy.email}</dt><dd>{display(view.email, copy.unknown)}</dd></div><div><dt>{copy.website || 'Website'}</dt><dd>{display(view.website, copy.unknown)}</dd></div><div><dt>{copy.source}</dt><dd>{display(view.source, copy.unknown)}</dd></div><div><dt>{copy.followUp}</dt><dd>{display(view.crm.nextFollowUp, copy.unknown)}</dd></div><div><dt>{copy.proposal}</dt><dd>{amount(view.proposalAmount, copy.unknown)}</dd></div><div><dt>{copy.deal}</dt><dd>{amount(view.dealAmount, copy.unknown)}</dd></div></dl>
-    <p><b>{copy.notes}:</b> {display(view.crm.notes, copy.unknown)}</p><small>{copy.activity}: {display(view.latestActivity, copy.unknown)}</small>
-    <button className="crm-lead-card__primary" type="button" disabled={paymentBlocked} onClick={primary}>{copy.nextAction}: {copy.actions[stageIndex]}</button>{paymentBlocked && <em>{copy.paymentMissing}</em>}
-    <div className="crm-lead-card__secondary"><button type="button" onClick={() => onEditLead?.(view)}>{t('editLead')}</button><button type="button" onClick={() => onManageImages?.(view)} disabled={!view.leadId}>{t('manageImages')}</button><button type="button" disabled={!view.phone} onClick={() => onAction?.('call', view.lead)}>{copy.call}</button><button type="button" disabled={!view.phone} onClick={() => onAction?.('whatsapp', view.lead)}>{copy.whatsapp}</button><button type="button" onClick={() => onAction?.('demo', view.lead)}>{copy.openDemo}</button><button type="button" onClick={() => onAction?.('proposal', view.lead)}>{copy.openProposal}</button><button type="button" onClick={() => setEditor('notes')}>{copy.addNote}</button><button type="button" onClick={() => setEditor('follow-up')}>{copy.setFollowUp}</button></div>
-    {editor && <div className="crm-lead-card__editor">{editor === 'notes' ? <textarea rows="3" value={notes} onChange={(event) => setNotes(event.target.value)} /> : <input type="date" value={followUp} onChange={(event) => setFollowUp(event.target.value)} />}<div><button type="button" onClick={saveEditor}>{copy.save}</button><button type="button" onClick={() => setEditor('')}>{copy.cancel}</button></div></div>}
-  </article>
+        <StageSelect value={view.stage} copy={copy} className="crm-lead-card__stage crm-lead-card__stage--pipeline" onMouseDown={stopCardOpen} onClick={stopCardOpen} onChange={changeStage} />
+        {optionalFields.map(([label, value]) => <span className="crm-lead-card__field" key={label}><b>{label}</b> {value}</span>)}
+        <div className="crm-lead-card__demo-actions">
+          <button type="button" onClick={createOrViewDemo}>{demoRecord ? copy.viewDemo : copy.createDemo}</button>
+          <button className="crm-lead-card__send-demo" type="button" disabled={!whatsappUrl} onClick={sendDemo}>{copy.sendDemo}</button>
+          <button type="button" onClick={openDemoImage}>תמונת דמו</button>
+        </div>
+      </div>
+    </article>
+  )
 }
 
-function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEditLead, onManageImages, onDemoImage, mediaRevision, onStageChange, selectedLeadId, onSelectLead, isDropTarget, onDragEnter, onDragLeave }) {
+function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEditLead, onDemoImage, onStageChange, selectedLeadId, onSelectLead, isDropTarget, onDragEnter, onDragLeave }) {
   return (
     <article className={`pipeline-column ${stageIndex < 4 ? 'pipeline-column--primary' : 'pipeline-column--secondary'}${isDropTarget ? ' is-drop-target' : ''}`}>
       <header className="pipeline-column-header"><span>{STAGE_ICONS[stageIndex]}</span><h3>{copy.stages[stageIndex]}</h3></header>
@@ -215,7 +170,7 @@ function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEdi
         }}
       >
         {stageViews.map((view) => (
-          <LeadCard key={view.leadId} view={view} copy={copy} pipeline selected={selectedLeadId === view.leadId} onSelect={onSelectLead} onAction={onAction} onEditLead={onEditLead} onManageImages={onManageImages} onDemoImage={onDemoImage} mediaRevision={mediaRevision} onStageChange={onStageChange} />
+          <PipelineLeadCard key={view.leadId} view={view} copy={copy} selected={selectedLeadId === view.leadId} onSelect={onSelectLead} onAction={onAction} onEditLead={onEditLead} onDemoImage={onDemoImage} onStageChange={onStageChange} />
         ))}
       </div>
       <footer className="pipeline-column-footer"><strong>{stageViews.length}</strong></footer>
@@ -225,7 +180,7 @@ function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEdi
 
 export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onRefreshLeads, navigation = null, onNavigationApplied }) {
   const direction = 'rtl'; const copy = PIPELINE_COPY; const finish = FINISH_COPY.he
-  const [revision, setRevision] = useState(0); const [goals, setGoals] = useState(loadCrmGoals); const [editingGoals, setEditingGoals] = useState(false); const [followUpTab, setFollowUpTab] = useState('overdue'); const [search, setSearch] = useState(''); const [stageFilter, setStageFilter] = useState('all'); const [sortBy, setSortBy] = useState('urgent'); const [pipelineFilters, setPipelineFilters] = useState(DEFAULT_PIPELINE_FILTERS); const [pipelineFilterOpen, setPipelineFilterOpen] = useState(false); const [dashboardLeadFilter, setDashboardLeadFilter] = useState(null); const [showManualLeadForm, setShowManualLeadForm] = useState(false); const [showGoogleMapsImport, setShowGoogleMapsImport] = useState(false); const [editingView, setEditingView] = useState(null); const [mediaView, setMediaView] = useState(null); const [demoImageView, setDemoImageView] = useState(null); const [mediaRevision, setMediaRevision] = useState(0); const [dragOverStage, setDragOverStage] = useState(''); const [selectedPipelineLeadId, setSelectedPipelineLeadId] = useState('')
+  const [revision, setRevision] = useState(0); const [goals, setGoals] = useState(loadCrmGoals); const [editingGoals, setEditingGoals] = useState(false); const [followUpTab, setFollowUpTab] = useState('overdue'); const [search, setSearch] = useState(''); const [stageFilter, setStageFilter] = useState('all'); const [sortBy, setSortBy] = useState('urgent'); const [pipelineFilters, setPipelineFilters] = useState(DEFAULT_PIPELINE_FILTERS); const [pipelineFilterOpen, setPipelineFilterOpen] = useState(false); const [dashboardLeadFilter, setDashboardLeadFilter] = useState(null); const [showManualLeadForm, setShowManualLeadForm] = useState(false); const [showGoogleMapsImport, setShowGoogleMapsImport] = useState(false); const [editingView, setEditingView] = useState(null); const [mediaView, setMediaView] = useState(null); const [demoImageView, setDemoImageView] = useState(null); const [dragOverStage, setDragOverStage] = useState(''); const [selectedPipelineLeadId, setSelectedPipelineLeadId] = useState('')
   const revenueRef = useRef(null)
   const followUpsRef = useRef(null)
   const pipelineRef = useRef(null)
@@ -289,16 +244,35 @@ export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onR
     return { ok: true }
   }
   function persistGoals() { setGoals(saveCrmGoals(goals)); setEditingGoals(false) }
+  function persistLeadFields(leadUpdates) {
+    if (!editingView) return { ok: false, reason: 'not-open' }
+    const result = onUpdateLead?.(editingView.leadId, leadUpdates, {})
+    if (result?.ok) {
+      setEditingView((current) => current ? { ...current, lead: { ...current.lead, ...leadUpdates } } : current)
+    }
+    return result
+  }
+  function saveLeadEdit(leadUpdates, crmUpdates) {
+    if (!editingView) return { ok: false, reason: 'not-open' }
+    const result = onUpdateLead?.(editingView.leadId, leadUpdates, crmUpdates)
+    if (result?.ok) setEditingView(null)
+    return result
+  }
+  function openLeadMediaFromEdit() {
+    if (!editingView?.lead) return
+    setEditingView(null)
+    setMediaView(editingView)
+  }
   return <section className="crm-v2" dir={direction}><header className="crm-v2__header"><div><span>{copy.eyebrow}</span><h1>{copy.pageTitle}</h1><p>{copy.subtitle}</p></div><div className="crm-v2__toolbar"><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={finish.search} aria-label={finish.search} /><select value={stageFilter} onChange={(event) => setStageFilter(event.target.value)}><option value="all">{finish.allStages}</option>{CRM_STAGES.map((stage, index) => <option key={stage} value={stage}>{copy.stages[index]}</option>)}</select><select value={sortBy} onChange={(event) => setSortBy(event.target.value)}><option value="urgent">{finish.sortUrgent}</option><option value="follow-up">{finish.sortFollowUp}</option><option value="score">{finish.sortScore}</option><option value="updated">{finish.sortUpdated}</option><option value="name">{finish.sortName}</option></select></div></header>
     <section className="crm-v2__mission"><header><span>01</span><h2>{copy.mission}</h2><button type="button" onClick={() => editingGoals ? persistGoals() : setEditingGoals(true)}>{editingGoals ? copy.saveGoals : copy.editGoals}</button></header><div>{metrics.map(([key, label]) => <article key={key}><span>{label}</span><strong>{actuals[key]} / {editingGoals ? <input type="number" min="0" value={goals[key]} onChange={(event) => setGoals({ ...goals, [key]: event.target.value })} /> : goals[key]}</strong><i><b style={{ width: `${Math.min(100, goals[key] ? actuals[key] / goals[key] * 100 : 0)}%` }} /></i></article>)}</div></section>
     <section className="crm-v2__urgent"><header><div><span>02</span><h2>{copy.urgent}</h2><p>{copy.urgentHint}</p></div><strong>{urgent.length}</strong></header>{urgent.length ? <div>{urgent.slice(0, 6).map((view) => <article key={view.leadId} className={`is-priority-${view.urgency.rank}`}><i /><div><strong>{copy.urgency[view.urgency.type]}</strong><span>{view.businessName}</span></div><b>{view.lead.leadScore || '—'}</b></article>)}</div> : <p className="crm-v2__empty">{copy.noUrgent}</p>}</section>
     <section className="crm-v2__revenue" ref={revenueRef}><header><span>03</span><h2>{finish.revenue}</h2></header><div>{[[finish.openProposals, revenue.openProposals], [finish.proposalValue, `₪${revenue.proposalValue.toLocaleString()}`], [finish.wonDeals, revenue.wonDeals], [finish.paidRevenue, `₪${revenue.paidRevenue.toLocaleString()}`], [finish.awaitingPayment, revenue.awaitingPayment]].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div></section>
     <section className="crm-v2__followups" ref={followUpsRef}><header><span>04</span><h2>{copy.followUpBoard}</h2></header><nav>{tabs.map(([key, label]) => <button type="button" className={followUpTab === key ? 'is-active' : ''} key={key} onClick={() => setFollowUpTab(key)}>{label} <b>{followUpGroups[key].length}</b></button>)}</nav><div>{followUpGroups[followUpTab].length ? followUpGroups[followUpTab].map((view) => <article key={view.leadId}><strong>{view.businessName}</strong><span>{view.crm.nextFollowUp || copy.none}</span><button type="button" onClick={() => onAction?.('call', view.lead)} disabled={!view.phone}>{copy.call}</button></article>) : <p>{copy.noItems}</p>}</div></section>
-    <section className="crm-v2__pipeline" ref={pipelineRef} dir="rtl"><header><span>05</span><h2>{PIPELINE_COPY.pipeline}</h2><div className="crm-v2__pipeline-actions"><button type="button" className="crm-v2__add-lead crm-v2__add-lead--secondary" onClick={() => setShowGoogleMapsImport(true)}>{PIPELINE_COPY.importGoogleMaps}</button><button type="button" className="crm-v2__add-lead" onClick={() => setShowManualLeadForm(true)}>{PIPELINE_COPY.addLeadManually}</button></div></header><PipelineFilterSort leads={leads} filters={pipelineFilters} onChange={setPipelineFilters} onReset={resetPipelineFilters} open={pipelineFilterOpen} onOpenChange={setPipelineFilterOpen} visibleCount={pipelineFilteredViews.length} totalCount={views.length} />{pipelineFilteredViews.length ? <div className="crm-v2__stages"><div className="crm-v2__stages-row crm-v2__stages-row--primary">{stages.slice(0, 4).map((stageViews, index) => <PipelineColumn key={CRM_STAGES[index]} stageId={CRM_STAGES[index]} stageIndex={index} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} onDemoImage={setDemoImageView} mediaRevision={mediaRevision} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={setSelectedPipelineLeadId} isDropTarget={dragOverStage === CRM_STAGES[index]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} />)}</div><div className="crm-v2__stages-row crm-v2__stages-row--secondary">{stages.slice(4).map((stageViews, index) => { const stageIndex = index + 4; return <PipelineColumn key={CRM_STAGES[stageIndex]} stageId={CRM_STAGES[stageIndex]} stageIndex={stageIndex} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} onDemoImage={setDemoImageView} mediaRevision={mediaRevision} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={setSelectedPipelineLeadId} isDropTarget={dragOverStage === CRM_STAGES[stageIndex]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} /> })}</div></div> : <p className="crm-v2__empty">{pipelineEmptyMessage}</p>}</section>
+    <section className="crm-v2__pipeline" ref={pipelineRef} dir="rtl"><header><span>05</span><h2>{PIPELINE_COPY.pipeline}</h2><div className="crm-v2__pipeline-actions"><button type="button" className="crm-v2__add-lead crm-v2__add-lead--secondary" onClick={() => setShowGoogleMapsImport(true)}>{PIPELINE_COPY.importGoogleMaps}</button><button type="button" className="crm-v2__add-lead" onClick={() => setShowManualLeadForm(true)}>{PIPELINE_COPY.addLeadManually}</button></div></header><PipelineFilterSort leads={leads} filters={pipelineFilters} onChange={setPipelineFilters} onReset={resetPipelineFilters} open={pipelineFilterOpen} onOpenChange={setPipelineFilterOpen} visibleCount={pipelineFilteredViews.length} totalCount={views.length} />{pipelineFilteredViews.length ? <div className="crm-v2__stages"><div className="crm-v2__stages-row crm-v2__stages-row--primary">{stages.slice(0, 4).map((stageViews, index) => <PipelineColumn key={CRM_STAGES[index]} stageId={CRM_STAGES[index]} stageIndex={index} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={setEditingView} onDemoImage={setDemoImageView} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={setSelectedPipelineLeadId} isDropTarget={dragOverStage === CRM_STAGES[index]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} />)}</div><div className="crm-v2__stages-row crm-v2__stages-row--secondary">{stages.slice(4).map((stageViews, index) => { const stageIndex = index + 4; return <PipelineColumn key={CRM_STAGES[stageIndex]} stageId={CRM_STAGES[stageIndex]} stageIndex={stageIndex} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={setEditingView} onDemoImage={setDemoImageView} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={setSelectedPipelineLeadId} isDropTarget={dragOverStage === CRM_STAGES[stageIndex]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} /> })}</div></div> : <p className="crm-v2__empty">{pipelineEmptyMessage}</p>}</section>
     {showManualLeadForm && <ManualLeadForm existingLeads={leads} useLegacyManualStore={false} onClose={() => setShowManualLeadForm(false)} onSave={(lead, notes) => { if (onAddLead?.(lead, notes)) setShowManualLeadForm(false) }} />}
     {showGoogleMapsImport && <GoogleMapsImportForm existingLeads={leads} onClose={() => setShowGoogleMapsImport(false)} onSave={(lead, notes, options) => { if (onAddLead?.(lead, notes, options)) setShowGoogleMapsImport(false) }} />}
-    {editingView && <LeadEditForm lead={editingView.lead} crm={editingView.crm} stageLabels={copy.stages} onClose={() => setEditingView(null)} onSave={(leadUpdates, crmUpdates) => { const result = onUpdateLead?.(editingView.leadId, leadUpdates, crmUpdates); if (result?.ok) setEditingView(null); return result }} />}
-    {mediaView && <LeadMediaModal lead={mediaView.lead} onClose={() => setMediaView(null)} onChanged={() => setMediaRevision((value) => value + 1)} />}
-    {demoImageView && <DemoImageModal lead={demoImageView.lead} onClose={() => setDemoImageView(null)} onChanged={() => setMediaRevision((value) => value + 1)} />}
+    {editingView && <LeadEditForm key={editingView.leadId} lead={editingView.lead} crm={editingView.crm} stageLabels={copy.stages} onClose={() => setEditingView(null)} onPersistLeadFields={persistLeadFields} onSave={saveLeadEdit} onManageImages={openLeadMediaFromEdit} />}
+    {mediaView && <LeadMediaModal lead={mediaView.lead} onClose={() => setMediaView(null)} />}
+    {demoImageView && <DemoImageModal lead={demoImageView.lead} onClose={() => setDemoImageView(null)} />}
   </section>
 }

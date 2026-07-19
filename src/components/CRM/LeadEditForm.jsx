@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
 import { CRM_STAGES } from '../LeadCRM/crmStorage'
+import LeadSalesTrackingFields from './LeadSalesTrackingFields'
+import { buildLeadSalesTrackingValues, salesTrackingFormPayload } from '../../services/leadSalesTracking'
 import '../ManualLead/ManualLeadForm.css'
 
 function toFormValues(lead = {}, crm = {}) {
@@ -19,16 +21,26 @@ function toFormValues(lead = {}, crm = {}) {
     notes: crm.notes || '',
     status: crm.status || 'new',
     nextFollowUp: crm.nextFollowUp || '',
+    ...buildLeadSalesTrackingValues(lead),
   }
 }
 
-export default function LeadEditForm({ lead, crm, stageLabels = [], onSave, onClose }) {
+export default function LeadEditForm({ lead, crm, stageLabels = [], onSave, onPersistLeadFields, onManageImages, onClose }) {
   const { t } = useLanguage()
   const [values, setValues] = useState(() => toFormValues(lead, crm))
   const [error, setError] = useState('')
 
   function update(field, value) {
     setValues((current) => ({ ...current, [field]: value }))
+  }
+
+  function persistSalesField(field, value) {
+    if (!onPersistLeadFields) return
+    const nextValues = { ...values, [field]: value }
+    const result = onPersistLeadFields(salesTrackingFormPayload(nextValues))
+    if (result?.ok === false) {
+      setError(result?.reason === 'duplicate-lead' ? t('manualDuplicateLead') : t('manualDuplicatePhone'))
+    }
   }
 
   function submit(event) {
@@ -50,6 +62,7 @@ export default function LeadEditForm({ lead, crm, stageLabels = [], onSave, onCl
       reviewsCount: values.reviewsCount,
       mapsUrl: values.mapsUrl,
       source: values.source,
+      ...salesTrackingFormPayload(values),
     }, {
       notes: values.notes,
       status: values.status,
@@ -77,11 +90,16 @@ export default function LeadEditForm({ lead, crm, stageLabels = [], onSave, onCl
           <label>{t('manualSource')}<input value={values.source} onChange={(event) => update('source', event.target.value)} /></label>
           <label>{t('crmStatus')}<select value={values.status} onChange={(event) => update('status', event.target.value)}>{CRM_STAGES.map((stage, index) => <option key={stage} value={stage}>{stageLabels[index] || stage}</option>)}</select></label>
           <label>{t('crmNextFollowUp')}<input type="date" value={values.nextFollowUp} onChange={(event) => update('nextFollowUp', event.target.value)} /></label>
+          <LeadSalesTrackingFields values={values} onChange={update} onPersistField={persistSalesField} />
           <label className="manual-lead-wide">{t('manualNotes')}<textarea rows="3" value={values.notes} onChange={(event) => update('notes', event.target.value)} /></label>
           <label className="manual-lead-wide">{t('manualMapsUrl')}<input type="url" value={values.mapsUrl} onChange={(event) => update('mapsUrl', event.target.value)} /></label>
         </div>
         {error && <p className="manual-lead-error">{error}</p>}
-        <footer><button type="submit">{t('saveLeadChanges')}</button><button type="button" onClick={onClose}>{t('cancel')}</button></footer>
+        <footer>
+          <button type="submit">{t('saveLeadChanges')}</button>
+          {onManageImages ? <button type="button" onClick={onManageImages}>{t('manageImages')}</button> : null}
+          <button type="button" onClick={onClose}>{t('cancel')}</button>
+        </footer>
       </form>
     </div>
   )

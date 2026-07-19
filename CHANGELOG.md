@@ -4,8 +4,14 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ## Unreleased
 
+### Added
+
+- Lead model sales tracking fields on every real lead record: `messageVersion`, `messageSentAt`, `demoOpenCount`, `firstDemoOpenAt`, `lastDemoOpenAt`, `lastContactAt`, `nextAction`, `nextActionDate`, and `salesStatus` (`new`, `message_sent`, `demo_opened`, `in_call`, `proposal_sent`, `follow_up`, `won`, `lost`). Existing leads receive defaults via `enrichLeadSalesTracking` on load and a one-time migration key `bs-hunter-lead-sales-tracking-migration-v1`.
+- LeadEditForm (Edit Lead dialog from Sales Pipeline): bordered **Sales Tracking** fieldset (`data-testid="lead-sales-tracking"`) directly above Notes; pipeline card click opens this dialog.
+
 ### Changed
 
+- Lead edit cleanup: removed unreachable legacy full CRM lead-card edit UI; pipeline cards renamed to `PipelineLeadCard`; Sales and CRM both open the same `LeadEditForm`; **Manage Images** moved to the edit dialog footer.
 - CRM pipeline filter UI: replaced category and import-batch chip rows with one compact Hebrew RTL `סינון ומיון` popover (presets, category/city/batch dropdowns, sort, result counter, reset, active indicator).
 - CRM import batch filtering: shared Apify batch object per search (`batchId`, `batchLabel`, `businessType`, `city`, `country`, `importedAt`, `importedDate`, `source: Apify`); legacy leads migrate in place with `legacyBatch: true` and derived `batchLabel`; compact batch tag on cards.
 - CRM pipeline category filtering: Hebrew filter bar above the pipeline with live counts; display-only (mission, urgent, revenue, and follow-up sections stay unfiltered).

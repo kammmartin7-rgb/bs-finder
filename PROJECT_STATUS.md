@@ -2,7 +2,7 @@
 
 ## Last Updated
 
-2026-07-18 IDT
+2026-07-19 IDT
 
 ## Current Main Goal
 
@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS with one shared CRM and a stable 
 
 ## Current Active Task
 
-Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google Maps import, editing, images, server restart, and that no leads disappear.
+Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google Maps import, editing, images, server restart, and that no leads disappear. Sales Command Center (BSH-009) paused until Task 1 is deployed.
 
 ## Last Completed Task
 
-CRM pipeline compact filter-and-sort control: replaced category/batch chip rows with one Hebrew RTL "סינון ומיון" popover (presets, category/city/batch dropdowns, sort options, result counter, reset). Build and lint passed.
+Lead edit flow cleanup (BSH-008): removed unreachable legacy full lead-card edit UI from `CRM.jsx`; Sales and CRM share one `LeadEditForm` dialog with Sales Tracking above Notes and Manage Images in the footer; build and lint passed.
 
 ## Project Rules (Current)
 
@@ -48,8 +48,9 @@ CRM pipeline compact filter-and-sort control: replaced category/batch chip rows 
 - BS Hunter with paid, free Google Maps, CSV import, demo, and manual lead modes.
 - Paid search fails safely when no production API/billing is configured; it never substitutes fake leads.
 - Manual real-lead entry, duplicate prevention, unique IDs, and canonical `bs-hunter-real-leads` persistence via `leadPersistence.js`.
+- Real lead records include sales tracking fields (`messageVersion`, `messageSentAt`, `demoOpenCount`, `firstDemoOpenAt`, `lastDemoOpenAt`, `lastContactAt`, `nextAction`, `nextActionDate`, `salesStatus`) with backward-compatible defaults and one-time migration on load.
 - CRM/Sales Pipeline manual lead entry and Google Maps paste import with optional images into per-business Media Library.
-- CRM lead cards: click-to-edit, optional fields when present, LeadEditForm, Manage Images, persisted updates via `updatePersistedLead`.
+- CRM lead cards: click-to-edit opens the shared `LeadEditForm`; Manage Images opens from the edit dialog footer; persisted updates via `updatePersistedLead`; Sales Tracking fieldset (`data-testid="lead-sales-tracking"`) sits directly above Notes with immediate save on blur/change.
 - LeadID-only joins for CRM, actions, proposals, demos, media, and real website projects with legacy migration on load.
 - CRM V2 pipeline, urgency ordering, follow-up center, revenue summary, search/filter/sort, and four-language UI.
 - Real Website Builder V1 with Image Manager, Media Library, templates, previews, and localStorage persistence.
@@ -72,7 +73,7 @@ CRM pipeline compact filter-and-sort control: replaced category/batch chip rows 
 
 ## Known Problems
 
-- Lead persistence must be re-verified end-to-end after navigation and pipeline UI changes (active task); pipeline stage selector and DnD persistence verified; full E2E script still fails on pipeline Edit Lead button (cards open edit on click, not via button).
+- Lead persistence must be re-verified end-to-end after lead-edit cleanup (active task); pipeline card click opens `LeadEditForm` directly (no separate Edit Lead button).
 - Paid lead search requires provider billing and a deployed backend.
 - Production deployment is prepared but not smoke-tested on a public URL.
 - `VITE_PUBLIC_APP_URL` currently resolves to localhost; configure the public Vercel origin before sending customer demo links.
@@ -120,6 +121,7 @@ node scripts/verify-lead-e2e.mjs
 - `src/components/BusinessOS/NavigationHub.jsx` — Businesses, BS Finder workspace, BS Funds, Finance, Documents, and asset hubs.
 - `src/components/CRM/` — shared CRM & Sales Pipeline, lead cards, edit form, media modal, selectors.
 - `src/services/leadPersistence.js` — canonical real-lead store and change notifications.
+- `src/services/leadSalesTracking.js`, `leadSalesTrackingMigration.js` — lead-level sales tracking fields and one-time backfill.
 - `src/services/leadId.js`, `leadRelationMigration.js` — LeadID normalization and legacy migration.
 - `src/components/GoogleMapsImport/` — Google Maps paste import for CRM pipeline.
 - `src/components/Projects/` — project status dashboard and markdown-mirrored project facts.

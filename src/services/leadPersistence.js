@@ -13,8 +13,10 @@ import { calculateLeadScore } from '../utils/leadScore'
 import { ensureStableLeadId, getLeadId } from './leadId'
 import { migrateAllLeadRelations, scanOrphanCrmKeys } from './leadRelationMigration'
 import { enrichLeadCategory } from './leadCategory'
+import { enrichLeadSalesTracking, pickSalesTrackingUpdates } from './leadSalesTracking'
 import { runLeadCategoryMigrationOnce } from './leadCategoryMigration'
 import { runLeadBatchMigrationOnce } from './leadBatchMigration'
+import { runLeadSalesTrackingMigrationOnce } from './leadSalesTrackingMigration'
 
 export const REAL_LEADS_STORAGE_KEY = 'bs-hunter-real-leads'
 export const LEGACY_MANUAL_LEADS_STORAGE_KEY = 'bs-hunter-manual-leads'
@@ -54,9 +56,10 @@ function cleanText(value) {
 function enrichLead(lead) {
   const normalized = ensureStableLeadId(lead)
   const categorized = enrichLeadCategory(normalized)
-  const nextLead = categorized.leadScore !== undefined && categorized.leadScore !== null
-    ? categorized
-    : { ...categorized, leadScore: calculateLeadScore(categorized) }
+  const tracked = enrichLeadSalesTracking(categorized)
+  const nextLead = tracked.leadScore !== undefined && tracked.leadScore !== null
+    ? tracked
+    : { ...tracked, leadScore: calculateLeadScore(tracked) }
   return nextLead
 }
 
@@ -244,6 +247,7 @@ export function loadPersistedLeads() {
   try {
     const migrationResult = runLeadCategoryMigrationOnce()
     const batchMigrationResult = runLeadBatchMigrationOnce()
+    const salesTrackingMigrationResult = runLeadSalesTrackingMigrationOnce()
     const primary = readPrimaryLeads()
     const recovered = recoverLeadsFromAllStorageKeys()
     const legacyPool = mergePersistedLeads([], [...readLegacyManualLeads(), ...recovered])
@@ -253,10 +257,15 @@ export function loadPersistedLeads() {
     if (
       migrationResult?.migrated > 0
       || batchMigrationResult?.migrated > 0
+      || salesTrackingMigrationResult?.migrated > 0
       || normalized.length !== primary.length
       || JSON.stringify(normalized) !== JSON.stringify(primary)
     ) {
-      normalized = savePersistedLeads(normalized, { notify: migrationResult?.migrated > 0 || batchMigrationResult?.migrated > 0 })
+      normalized = savePersistedLeads(normalized, {
+        notify: migrationResult?.migrated > 0
+          || batchMigrationResult?.migrated > 0
+          || salesTrackingMigrationResult?.migrated > 0,
+      })
     }
 
     migrateRelatedEntities(normalized)
@@ -370,6 +379,7 @@ function buildUpdatedLead(current = {}, leadUpdates = {}) {
 
   const nextLead = enrichLead({
     ...current,
+    ...pickSalesTrackingUpdates(leadUpdates),
     businessName: cleanText(leadUpdates.businessName ?? current.businessName),
     category: cleanText(leadUpdates.category ?? current.category),
     city: cleanText(leadUpdates.city ?? current.city),
