@@ -17,7 +17,7 @@ import { runLeadCategoryMigrationOnce } from './services/leadCategoryMigration'
 import { createIsraeliWhatsAppUrl } from './services/whatsapp'
 import { hasLeadAction, LEAD_ACTIONS, recordLeadAction, subscribeToLeadActionChanges } from './components/LeadCRM/leadActionStorage'
 import ShareableDemo from './components/WebsiteBuilder/ShareableDemo'
-import { createShareableDemoUrl, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
+import { createDemoOpenUrl, createShareableDemoUrl, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
 function hasValue(value) {
   return value !== null && value !== undefined && value !== ''
 }
@@ -496,7 +496,8 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
 
   const shareableDemoRoute = parseShareableDemoRoute()
   if (shareableDemoRoute) return <ShareableDemo route={shareableDemoRoute} />
-  const selectedDemoUrl = selectedDemoLead?.shareDemo ? createShareableDemoUrl(selectedDemoLead.shareDemo) : ''
+  const selectedDemoShareUrl = selectedDemoLead?.shareDemo ? createShareableDemoUrl(selectedDemoLead.shareDemo) : ''
+  const selectedDemoOpenUrl = selectedDemoLead?.shareDemo ? createDemoOpenUrl(selectedDemoLead.shareDemo) : ''
 
   return (
     <BusinessOS leads={persistedLeads} realWebsiteLead={selectedRealWebsiteLead} onDashboardFilterChange={setDashboardFilter} onMissionAction={handleMissionAction} onCrmAction={handleCrmAction} onRefreshLeads={refreshLeadsFromStorage} onAddLead={handleAddLead} onUpdateLead={handleUpdateLead}>
@@ -883,8 +884,8 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
           }}
         >
           <div className="demo-share-toolbar">
-            <button type="button" className="mini-button" onClick={async () => { try { await navigator.clipboard.writeText(selectedDemoUrl); setDemoLinkNotice('Demo link copied.') } catch { setDemoLinkNotice('Could not copy. Open the demo and copy the browser URL.') } }}>Copy Demo Link</button>
-            <button type="button" className="mini-button" onClick={() => window.open(selectedDemoUrl, '_blank', 'noopener,noreferrer')}>Open Demo</button>
+            <button type="button" className="mini-button" onClick={async () => { try { await navigator.clipboard.writeText(selectedDemoShareUrl); setDemoLinkNotice('Demo link copied.') } catch { setDemoLinkNotice('Could not copy. Open the demo and copy the browser URL.') } }}>Copy Demo Link</button>
+            <button type="button" className="mini-button" onClick={() => window.open(selectedDemoOpenUrl, '_blank', 'noopener,noreferrer')}>Open Demo</button>
             <button type="button" className="mini-button" onClick={() => setSelectedDemoLead(null)}>{t('close')}</button>
             {demoLinkNotice && <span>{demoLinkNotice}</span>}
           </div>

@@ -15,7 +15,7 @@ import DemoImageModal from './DemoImageModal'
 import { loadLeadMediaLibrary } from '../RealWebsiteBuilder/realWebsiteStorage'
 import { imageSource } from '../RealWebsiteBuilder/imageProcessing'
 import { createIsraeliWhatsAppUrl } from '../../services/whatsapp'
-import { createShareableDemoUrl, loadShareableDemo } from '../WebsiteBuilder/demoStorage'
+import { createDemoOpenUrl, createShareableDemoUrl, loadShareableDemo } from '../WebsiteBuilder/demoStorage'
 import PipelineFilterSort from './PipelineFilterSort'
 import {
   applyPipelineFilters,
@@ -136,7 +136,7 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImag
       stopCardOpen(event)
       const existingDemo = demoRecord || loadShareableDemo(view.lead)
       if (existingDemo) {
-        window.open(createShareableDemoUrl(existingDemo), '_blank', 'noopener,noreferrer')
+        window.open(createDemoOpenUrl(existingDemo), '_blank', 'noopener,noreferrer')
         return
       }
       const createdDemo = onAction?.('demo', view.lead)
