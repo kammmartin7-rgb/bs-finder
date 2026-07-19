@@ -14,7 +14,7 @@ Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google M
 
 ## Last Completed Task
 
-Lead edit flow cleanup (BSH-008): removed unreachable legacy full lead-card edit UI from `CRM.jsx`; Sales and CRM share one `LeadEditForm` dialog with Sales Tracking above Notes and Manage Images in the footer; build and lint passed.
+Fix lead load stack overflow: stopped synchronous persistence-change reload loop that blocked 149+ stored leads from rendering after the sales-tracking deploy; build and lint passed; no localStorage data changes.
 
 ## Project Rules (Current)
 
@@ -73,7 +73,7 @@ Lead edit flow cleanup (BSH-008): removed unreachable legacy full lead-card edit
 
 ## Known Problems
 
-- Lead persistence must be re-verified end-to-end after lead-edit cleanup (active task); pipeline card click opens `LeadEditForm` directly (no separate Edit Lead button).
+- Lead persistence must be re-verified end-to-end after the load-loop fix (active task); pipeline card click opens `LeadEditForm` directly (no separate Edit Lead button).
 - Paid lead search requires provider billing and a deployed backend.
 - Production deployment is prepared but not smoke-tested on a public URL.
 - `VITE_PUBLIC_APP_URL` currently resolves to localhost; configure the public Vercel origin before sending customer demo links.

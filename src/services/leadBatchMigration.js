@@ -33,7 +33,7 @@ export function runLeadBatchMigrationOnce() {
   if (window.localStorage.getItem(LEAD_BATCH_MIGRATION_KEY)) {
     try {
       const cached = JSON.parse(window.localStorage.getItem(LEAD_BATCH_MIGRATION_RESULT_KEY) || 'null')
-      if (cached?.ok && cached.migrated > 0) return cached
+      if (cached?.ok && cached.migrated > 0) return { ...cached, alreadyMigrated: true }
     } catch {
       // Fall through and attempt migration again when the cached result is invalid.
     }
@@ -83,7 +83,7 @@ export function runLeadBatchMigrationOnce() {
     window.localStorage.setItem(LEAD_BATCH_MIGRATION_RESULT_KEY, JSON.stringify(result))
   }
 
-  notifyLeadPersistenceChange()
+  if (migrated > 0) notifyLeadPersistenceChange()
 
   if (import.meta.env.DEV || migrated > 0) {
     console.info('[bs-hunter] Lead batch migration complete:', result)

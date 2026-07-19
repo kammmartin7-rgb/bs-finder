@@ -254,17 +254,20 @@ export function loadPersistedLeads() {
     const merged = migrateLegacyLeadStores(mergePersistedLeads(legacyPool, primary))
     let normalized = ensurePlumberLeadInCanonicalStore(merged.map(enrichLead))
 
+    const categoryWrote = migrationResult?.migrated > 0 && migrationResult?.alreadyMigrated !== true
+    const batchWrote = batchMigrationResult?.migrated > 0 && batchMigrationResult?.alreadyMigrated !== true
+    const salesTrackingWrote = salesTrackingMigrationResult?.migrated > 0
+      && salesTrackingMigrationResult?.alreadyMigrated !== true
+
     if (
-      migrationResult?.migrated > 0
-      || batchMigrationResult?.migrated > 0
-      || salesTrackingMigrationResult?.migrated > 0
+      categoryWrote
+      || batchWrote
+      || salesTrackingWrote
       || normalized.length !== primary.length
       || JSON.stringify(normalized) !== JSON.stringify(primary)
     ) {
       normalized = savePersistedLeads(normalized, {
-        notify: migrationResult?.migrated > 0
-          || batchMigrationResult?.migrated > 0
-          || salesTrackingMigrationResult?.migrated > 0,
+        notify: categoryWrote || batchWrote || salesTrackingWrote,
       })
     }
 

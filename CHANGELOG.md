@@ -9,6 +9,10 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Lead model sales tracking fields on every real lead record: `messageVersion`, `messageSentAt`, `demoOpenCount`, `firstDemoOpenAt`, `lastDemoOpenAt`, `lastContactAt`, `nextAction`, `nextActionDate`, and `salesStatus` (`new`, `message_sent`, `demo_opened`, `in_call`, `proposal_sent`, `follow_up`, `won`, `lost`). Existing leads receive defaults via `enrichLeadSalesTracking` on load and a one-time migration key `bs-hunter-lead-sales-tracking-migration-v1`.
 - LeadEditForm (Edit Lead dialog from Sales Pipeline): bordered **Sales Tracking** fieldset (`data-testid="lead-sales-tracking"`) directly above Notes; pipeline card click opens this dialog.
 
+### Fixed
+
+- Lead load stack overflow after sales-tracking deploy: cached one-time migration results exposed `migrated > 0` on every load, so `loadPersistedLeads()` re-saved and emitted `bs-hunter-lead-persistence-change` synchronously while `App.jsx` was subscribed—creating an infinite reload loop and `RangeError: Maximum call stack size exceeded` with large lead sets (e.g. 149 leads). Fixed by treating cached migration hits as `alreadyMigrated: true` and notifying only when a migration actually writes in the current load.
+
 ### Changed
 
 - Lead edit cleanup: removed unreachable legacy full CRM lead-card edit UI; pipeline cards renamed to `PipelineLeadCard`; Sales and CRM both open the same `LeadEditForm`; **Manage Images** moved to the edit dialog footer.

@@ -32,7 +32,7 @@ export function runLeadSalesTrackingMigrationOnce() {
   if (window.localStorage.getItem(LEAD_SALES_TRACKING_MIGRATION_KEY)) {
     try {
       const cached = JSON.parse(window.localStorage.getItem(LEAD_SALES_TRACKING_MIGRATION_RESULT_KEY) || 'null')
-      if (cached?.ok) return cached
+      if (cached?.ok) return { ...cached, alreadyMigrated: true }
     } catch {
       // Fall through and attempt migration again when the cached result is invalid.
     }
@@ -76,7 +76,7 @@ export function runLeadSalesTrackingMigrationOnce() {
     window.localStorage.setItem(LEAD_SALES_TRACKING_MIGRATION_RESULT_KEY, JSON.stringify(result))
   }
 
-  notifyLeadPersistenceChange()
+  if (migrated > 0) notifyLeadPersistenceChange()
 
   if (import.meta.env.DEV || migrated > 0) {
     console.info('[bs-hunter] Lead sales tracking migration complete:', result)
