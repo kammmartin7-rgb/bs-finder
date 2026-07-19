@@ -45,9 +45,9 @@ export function createCrmLeadView(lead, actionHistory = null) {
 }
 
 export function getCrmRevenueSummary(views) {
-  const activeProposalViews = views.filter((view) => view.proposal.exists && !['paid', 'website-in-progress', 'completed', 'lost'].includes(view.stage))
-  const wonViews = views.filter((view) => ['deal-won', 'paid', 'website-in-progress', 'completed'].includes(view.stage))
-  const paidViews = views.filter((view) => ['paid', 'website-in-progress', 'completed'].includes(view.stage))
+  const activeProposalViews = views.filter((view) => view.proposal.exists && !['deal-won', 'lost'].includes(view.stage))
+  const wonViews = views.filter((view) => view.stage === 'deal-won')
+  const paidViews = wonViews
   const value = (view) => Math.max(0, Number(view.dealAmount || view.proposalAmount) || 0)
   return {
     openProposals: activeProposalViews.length,
@@ -98,7 +98,7 @@ export function getFollowUpGroups(views, today = new Date().toISOString().slice(
 
 export function getTodayMissionActuals(views, today = new Date().toISOString().slice(0, 10)) {
   const actions = views.flatMap((view) => view.actions).filter((action) => action.date === today)
-  const outreachTypes = new Set([LEAD_ACTIONS.CALL_OPENED, LEAD_ACTIONS.WHATSAPP_OPENED, LEAD_ACTIONS.DEMO_SITE_OPENED, LEAD_ACTIONS.PROPOSAL_OPENED, LEAD_ACTIONS.SALES_PITCH_OPENED])
+  const outreachTypes = new Set([LEAD_ACTIONS.CALL_OPENED, LEAD_ACTIONS.WHATSAPP_OPENED, LEAD_ACTIONS.DEMO_SITE_OPENED, LEAD_ACTIONS.PROPOSAL_OPENED, LEAD_ACTIONS.PROPOSAL_SENT, LEAD_ACTIONS.SALES_PITCH_OPENED])
   return {
     leads: views.filter((view) => String(view.lead.createdAt || view.lead.addedAt || view.lead.dateAdded || '').slice(0, 10) === today).length,
     outreach: actions.filter((action) => outreachTypes.has(action.actionType)).length,

@@ -16,6 +16,7 @@ import { loadPersistedLeads, mergePersistedLeads, persistLeadCollection, addPers
 import { runLeadCategoryMigrationOnce } from './services/leadCategoryMigration'
 import { createIsraeliWhatsAppUrl } from './services/whatsapp'
 import { hasLeadAction, LEAD_ACTIONS, recordLeadAction } from './components/LeadCRM/leadActionStorage'
+import { getProposalSummary } from './components/proposalStorage'
 import ShareableDemo from './components/WebsiteBuilder/ShareableDemo'
 import { createDemoOpenUrl, createShareableDemoUrl, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
 function hasValue(value) {
@@ -281,7 +282,6 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     } else if (action === 'send-demo') {
       trackRealLeadAction(lead, LEAD_ACTIONS.DEMO_SENT)
     } else if (action === 'proposal') {
-      trackRealLeadAction(lead, LEAD_ACTIONS.PROPOSAL_OPENED)
       setSelectedBusiness(lead)
       setShowProposal(true)
     } else if (action === 'real-website') {
@@ -800,12 +800,11 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
       type="button"
       className="mini-button"
       onClick={() => {
-        trackRealLeadAction(lead, LEAD_ACTIONS.PROPOSAL_OPENED)
         setSelectedBusiness(lead)
         setShowProposal(true)
       }}
     >
-      📄 {t('proposal')}{hasLeadAction(lead, LEAD_ACTIONS.PROPOSAL_OPENED) && !isDemoLead(lead) ? ' ✓' : ''}
+      📄 {t('proposal')}{(hasLeadAction(lead, LEAD_ACTIONS.PROPOSAL_SENT) || getProposalSummary(lead).exists) && !isDemoLead(lead) ? ' ✓' : ''}
     </button>
 
     <button

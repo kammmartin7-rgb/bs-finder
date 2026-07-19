@@ -31,7 +31,7 @@ export function getLeadDashboardData(lead) {
   return {
     crm: { ...crm, status: normalizeCrmStage(crm.status) },
     hasDemoSite: lead.demoSiteCreated === true || lead.hasDemoSite === true || hasLeadAction(lead, LEAD_ACTIONS.DEMO_SITE_OPENED),
-    hasProposal: lead.proposalCreated === true || lead.proposalSent === true || hasLeadAction(lead, LEAD_ACTIONS.PROPOSAL_OPENED),
+    hasProposal: lead.proposalCreated === true || lead.proposalSent === true || hasLeadAction(lead, LEAD_ACTIONS.PROPOSAL_SENT) || hasLeadAction(lead, LEAD_ACTIONS.PROPOSAL_OPENED),
   }
 }
 
@@ -45,11 +45,11 @@ export function matchesDashboardFilter(lead, filter) {
     case DASHBOARD_FILTERS.REAL_LEADS: return true
     case DASHBOARD_FILTERS.HOT_LEADS: return Number(lead.leadScore) >= 80
     case DASHBOARD_FILTERS.DEMO_SITES: return hasDemoSite
-    case DASHBOARD_FILTERS.PROPOSALS: return hasProposal || ['proposal-sent', 'follow-up', 'deal-won'].includes(stage)
+    case DASHBOARD_FILTERS.PROPOSALS: return hasProposal || ['proposal-sent', 'negotiation', 'follow-up', 'deal-won'].includes(stage)
     case DASHBOARD_FILTERS.FOLLOW_UPS: return Boolean(crm.nextFollowUp)
-    case DASHBOARD_FILTERS.FOLLOW_UPS_DUE: return Boolean(crm.nextFollowUp && crm.nextFollowUp <= todayIso() && !['completed', 'lost'].includes(stage))
+    case DASHBOARD_FILTERS.FOLLOW_UPS_DUE: return Boolean(crm.nextFollowUp && crm.nextFollowUp <= todayIso() && !['lost', 'deal-won'].includes(stage))
     case DASHBOARD_FILTERS.NEW_LEADS_TODAY: return String(lead.createdAt || lead.addedAt || lead.dateAdded || '').slice(0, 10) === todayIso()
-    case DASHBOARD_FILTERS.ACTIVE_DEALS: return ['first-contact', 'demo-sent', 'proposal-sent', 'follow-up'].includes(stage)
+    case DASHBOARD_FILTERS.ACTIVE_DEALS: return ['first-contact', 'demo-created', 'demo-sent', 'proposal-sent', 'negotiation', 'follow-up'].includes(stage)
     case DASHBOARD_FILTERS.WON_DEALS: return ['deal-won', 'paid', 'website-in-progress', 'completed'].includes(stage)
     default: return true
   }

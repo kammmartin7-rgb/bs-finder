@@ -1,26 +1,15 @@
 // CRM metadata keyed exclusively by LeadID (lead.id).
 import { getLeadId } from '../../services/leadId'
 
+export { CRM_STAGES, normalizeCrmStage, STAGE_LABELS } from '../CRM/salesWorkflow'
+
 const STORAGE_PREFIX = 'bs-hunter-crm:'
 const CRM_CHANGE_EVENT = 'bs-hunter-crm-change'
-
-export const CRM_STAGES = ['new', 'first-contact', 'demo-sent', 'proposal-sent', 'follow-up', 'deal-won', 'paid', 'website-in-progress', 'completed', 'lost']
-
-const LEGACY_STAGE_MAP = {
-  contacted: 'first-contact',
-  'whatsapp-sent': 'first-contact',
-  negotiation: 'follow-up',
-  won: 'deal-won',
-}
-
-export function normalizeCrmStage(status) {
-  if (CRM_STAGES.includes(status)) return status
-  return LEGACY_STAGE_MAP[status] || 'new'
-}
 
 export const DEFAULT_CRM_RECORD = {
   status: 'new',
   notes: '',
+  notesHistory: [],
   nextFollowUp: '',
   dealAmount: '',
   proposalAmount: '',

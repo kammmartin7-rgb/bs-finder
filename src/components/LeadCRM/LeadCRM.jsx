@@ -4,6 +4,8 @@ import { useLanguage } from '../../context/LanguageContext'
 import { CRM_STAGES, normalizeCrmStage } from '../CRM/crmSelectors'
 import { getLeadId } from '../../services/leadId'
 import { loadLeadCrm, saveLeadCrm, subscribeToCrmChanges } from './crmStorage'
+import LeadNotesEditor from '../CRM/LeadNotesEditor'
+import { getLeadNotesHistory } from '../../services/leadNotesHistory'
 import './LeadCRM.css'
 
 function formatStageLabel(stage) {
@@ -40,6 +42,8 @@ export function LeadCRM({ lead }) {
   }
 
   const currentStage = normalizeCrmStage(record.status)
+  const notesHistory = getLeadNotesHistory(record)
+  const view = { leadId, crm: record, lead }
 
   return (
     <div className="lead-crm">
@@ -52,15 +56,21 @@ export function LeadCRM({ lead }) {
         </select>
       </label>
 
-      <label>
+      <div className="lead-crm__notes">
         <span>{t('crmNotes')}</span>
-        <textarea
-          rows="2"
-          value={record.notes}
-          placeholder={t('crmNotesPlaceholder')}
-          onChange={(event) => updateRecord('notes', event.target.value)}
+        {notesHistory.length ? (
+          <ol className="lead-crm__notes-history">
+            {notesHistory.map((note) => (
+              <li key={note.id}><p>{note.text}</p><small>{note.date} · {note.time}</small></li>
+            ))}
+          </ol>
+        ) : null}
+        <LeadNotesEditor
+          view={view}
+          copy={{ addNote: t('manualNotes'), notesPlaceholder: t('crmNotesPlaceholder') }}
+          onSaved={() => setRecord(loadLeadCrm(leadId))}
         />
-      </label>
+      </div>
 
       <label>
         <span>{t('crmNextFollowUp')}</span>

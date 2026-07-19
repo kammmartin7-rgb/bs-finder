@@ -1,6 +1,7 @@
 // Single source of truth for real leads: localStorage key bs-hunter-real-leads.
 import { isDemoLead } from '../components/BusinessOS/dashboardFilters'
 import { ensureCrmRecordsForLeads, loadLeadCrm, saveLeadCrm } from '../components/LeadCRM/crmStorage'
+import { appendLeadNote } from './leadNotesHistory'
 import {
   createManualLead,
   findDuplicateLeadIndex,
@@ -384,7 +385,7 @@ export function addPersistedLead(_existingLeads = [], lead, { notes = '', images
   const leadId = getLeadId(nextLead)
 
   if (crmNotes && leadId) {
-    saveLeadCrm(leadId, { ...loadLeadCrm(leadId), notes: crmNotes })
+    appendLeadNote(leadId, crmNotes, loadLeadCrm(leadId))
   }
 
   if (images.length && leadId) {
@@ -453,7 +454,6 @@ export function updatePersistedLead(leadId, leadUpdates = {}, { crm = {} } = {})
   const existingCrm = loadLeadCrm(leadId)
   const nextCrm = {
     ...existingCrm,
-    notes: crm.notes ?? existingCrm.notes,
     nextFollowUp: crm.nextFollowUp ?? existingCrm.nextFollowUp,
     status: crm.status ?? existingCrm.status,
   }

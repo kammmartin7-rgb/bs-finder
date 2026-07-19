@@ -40,8 +40,8 @@ export default function DashboardHome({ leads, onNavigate, onOpenScreen, theme, 
     const weighted = tasks.reduce((sum, task) => sum + taskProgress(task), 0); const overallProgress = tasks.length ? Math.round(weighted / tasks.length) : 0
     const today = new Date().toISOString().slice(0, 10)
     const newToday = realLeads.filter((lead) => String(lead.createdAt || lead.addedAt || lead.dateAdded || '').slice(0, 10) === today).length
-    const activeDeals = leadData.filter(({ crm }) => ['first-contact', 'demo-sent', 'proposal-sent', 'follow-up'].includes(crm.status)).length
-    const followUpsDue = leadData.filter(({ crm }) => crm.nextFollowUp && crm.nextFollowUp <= today && !['completed', 'lost', 'deal-won', 'paid', 'website-in-progress'].includes(crm.status)).length
+    const activeDeals = leadData.filter(({ crm }) => ['first-contact', 'demo-created', 'demo-sent', 'proposal-sent', 'negotiation', 'follow-up'].includes(crm.status)).length
+    const followUpsDue = leadData.filter(({ crm }) => crm.nextFollowUp && crm.nextFollowUp <= today && !['lost', 'deal-won', 'paid', 'website-in-progress', 'completed'].includes(crm.status)).length
     const tasksDueToday = open.filter((task) => String(task.dueDate || '').slice(0, 10) === today).length
     return { realLeads, leadData, open, mission, overallProgress, won: leadData.filter(({ crm }) => ['deal-won', 'paid', 'website-in-progress', 'completed'].includes(crm.status)).length, blocking: open.filter((task) => task.isBlocking).length, hot: realLeads.filter((lead) => Number(lead.leadScore) >= 80).length, newToday, activeDeals, followUpsDue, tasksDueToday }
   }, [leads, revision, tasks])

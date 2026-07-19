@@ -158,6 +158,7 @@ export function completeRoadmapTrackingTask(actionType) {
   const titleByAction = {
     'demo-site-opened': 'Improve demo site quality',
     'proposal-opened': 'Track proposal creation',
+    'proposal-sent': 'Track proposal creation',
     'whatsapp-opened': 'Track WhatsApp sending',
   }
   const targetTitle = titleByAction[actionType]

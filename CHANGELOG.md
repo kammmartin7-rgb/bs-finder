@@ -12,13 +12,19 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Lead model sales tracking fields on every real lead record: `messageVersion`, `messageSentAt`, `demoOpenCount`, `firstDemoOpenAt`, `lastDemoOpenAt`, `lastContactAt`, `nextAction`, `nextActionDate`, and `salesStatus` (`new`, `message_sent`, `demo_opened`, `in_call`, `proposal_sent`, `follow_up`, `won`, `lost`). Existing leads receive defaults via `enrichLeadSalesTracking` on load and a one-time migration key `bs-hunter-lead-sales-tracking-migration-v1`.
 - LeadEditForm (Edit Lead dialog from Sales Pipeline): bordered **Sales Tracking** fieldset (`data-testid="lead-sales-tracking"`) directly above Notes; pipeline card click opens this dialog.
 
-### Fixed
+### Changed
 
+- Lead customer file on Sales screen: `LeadCustomerFile.jsx` with business/sales sections, append-only `notesHistory` via `leadNotesHistory.js`, activity timeline from actions + notes, demo/proposal links; `LeadNotesEditor` append-only; `LeadEditForm` shows note history read-only.
+- Sales workflow redesigned (`salesWorkflow.js`, `salesWorkflowActions.js`): 9 pipeline stages as completed states; per-stage primary/secondary actions; manual ⬅/⏸/➡ navigation on every card; Send Demo and Save Proposal optionally advance stage after salesperson confirms.
 - Sales/CRM interaction slowness: cached `loadPersistedLeads`, CRM records, and lead-action history; removed full lead reload on screen change, window focus, lead-action events, and CRM mount; CRM-only stage updates no longer rewrite the entire lead array; Sales command data computed in one pass; pipeline cards memoized and demo lookups deferred until click.
+
+### Added
+
+- Sales Work Mode **Current Lead** panel (`CurrentLeadPanel.jsx`, `data-testid="current-lead-panel"`): sticky header on Sales screen with selected lead details and primary sales actions; Next Lead cycles through filtered/sorted visible pipeline leads without changing stage.
 
 ### Changed
 
-- Sales Screen Cleanup Audit: removed daily mission goals, duplicate urgent actions list, CRM revenue summary, redundant header search/stage/sort toolbar, and standalone follow-up section; dashboard deep-links scroll to the action center; pipeline filter/sort popover remains the sole pipeline filter UI.
+- CRM pipeline toolbar redesigned as **Lead Command Bar** (`LeadCommandBar.jsx`): compact search, Filter/Sort/Actions menus, and clickable KPI cards replace the single `סינון ומיון` popover; Google Maps import and manual add moved into Actions menu; category/city/batch/phone filters preserved in Filter advanced section.
 - Sales Action Center replaces **מרכז פיקוד מכירות** / **דורש טיפול עכשיו** / **מרכז מעקבים** with one category-filtered action queue above the pipeline.
 - Lead edit cleanup: removed unreachable legacy full CRM lead-card edit UI; pipeline cards renamed to `PipelineLeadCard`; Sales and CRM both open the same `LeadEditForm`; **Manage Images** moved to the edit dialog footer.
 - CRM pipeline filter UI: replaced category and import-batch chip rows with one compact Hebrew RTL `סינון ומיון` popover (presets, category/city/batch dropdowns, sort, result counter, reset, active indicator).

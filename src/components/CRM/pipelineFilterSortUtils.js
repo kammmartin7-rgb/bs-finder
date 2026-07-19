@@ -1,4 +1,6 @@
 import { isDemoLead } from '../BusinessOS/dashboardFilters'
+import { WON_STAGES } from './salesWorkflow'
+import { normalizeLeadDateOnly } from './salesTrackingSelectors'
 import {
   ALL_BATCHES_FILTER,
   ALL_LEADS_FILTER,
@@ -18,6 +20,14 @@ export const PIPELINE_FILTER_PRESETS = {
   NO_WEBSITE: 'no-website',
   WITH_WEBSITE: 'with-website',
   WITH_PHONE: 'with-phone',
+  SCORE_90: 'score-90',
+  SCORE_80: 'score-80',
+  NEW_LEADS: 'new-leads',
+  NEEDS_FOLLOWUP: 'needs-followup',
+  DEMO_SENT: 'demo-sent',
+  PROPOSAL_SENT: 'proposal-sent',
+  WON: 'won',
+  LOST: 'lost',
 }
 
 export const PIPELINE_SORT_OPTIONS = {
@@ -26,6 +36,9 @@ export const PIPELINE_SORT_OPTIONS = {
   NEWEST: 'newest',
   OLDEST: 'oldest',
   NAME_ASC: 'name-asc',
+  CITY_ASC: 'city-asc',
+  CATEGORY_ASC: 'category-asc',
+  SALES_STATUS: 'sales-status',
 }
 
 export const DEFAULT_PIPELINE_FILTERS = {
@@ -34,6 +47,7 @@ export const DEFAULT_PIPELINE_FILTERS = {
   city: ALL_CITIES_FILTER,
   batch: ALL_BATCHES_FILTER,
   sort: '',
+  search: '',
 }
 
 function cleanText(value) {
@@ -66,6 +80,51 @@ export function isPipelineFiltersActive(filters = DEFAULT_PIPELINE_FILTERS) {
     || filters.city !== ALL_CITIES_FILTER
     || filters.batch !== ALL_BATCHES_FILTER
     || Boolean(filters.sort)
+    || Boolean(String(filters.search || '').trim())
+}
+
+function needsFollowUpToday(view = {}, today) {
+  const lead = view.lead || {}
+  const nextActionDate = normalizeLeadDateOnly(lead.nextActionDate)
+  const crmFollowUp = normalizeLeadDateOnly(view.crm?.nextFollowUp)
+  return nextActionDate === today || crmFollowUp === today
+}
+
+function leadMatchesSearch(lead = {}, query = '') {
+  const q = String(query || '').trim().toLowerCase()
+  if (!q) return true
+  const name = String(lead.businessName || '').toLowerCase()
+  const city = resolveLeadCity(lead).toLowerCase()
+  const phone = String(lead.phone || '').replace(/\D/g, '')
+  const qDigits = q.replace(/\D/g, '')
+  return name.includes(q) || city.includes(q) || (qDigits.length >= 3 && phone.includes(qDigits))
+}
+
+export function getLeadCommandKpis(views = []) {
+  const today = new Date().toISOString().slice(0, 10)
+  let noWebsite = 0
+  let followUpToday = 0
+  let score90 = 0
+  let demoSent = 0
+  let proposalSent = 0
+
+  for (const view of views) {
+    const lead = view.lead || {}
+    if (!hasValidWebsite(lead)) noWebsite += 1
+    if (needsFollowUpToday(view, today)) followUpToday += 1
+    if (Number(lead.leadScore) >= 90) score90 += 1
+    if (view.stage === 'demo-sent') demoSent += 1
+    if (view.stage === 'proposal-sent') proposalSent += 1
+  }
+
+  return {
+    total: views.length,
+    noWebsite,
+    followUpToday,
+    score90,
+    demoSent,
+    proposalSent,
+  }
 }
 
 export function getPipelineCategoryOptions(leads = []) {
@@ -98,12 +157,24 @@ export function getPipelineBatchOptions(leads = []) {
 }
 
 export function applyPipelineFilters(views = [], filters = DEFAULT_PIPELINE_FILTERS) {
+  const today = new Date().toISOString().slice(0, 10)
+
   return views.filter((view) => {
     const lead = view.lead || {}
+
+    if (!leadMatchesSearch(lead, filters.search)) return false
 
     if (filters.preset === PIPELINE_FILTER_PRESETS.NO_WEBSITE && hasValidWebsite(lead)) return false
     if (filters.preset === PIPELINE_FILTER_PRESETS.WITH_WEBSITE && !hasValidWebsite(lead)) return false
     if (filters.preset === PIPELINE_FILTER_PRESETS.WITH_PHONE && !hasPhoneNumber(lead)) return false
+    if (filters.preset === PIPELINE_FILTER_PRESETS.SCORE_90 && Number(lead.leadScore) < 90) return false
+    if (filters.preset === PIPELINE_FILTER_PRESETS.SCORE_80 && Number(lead.leadScore) < 80) return false
+    if (filters.preset === PIPELINE_FILTER_PRESETS.NEW_LEADS && view.stage !== 'new') return false
+    if (filters.preset === PIPELINE_FILTER_PRESETS.NEEDS_FOLLOWUP && !needsFollowUpToday(view, today)) return false
+    if (filters.preset === PIPELINE_FILTER_PRESETS.DEMO_SENT && view.stage !== 'demo-sent') return false
+    if (filters.preset === PIPELINE_FILTER_PRESETS.PROPOSAL_SENT && view.stage !== 'proposal-sent') return false
+    if (filters.preset === PIPELINE_FILTER_PRESETS.WON && !WON_STAGES.has(view.stage)) return false
+    if (filters.preset === PIPELINE_FILTER_PRESETS.LOST && view.stage !== 'lost') return false
 
     if (filters.category !== ALL_LEADS_FILTER) {
       const categoryId = view.leadCategoryId || resolveLeadCategoryId(lead)
@@ -142,6 +213,12 @@ export function applyPipelineSort(views = [], sortKey = '') {
     sorted.sort((a, b) => leadImportedTimestamp(a) - leadImportedTimestamp(b))
   } else if (sortKey === PIPELINE_SORT_OPTIONS.NAME_ASC) {
     sorted.sort((a, b) => String(a.businessName || '').localeCompare(String(b.businessName || ''), 'he'))
+  } else if (sortKey === PIPELINE_SORT_OPTIONS.CITY_ASC) {
+    sorted.sort((a, b) => resolveLeadCity(a.lead).localeCompare(resolveLeadCity(b.lead), 'he'))
+  } else if (sortKey === PIPELINE_SORT_OPTIONS.CATEGORY_ASC) {
+    sorted.sort((a, b) => resolveLeadCategory(a.lead).localeCompare(resolveLeadCategory(b.lead), 'he'))
+  } else if (sortKey === PIPELINE_SORT_OPTIONS.SALES_STATUS) {
+    sorted.sort((a, b) => String(a.lead?.salesStatus || '').localeCompare(String(b.lead?.salesStatus || ''), 'he'))
   }
 
   return sorted

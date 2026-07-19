@@ -3,6 +3,9 @@ import { useState } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
 import { CRM_STAGES } from '../LeadCRM/crmStorage'
 import LeadSalesTrackingFields from './LeadSalesTrackingFields'
+import LeadNotesEditor from './LeadNotesEditor'
+import { getLeadNotesHistory } from '../../services/leadNotesHistory'
+import { getLeadId } from '../../services/leadId'
 import { buildLeadSalesTrackingValues, salesTrackingFormPayload } from '../../services/leadSalesTracking'
 import '../ManualLead/ManualLeadForm.css'
 
@@ -28,6 +31,7 @@ function toFormValues(lead = {}, crm = {}) {
 export default function LeadEditForm({ lead, crm, stageLabels = [], onSave, onPersistLeadFields, onManageImages, onClose }) {
   const { t } = useLanguage()
   const [values, setValues] = useState(() => toFormValues(lead, crm))
+  const [crmSnapshot, setCrmSnapshot] = useState(crm)
   const [error, setError] = useState('')
 
   function update(field, value) {
@@ -64,7 +68,6 @@ export default function LeadEditForm({ lead, crm, stageLabels = [], onSave, onPe
       source: values.source,
       ...salesTrackingFormPayload(values),
     }, {
-      notes: values.notes,
       status: values.status,
       nextFollowUp: values.nextFollowUp,
     })
@@ -91,7 +94,23 @@ export default function LeadEditForm({ lead, crm, stageLabels = [], onSave, onPe
           <label>{t('crmStatus')}<select value={values.status} onChange={(event) => update('status', event.target.value)}>{CRM_STAGES.map((stage, index) => <option key={stage} value={stage}>{stageLabels[index] || stage}</option>)}</select></label>
           <label>{t('crmNextFollowUp')}<input type="date" value={values.nextFollowUp} onChange={(event) => update('nextFollowUp', event.target.value)} /></label>
           <LeadSalesTrackingFields values={values} onChange={update} onPersistField={persistSalesField} />
-          <label className="manual-lead-wide">{t('manualNotes')}<textarea rows="3" value={values.notes} onChange={(event) => update('notes', event.target.value)} /></label>
+          <div className="manual-lead-wide lead-edit-notes">
+            <span>{t('manualNotes')}</span>
+            {getLeadNotesHistory(crmSnapshot).length ? (
+              <ol className="lead-edit-notes__history">
+                {getLeadNotesHistory(crmSnapshot).map((note) => (
+                  <li key={note.id}><p>{note.text}</p><small>{note.date} · {note.time}</small></li>
+                ))}
+              </ol>
+            ) : (
+              <p className="lead-edit-notes__empty">{t('crmNotesPlaceholder')}</p>
+            )}
+            <LeadNotesEditor
+              view={{ leadId: getLeadId(lead), crm: crmSnapshot, lead }}
+              copy={{ addNote: t('manualNotes'), cancel: t('cancel'), notesPlaceholder: t('crmNotesPlaceholder') }}
+              onSaved={(result) => result?.crm && setCrmSnapshot(result.crm)}
+            />
+          </div>
           <label className="manual-lead-wide">{t('manualMapsUrl')}<input type="url" value={values.mapsUrl} onChange={(event) => update('mapsUrl', event.target.value)} /></label>
         </div>
         {error && <p className="manual-lead-error">{error}</p>}

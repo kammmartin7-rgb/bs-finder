@@ -3,6 +3,9 @@ import { useMemo, useState } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 import { applyProposalTemplate, createProposalDraft, getProposalTemplate, PROPOSAL_TEMPLATES, proposalFeatures } from './proposalTemplates'
 import { getProposalStorageKey, loadProposalApproval, notifyProposalChange } from './proposalStorage'
+import { LEAD_ACTIONS, recordLeadAction } from './LeadCRM/leadActionStorage'
+import { isDemoLead } from './BusinessOS/dashboardFilters'
+import { dispatchProposalSent } from './CRM/salesWorkflowActions'
 import { getLeadId } from '../services/leadId'
 import { loadLeadCrm, saveLeadCrm } from './LeadCRM/crmStorage'
 import './ProposalGenerator.css'
@@ -52,7 +55,11 @@ export default function ProposalGenerator({ business, onClose }) {
     const leadId = getLeadId(business)
     const crm = loadLeadCrm(leadId)
     saveLeadCrm(leadId, { ...crm, proposalAmount: selectedPackage.price, stageChangedAt: crm.stageChangedAt || new Date().toISOString() })
+    if (!isDemoLead(business)) {
+      recordLeadAction(business, LEAD_ACTIONS.PROPOSAL_SENT)
+    }
     notifyProposalChange(business)
+    dispatchProposalSent(business)
     setDraftNotice(copy.draftSaved)
     setEditing(false)
   }

@@ -14,7 +14,7 @@ Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-Lead persistence E2E stabilization (BOS-028): expanded `scripts/verify-lead-e2e.mjs` to 12 checks (existing count, manual create, duplicate block, pipeline-card edit, stage selector, drag-and-drop, refresh, dev-server restart, count non-decrease, canonical storage); 12/12 passed; build/lint passed; no production code changes required.
+Lead customer file: selected lead panel now shows business info, sales info, append-only notes history, activity timeline, demo/proposal links, and Edit Lead; notes stored in `notesHistory` on CRM record; reuses `LeadEditForm` and `LeadNotesEditor`; build/lint passed.
 
 ## Project Rules (Current)
 
@@ -32,10 +32,11 @@ Lead persistence E2E stabilization (BOS-028): expanded `scripts/verify-lead-e2e.
 - **Sales** sidebar tab opens the existing shared CRM & Sales Pipeline (`crm` screen); no duplicate CRM or pipeline was created.
 - Businesses hub lists BS Finder, BS Funds, the plumber demo website asset, and the kidney donation campaign website (`התרמה להשתלת כליה`); BS Finder workspace links to Overview, Lead Sources, CRM & Sales Pipeline, Proposal, Demo Builder, Real Website Builder, Media Library, and Customers.
 - Projects, Websites & Assets, Ideas Vault, and Development remain accessible via business hubs, dashboard links, deep routes, or Settings — not as duplicate top-level modules.
-- Sales Pipeline uses two fixed-height rows (primary 420px / secondary 270px); lead lists scroll inside each stage column.
-- Pipeline lead cards use dynamic height from available data; compact stage selector on every card; drag-and-drop and selector share `updateLeadStage`; compact Hebrew category tag on each card; empty optional fields do not reserve space.
+- Sales Pipeline uses two fixed-height rows (5 primary + 4 secondary stages, 420px / 270px); lead lists scroll inside each stage column.
+- Selected lead **customer file** (`LeadCustomerFile.jsx`): business info, sales info, append-only notes history, activity timeline, demo/proposal links, and Edit Lead; pipeline cards and Current Lead panel retain all CRM actions.
+- Sales workflow (`salesWorkflow.js`): nine stages — new, first-contact, demo-created, demo-sent, proposal-sent, negotiation, follow-up, deal-won, lost; legacy stages normalize on read.
 - CRM Sales Pipeline category filter bar above the pipeline (`כל הלידים`, known Hebrew categories, dynamic future categories, `לא מסווג` when needed) with per-category counts; filtering is display-only for the pipeline section.
-- CRM Sales Pipeline compact filter-and-sort control (`סינון ומיון`) replaces category/batch chip rows; popover includes presets, category/city/batch dropdowns, sort options, `מציג X מתוך Y לידים`, and `איפוס`; display-only for the pipeline section.
+- Sales **Work Mode** sticky Current Lead panel above action center: business name, phone, city, category, website status, score, stage, and one-click Call/WhatsApp/Create Demo/Send Demo/Proposal/Notes/Next Lead; pipeline selection updates panel; Next Lead follows current filter/sort order.
 - CRM Sales Pipeline import batch filter metadata and compact batch tag on pipeline cards remain on lead records; batch labels visible on cards.
 - Pipeline phone numbers and CRM call actions open WhatsApp in a new tab and normalize Israeli local numbers with or without a leading zero to country code `972`.
 - Pipeline lead cards include a compact Send Demo action that reuses the existing shareable demo record and shared WhatsApp normalization; it never creates a second demo.
@@ -75,7 +76,7 @@ Lead persistence E2E stabilization (BOS-028): expanded `scripts/verify-lead-e2e.
 
 ## Known Problems
 
-- Pipeline card click opens `LeadEditForm` directly (no separate Edit Lead button); automated E2E covers manual create/edit/stage/drag/refresh/restart paths.
+- Pipeline card click selects lead for Current Lead panel (edit via panel or double workflow); drag-and-drop still moves stage manually; E2E script may need update for 9-stage pipeline order.
 - Paid lead search requires provider billing and a deployed backend.
 - Production deployment is prepared but not smoke-tested on a public URL.
 - `VITE_PUBLIC_APP_URL` currently resolves to localhost; configure the public Vercel origin before sending customer demo links.
