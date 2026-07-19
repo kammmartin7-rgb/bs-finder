@@ -16,6 +16,13 @@ import { loadLeadMediaLibrary } from '../RealWebsiteBuilder/realWebsiteStorage'
 import { imageSource } from '../RealWebsiteBuilder/imageProcessing'
 import { createIsraeliWhatsAppUrl } from '../../services/whatsapp'
 import { createShareableDemoUrl, loadShareableDemo } from '../WebsiteBuilder/demoStorage'
+import PipelineFilterSort from './PipelineFilterSort'
+import {
+  applyPipelineFilters,
+  applyPipelineSort,
+  DEFAULT_PIPELINE_FILTERS,
+  isPipelineFiltersActive,
+} from './pipelineFilterSortUtils'
 import './CRM.css'
 
 const COPY = {
@@ -79,7 +86,7 @@ ${demoUrl}
 
 אשמח לשמוע מה דעתכם.`
 
-function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImage, mediaRevision, onStageChange, pipeline = false }) {
+function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImage, mediaRevision, onStageChange, pipeline = false, selected = false, onSelect }) {
   const { t } = useLanguage()
   const [editor, setEditor] = useState('')
   const [notes, setNotes] = useState(view.crm.notes)
@@ -98,6 +105,10 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImag
   function update(updates) { saveLeadCrm(view.leadId, { ...view.crm, ...updates }) }
   function openDetails(event) {
     if (event?.target?.closest('a, select, option')) return
+    if (pipeline && !selected) {
+      onSelect?.(view.leadId)
+      return
+    }
     onEditLead?.(view)
   }
   function changeStage(event) {
@@ -111,6 +122,7 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImag
   if (pipeline) {
     const businessName = display(view.businessName, copy.unknown)
     const phone = display(view.phone, copy.unknown)
+    const batchLabel = fieldText(view.batchLabel)
     const whatsappUrl = createIsraeliWhatsAppUrl(view.phone)
     const rating = Number(view.lead?.leadScore)
     const optionalFields = [
@@ -146,10 +158,13 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImag
       onDemoImage(view)
     }
     return (
-      <article className="crm-lead-card crm-lead-card--pipeline" role="button" tabIndex={0} draggable onDragStart={startDrag} onClick={openDetails} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEditLead?.(view) } }}>
+      <article className={`crm-lead-card crm-lead-card--pipeline${selected ? ' is-selected' : ''}`} role="button" aria-pressed={selected} tabIndex={0} draggable onDragStart={startDrag} onClick={openDetails} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetails(event) } }}>
         <div className="crm-lead-card__content">
           <strong className="crm-lead-card__name">{businessName}</strong>
-          {whatsappUrl ? <a className="crm-lead-card__phone" href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={stopCardOpen}>{phone}</a> : <span className="crm-lead-card__phone">{phone}</span>}
+          <div className="crm-lead-card__meta">
+            {whatsappUrl ? <a className="crm-lead-card__phone" href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={stopCardOpen}>{phone}</a> : <span className="crm-lead-card__phone">{phone}</span>}
+            {batchLabel ? <span className="crm-lead-card__batch" title={batchLabel}>{batchLabel}</span> : null}
+          </div>
           <StageSelect value={view.stage} copy={copy} className="crm-lead-card__stage crm-lead-card__stage--pipeline" onMouseDown={stopCardOpen} onClick={stopCardOpen} onChange={changeStage} />
           {optionalFields.map(([label, value]) => <span className="crm-lead-card__field" key={label}><b>{label}</b> {value}</span>)}
           <div className="crm-lead-card__demo-actions">
@@ -183,7 +198,7 @@ function LeadCard({ view, copy, onAction, onEditLead, onManageImages, onDemoImag
   </article>
 }
 
-function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEditLead, onManageImages, onDemoImage, mediaRevision, onStageChange, isDropTarget, onDragEnter, onDragLeave }) {
+function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEditLead, onManageImages, onDemoImage, mediaRevision, onStageChange, selectedLeadId, onSelectLead, isDropTarget, onDragEnter, onDragLeave }) {
   return (
     <article className={`pipeline-column ${stageIndex < 4 ? 'pipeline-column--primary' : 'pipeline-column--secondary'}${isDropTarget ? ' is-drop-target' : ''}`}>
       <header className="pipeline-column-header"><span>{STAGE_ICONS[stageIndex]}</span><h3>{copy.stages[stageIndex]}</h3></header>
@@ -200,7 +215,7 @@ function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEdi
         }}
       >
         {stageViews.map((view) => (
-          <LeadCard key={view.leadId} view={view} copy={copy} pipeline onAction={onAction} onEditLead={onEditLead} onManageImages={onManageImages} onDemoImage={onDemoImage} mediaRevision={mediaRevision} onStageChange={onStageChange} />
+          <LeadCard key={view.leadId} view={view} copy={copy} pipeline selected={selectedLeadId === view.leadId} onSelect={onSelectLead} onAction={onAction} onEditLead={onEditLead} onManageImages={onManageImages} onDemoImage={onDemoImage} mediaRevision={mediaRevision} onStageChange={onStageChange} />
         ))}
       </div>
       <footer className="pipeline-column-footer"><strong>{stageViews.length}</strong></footer>
@@ -209,8 +224,8 @@ function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEdi
 }
 
 export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onRefreshLeads, navigation = null, onNavigationApplied }) {
-  const language = 'he'; const direction = 'rtl'; const copy = PIPELINE_COPY; const finish = FINISH_COPY.he
-  const [revision, setRevision] = useState(0); const [goals, setGoals] = useState(loadCrmGoals); const [editingGoals, setEditingGoals] = useState(false); const [followUpTab, setFollowUpTab] = useState('overdue'); const [search, setSearch] = useState(''); const [stageFilter, setStageFilter] = useState('all'); const [sortBy, setSortBy] = useState('urgent'); const [dashboardLeadFilter, setDashboardLeadFilter] = useState(null); const [showManualLeadForm, setShowManualLeadForm] = useState(false); const [showGoogleMapsImport, setShowGoogleMapsImport] = useState(false); const [editingView, setEditingView] = useState(null); const [mediaView, setMediaView] = useState(null); const [demoImageView, setDemoImageView] = useState(null); const [mediaRevision, setMediaRevision] = useState(0); const [dragOverStage, setDragOverStage] = useState('')
+  const direction = 'rtl'; const copy = PIPELINE_COPY; const finish = FINISH_COPY.he
+  const [revision, setRevision] = useState(0); const [goals, setGoals] = useState(loadCrmGoals); const [editingGoals, setEditingGoals] = useState(false); const [followUpTab, setFollowUpTab] = useState('overdue'); const [search, setSearch] = useState(''); const [stageFilter, setStageFilter] = useState('all'); const [sortBy, setSortBy] = useState('urgent'); const [pipelineFilters, setPipelineFilters] = useState(DEFAULT_PIPELINE_FILTERS); const [pipelineFilterOpen, setPipelineFilterOpen] = useState(false); const [dashboardLeadFilter, setDashboardLeadFilter] = useState(null); const [showManualLeadForm, setShowManualLeadForm] = useState(false); const [showGoogleMapsImport, setShowGoogleMapsImport] = useState(false); const [editingView, setEditingView] = useState(null); const [mediaView, setMediaView] = useState(null); const [demoImageView, setDemoImageView] = useState(null); const [mediaRevision, setMediaRevision] = useState(0); const [dragOverStage, setDragOverStage] = useState(''); const [selectedPipelineLeadId, setSelectedPipelineLeadId] = useState('')
   const revenueRef = useRef(null)
   const followUpsRef = useRef(null)
   const pipelineRef = useRef(null)
@@ -233,18 +248,25 @@ export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onR
     onNavigationApplied?.()
   }, [navigation, navigationFilter, navigationFollowUpTab, navigationSection, onNavigationApplied])
   const views = useMemo(() => { void revision; return getCrmLeadViews(leads) }, [leads, revision]); const urgent = useMemo(() => getUrgentCrmLeads(views), [views]); const actuals = useMemo(() => getTodayMissionActuals(views), [views]); const followUpGroups = useMemo(() => getFollowUpGroups(views), [views]); const revenue = useMemo(() => getCrmRevenueSummary(views), [views])
-  const filteredViews = useMemo(() => {
-    const query = search.trim().toLowerCase(); const urgencyOrder = new Map(urgent.map((view, index) => [view.leadId, index]))
-    return views.filter((view) => stageFilter === 'all' || view.stage === stageFilter).filter((view) => !dashboardLeadFilter || matchesDashboardFilter(view.lead, dashboardLeadFilter)).filter((view) => !query || [view.businessName, view.contactName, view.phone, view.email, view.website, view.lead.category, view.lead.city, view.source, view.crm.notes].some((value) => String(value || '').toLowerCase().includes(query))).sort((a, b) => {
-      if (sortBy === 'follow-up') return String(a.crm.nextFollowUp || '9999').localeCompare(String(b.crm.nextFollowUp || '9999'))
-      if (sortBy === 'score') return Number(b.lead.leadScore || 0) - Number(a.lead.leadScore || 0)
-      if (sortBy === 'updated') return String(b.crm.updatedAt || b.latestActivity || '').localeCompare(String(a.crm.updatedAt || a.latestActivity || ''))
-      if (sortBy === 'name') return a.businessName.localeCompare(b.businessName, language)
-      return (urgencyOrder.get(a.leadId) ?? 9999) - (urgencyOrder.get(b.leadId) ?? 9999)
-    })
-  }, [dashboardLeadFilter, language, search, sortBy, stageFilter, urgent, views])
-  const stages = useMemo(() => CRM_STAGES.map((stage) => filteredViews.filter((view) => view.stage === stage)), [filteredViews])
-  const pipelineEmptyMessage = views.length ? PIPELINE_COPY.noItems : PIPELINE_COPY.empty
+  const pipelineBaseViews = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return views
+      .filter((view) => stageFilter === 'all' || view.stage === stageFilter)
+      .filter((view) => !dashboardLeadFilter || matchesDashboardFilter(view.lead, dashboardLeadFilter))
+      .filter((view) => !query || [view.businessName, view.contactName, view.phone, view.email, view.website, view.lead.category, view.lead.city, view.source, view.crm.notes].some((value) => String(value || '').toLowerCase().includes(query)))
+  }, [dashboardLeadFilter, search, stageFilter, views])
+  const pipelineFilteredViews = useMemo(() => {
+    const filtered = applyPipelineFilters(pipelineBaseViews, pipelineFilters)
+    return applyPipelineSort(filtered, pipelineFilters.sort)
+  }, [pipelineBaseViews, pipelineFilters])
+  const stages = useMemo(() => CRM_STAGES.map((stage) => pipelineFilteredViews.filter((view) => view.stage === stage)), [pipelineFilteredViews])
+  const pipelineEmptyMessage = views.length
+    ? (isPipelineFiltersActive(pipelineFilters) ? 'אין לידים לפי הסינון הנוכחי.' : PIPELINE_COPY.noItems)
+    : PIPELINE_COPY.empty
+  function resetPipelineFilters() {
+    setPipelineFilters(DEFAULT_PIPELINE_FILTERS)
+    setPipelineFilterOpen(false)
+  }
   const metrics = [['leads', copy.leads], ['outreach', copy.outreach], ['calls', copy.calls], ['followUps', copy.followUps], ['deals', copy.deals]]; const tabs = [['overdue', copy.overdue], ['today', copy.today], ['upcoming', copy.upcoming], ['none', copy.none]]
   function updateLeadStage(leadId, nextStage) {
     const normalized = normalizeCrmStage(nextStage)
@@ -272,7 +294,7 @@ export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onR
     <section className="crm-v2__urgent"><header><div><span>02</span><h2>{copy.urgent}</h2><p>{copy.urgentHint}</p></div><strong>{urgent.length}</strong></header>{urgent.length ? <div>{urgent.slice(0, 6).map((view) => <article key={view.leadId} className={`is-priority-${view.urgency.rank}`}><i /><div><strong>{copy.urgency[view.urgency.type]}</strong><span>{view.businessName}</span></div><b>{view.lead.leadScore || '—'}</b></article>)}</div> : <p className="crm-v2__empty">{copy.noUrgent}</p>}</section>
     <section className="crm-v2__revenue" ref={revenueRef}><header><span>03</span><h2>{finish.revenue}</h2></header><div>{[[finish.openProposals, revenue.openProposals], [finish.proposalValue, `₪${revenue.proposalValue.toLocaleString()}`], [finish.wonDeals, revenue.wonDeals], [finish.paidRevenue, `₪${revenue.paidRevenue.toLocaleString()}`], [finish.awaitingPayment, revenue.awaitingPayment]].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div></section>
     <section className="crm-v2__followups" ref={followUpsRef}><header><span>04</span><h2>{copy.followUpBoard}</h2></header><nav>{tabs.map(([key, label]) => <button type="button" className={followUpTab === key ? 'is-active' : ''} key={key} onClick={() => setFollowUpTab(key)}>{label} <b>{followUpGroups[key].length}</b></button>)}</nav><div>{followUpGroups[followUpTab].length ? followUpGroups[followUpTab].map((view) => <article key={view.leadId}><strong>{view.businessName}</strong><span>{view.crm.nextFollowUp || copy.none}</span><button type="button" onClick={() => onAction?.('call', view.lead)} disabled={!view.phone}>{copy.call}</button></article>) : <p>{copy.noItems}</p>}</div></section>
-    <section className="crm-v2__pipeline" ref={pipelineRef} dir="rtl"><header><span>05</span><h2>{PIPELINE_COPY.pipeline}</h2><div className="crm-v2__pipeline-actions"><button type="button" className="crm-v2__add-lead crm-v2__add-lead--secondary" onClick={() => setShowGoogleMapsImport(true)}>{PIPELINE_COPY.importGoogleMaps}</button><button type="button" className="crm-v2__add-lead" onClick={() => setShowManualLeadForm(true)}>{PIPELINE_COPY.addLeadManually}</button></div></header>{filteredViews.length ? <div className="crm-v2__stages"><div className="crm-v2__stages-row crm-v2__stages-row--primary">{stages.slice(0, 4).map((stageViews, index) => <PipelineColumn key={CRM_STAGES[index]} stageId={CRM_STAGES[index]} stageIndex={index} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} onDemoImage={setDemoImageView} mediaRevision={mediaRevision} onStageChange={updateLeadStage} isDropTarget={dragOverStage === CRM_STAGES[index]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} />)}</div><div className="crm-v2__stages-row crm-v2__stages-row--secondary">{stages.slice(4).map((stageViews, index) => { const stageIndex = index + 4; return <PipelineColumn key={CRM_STAGES[stageIndex]} stageId={CRM_STAGES[stageIndex]} stageIndex={stageIndex} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} onDemoImage={setDemoImageView} mediaRevision={mediaRevision} onStageChange={updateLeadStage} isDropTarget={dragOverStage === CRM_STAGES[stageIndex]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} /> })}</div></div> : <p className="crm-v2__empty">{pipelineEmptyMessage}</p>}</section>
+    <section className="crm-v2__pipeline" ref={pipelineRef} dir="rtl"><header><span>05</span><h2>{PIPELINE_COPY.pipeline}</h2><div className="crm-v2__pipeline-actions"><button type="button" className="crm-v2__add-lead crm-v2__add-lead--secondary" onClick={() => setShowGoogleMapsImport(true)}>{PIPELINE_COPY.importGoogleMaps}</button><button type="button" className="crm-v2__add-lead" onClick={() => setShowManualLeadForm(true)}>{PIPELINE_COPY.addLeadManually}</button></div></header><PipelineFilterSort leads={leads} filters={pipelineFilters} onChange={setPipelineFilters} onReset={resetPipelineFilters} open={pipelineFilterOpen} onOpenChange={setPipelineFilterOpen} visibleCount={pipelineFilteredViews.length} totalCount={views.length} />{pipelineFilteredViews.length ? <div className="crm-v2__stages"><div className="crm-v2__stages-row crm-v2__stages-row--primary">{stages.slice(0, 4).map((stageViews, index) => <PipelineColumn key={CRM_STAGES[index]} stageId={CRM_STAGES[index]} stageIndex={index} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} onDemoImage={setDemoImageView} mediaRevision={mediaRevision} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={setSelectedPipelineLeadId} isDropTarget={dragOverStage === CRM_STAGES[index]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} />)}</div><div className="crm-v2__stages-row crm-v2__stages-row--secondary">{stages.slice(4).map((stageViews, index) => { const stageIndex = index + 4; return <PipelineColumn key={CRM_STAGES[stageIndex]} stageId={CRM_STAGES[stageIndex]} stageIndex={stageIndex} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={setEditingView} onManageImages={setMediaView} onDemoImage={setDemoImageView} mediaRevision={mediaRevision} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={setSelectedPipelineLeadId} isDropTarget={dragOverStage === CRM_STAGES[stageIndex]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} /> })}</div></div> : <p className="crm-v2__empty">{pipelineEmptyMessage}</p>}</section>
     {showManualLeadForm && <ManualLeadForm existingLeads={leads} useLegacyManualStore={false} onClose={() => setShowManualLeadForm(false)} onSave={(lead, notes) => { if (onAddLead?.(lead, notes)) setShowManualLeadForm(false) }} />}
     {showGoogleMapsImport && <GoogleMapsImportForm existingLeads={leads} onClose={() => setShowGoogleMapsImport(false)} onSave={(lead, notes, options) => { if (onAddLead?.(lead, notes, options)) setShowGoogleMapsImport(false) }} />}
     {editingView && <LeadEditForm lead={editingView.lead} crm={editingView.crm} stageLabels={copy.stages} onClose={() => setEditingView(null)} onSave={(leadUpdates, crmUpdates) => { const result = onUpdateLead?.(editingView.leadId, leadUpdates, crmUpdates); if (result?.ok) setEditingView(null); return result }} />}

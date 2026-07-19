@@ -4,6 +4,7 @@ import { getLeadId } from '../../services/leadId'
 import { getLeadActions, LEAD_ACTIONS } from '../LeadCRM/leadActionStorage'
 import { isDemoLead } from '../BusinessOS/dashboardFilters'
 import { getProposalSummary } from '../proposalStorage'
+import { resolveLeadCategory, resolveLeadCategoryId, resolveLeadBatchId, resolveLeadBatchLabel } from '../../services/leadCategory'
 
 export { CRM_STAGES, normalizeCrmStage }
 
@@ -31,6 +32,10 @@ export function createCrmLeadView(lead) {
     website: lead.website || '',
     source: lead.source || lead.leadSource || lead.searchMode || '',
     category: lead.category || '',
+    leadCategory: resolveLeadCategory(lead),
+    leadCategoryId: resolveLeadCategoryId(lead),
+    batchId: resolveLeadBatchId(lead),
+    batchLabel: resolveLeadBatchLabel(lead),
     city: lead.city || '',
     proposal,
     proposalAmount: crm.proposalAmount || lead.proposalAmount || proposal.amount || '',

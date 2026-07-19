@@ -6,6 +6,11 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Changed
 
+- CRM pipeline filter UI: replaced category and import-batch chip rows with one compact Hebrew RTL `סינון ומיון` popover (presets, category/city/batch dropdowns, sort, result counter, reset, active indicator).
+- CRM import batch filtering: shared Apify batch object per search (`batchId`, `batchLabel`, `businessType`, `city`, `country`, `importedAt`, `importedDate`, `source: Apify`); legacy leads migrate in place with `legacyBatch: true` and derived `batchLabel`; compact batch tag on cards.
+- CRM pipeline category filtering: Hebrew filter bar above the pipeline with live counts; display-only (mission, urgent, revenue, and follow-up sections stay unfiltered).
+- Existing leads migrate in place on load: `businessType` derived from `category`, `searchBusinessType`, `batchLabel`, and related fields without deleting or duplicating records.
+- Apify lead import metadata now saves `businessType`, `city`, `country`, `importedAt`, and `batchLabel` (`<businessType> — <city> — <DD/MM/YYYY>`) via existing `attachSearchMetadata`.
 - Demo persistence now saves complete records to the existing Supabase `demos` table and generates 8-character `/#/demo/<id>` links without embedded JSON or base64; public routes load from Supabase, localStorage remains a cache/legacy fallback, and old `?data=` links continue to parse.
 - Sales Pipeline Send Demo message now uses the approved concise Hebrew copy, contains no emojis, and keeps the existing demo URL and pre-filled WhatsApp flow.
 - Demo Website hero: selected per-lead business images now fill the existing hero with `cover`, layered dark readability gradients, responsive portrait positioning, right-aligned Hebrew copy and CTA controls, and the existing WhatsApp contact form in a glass panel; the no-image blue gradient fallback remains.
@@ -38,6 +43,10 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Google Sheets export filters demo leads, verifies JSON responses, and includes CRM/proposal columns.
 
 ### Added
+
+- Lead category normalization module (`src/services/leadCategory.js`) with Hebrew alias mapping and dynamic future-category support.
+- CRM pipeline category filter bar and compact category tags on lead cards.
+- `scripts/report-lead-categories.mjs` helper to report category counts from browser localStorage.
 
 - Businesses hub now includes “אתר אינסטלטור – דמו למכירה” beside BS Finder and BS Funds, linked to its verified public Sites URL; hosted assets without a repository hide repository-only controls.
 

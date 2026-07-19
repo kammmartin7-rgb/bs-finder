@@ -1,3 +1,13 @@
+import {
+  buildBatchLabel,
+  createBatchId,
+  createImportBatchContext,
+  detectBusinessTypeGroup,
+  formatImportedDate,
+  resolveLeadCategory,
+  UNCLASSIFIED_STORAGE_LABEL,
+} from './leadCategory'
+
 function cleanText(value) {
   return String(value || '').trim()
 }
@@ -57,24 +67,52 @@ export function mapPlace(place, index, searchContext = {}) {
   }
 }
 
-export function attachSearchMetadata(lead, { businessType, city, country } = {}) {
-  return {
+export function attachSearchMetadata(lead, batch = {}) {
+  const rawBusinessType = cleanText(batch.businessType || businessTypeFromBatch(batch, lead))
+  const resolvedCity = cleanText(batch.city || lead.searchedCity || lead.city)
+  const resolvedCountry = cleanText(batch.country || lead.searchedCountry || lead.country)
+  const resolvedImportedAt = batch.importedAt || lead.importedAt || new Date().toISOString()
+  const resolvedImportedDate = batch.importedDate || formatImportedDate(resolvedImportedAt)
+  const resolvedBatchId = batch.batchId || lead.batchId || createBatchId(rawBusinessType, resolvedCity, resolvedImportedAt)
+  const resolvedSource = cleanText(batch.source) || 'Apify'
+  const enriched = {
     ...lead,
-    searchBusinessType: cleanText(businessType || lead.searchBusinessType),
-    searchedCity: cleanText(city || lead.searchedCity || lead.city),
-    searchedCountry: cleanText(country || lead.searchedCountry || lead.country),
-    createdAt: lead.createdAt || new Date().toISOString(),
+    searchBusinessType: rawBusinessType,
+    searchedCity: resolvedCity,
+    searchedCountry: resolvedCountry,
+    city: resolvedCity,
+    country: resolvedCountry,
+    importedAt: resolvedImportedAt,
+    importedDate: resolvedImportedDate,
+    batchId: resolvedBatchId,
+    source: resolvedSource,
+    createdAt: lead.createdAt || resolvedImportedAt,
     isDemo: false,
+    legacyBatch: false,
+  }
+
+  const normalizedType = resolveLeadCategory({ ...enriched, businessType: rawBusinessType })
+  const savedBusinessType = normalizedType !== UNCLASSIFIED_STORAGE_LABEL ? normalizedType : rawBusinessType
+  const group = detectBusinessTypeGroup({ ...enriched, businessType: savedBusinessType })
+  const resolvedBatchLabel = batch.batchLabel || buildBatchLabel(savedBusinessType, resolvedCity, resolvedImportedAt)
+
+  return {
+    ...enriched,
+    businessType: savedBusinessType,
+    category: group?.filterLabel || enriched.category || (savedBusinessType !== UNCLASSIFIED_STORAGE_LABEL ? savedBusinessType : 'Unclassified'),
+    batchLabel: resolvedBatchLabel,
   }
 }
 
+function businessTypeFromBatch(batch, lead) {
+  return batch.businessType || lead.searchBusinessType
+}
+
+export { createImportBatchContext }
+
 export async function searchLeads(businessType, city, country) {
   const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim()
-  const apiBaseUrl = configuredApiUrl || (import.meta.env.DEV ? '' : null)
-
-  if (apiBaseUrl === null) {
-    throw new Error('Paid lead search is unavailable because billing is not enabled.')
-  }
+  const apiBaseUrl = configuredApiUrl || ''
 
   let response
 
@@ -107,7 +145,8 @@ export async function searchLeads(businessType, city, country) {
 
   const data = await response.json()
   const searchContext = { businessType, city, country }
+  const batch = createImportBatchContext(businessType, city, country)
   return Array.isArray(data.leads)
-    ? data.leads.map((place, index) => attachSearchMetadata(mapPlace(place, index, searchContext), searchContext))
+    ? data.leads.map((place, index) => attachSearchMetadata(mapPlace(place, index, searchContext), batch))
     : []
 }

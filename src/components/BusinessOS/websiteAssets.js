@@ -27,6 +27,15 @@ export const WEBSITE_ASSETS = [
     productionUrl: 'https://plumber-pro-israel.kammmartin7.chatgpt.site',
     repositoryUrl: '',
   },
+  {
+    id: 'kidney-help-campaign',
+    name: 'התרמה להשתלת כליה',
+    icon: '❤️',
+    typeKey: 'assetTypeWebsite',
+    statusKey: 'assetStatusActive',
+    productionUrl: 'https://kidney-help-campaign.kammmartin7.chatgpt.site',
+    repositoryUrl: '',
+  },
 
 ]
 

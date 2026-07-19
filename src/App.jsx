@@ -13,6 +13,7 @@ import { getDashboardFilterLabelKey, isDemoLead, matchesDashboardFilter } from '
 import { parseLeadsCsv } from './utils/csvImport'
 import ManualLeadForm from './components/ManualLead/ManualLeadForm'
 import { loadPersistedLeads, mergePersistedLeads, persistLeadCollection, addPersistedLead, updatePersistedLead, subscribeToLeadPersistenceChanges } from './services/leadPersistence'
+import { runLeadCategoryMigrationOnce } from './services/leadCategoryMigration'
 import { createIsraeliWhatsAppUrl } from './services/whatsapp'
 import { hasLeadAction, LEAD_ACTIONS, recordLeadAction, subscribeToLeadActionChanges } from './components/LeadCRM/leadActionStorage'
 import ShareableDemo from './components/WebsiteBuilder/ShareableDemo'
@@ -226,7 +227,11 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
   }, [])
 
   useEffect(() => {
+    const migrationResult = runLeadCategoryMigrationOnce()
     refreshLeadsFromStorage()
+    if (migrationResult?.migrated > 0) {
+      refreshLeadsFromStorage()
+    }
   }, [refreshLeadsFromStorage])
 
   useEffect(() => subscribeToLeadPersistenceChanges(refreshLeadsFromStorage), [refreshLeadsFromStorage])

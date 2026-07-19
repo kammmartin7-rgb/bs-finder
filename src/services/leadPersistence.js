@@ -12,6 +12,9 @@ import { addImagesToLeadMediaLibrary } from '../components/RealWebsiteBuilder/re
 import { calculateLeadScore } from '../utils/leadScore'
 import { ensureStableLeadId, getLeadId } from './leadId'
 import { migrateAllLeadRelations, scanOrphanCrmKeys } from './leadRelationMigration'
+import { enrichLeadCategory } from './leadCategory'
+import { runLeadCategoryMigrationOnce } from './leadCategoryMigration'
+import { runLeadBatchMigrationOnce } from './leadBatchMigration'
 
 export const REAL_LEADS_STORAGE_KEY = 'bs-hunter-real-leads'
 export const LEGACY_MANUAL_LEADS_STORAGE_KEY = 'bs-hunter-manual-leads'
@@ -50,8 +53,11 @@ function cleanText(value) {
 
 function enrichLead(lead) {
   const normalized = ensureStableLeadId(lead)
-  if (normalized.leadScore !== undefined && normalized.leadScore !== null) return normalized
-  return { ...normalized, leadScore: calculateLeadScore(normalized) }
+  const categorized = enrichLeadCategory(normalized)
+  const nextLead = categorized.leadScore !== undefined && categorized.leadScore !== null
+    ? categorized
+    : { ...categorized, leadScore: calculateLeadScore(categorized) }
+  return nextLead
 }
 
 function readJsonArray(key) {
@@ -236,14 +242,21 @@ function migrateRelatedEntities(leads = []) {
 /** Loads every real lead from the canonical store and migrates legacy keys without duplicates. */
 export function loadPersistedLeads() {
   try {
+    const migrationResult = runLeadCategoryMigrationOnce()
+    const batchMigrationResult = runLeadBatchMigrationOnce()
     const primary = readPrimaryLeads()
     const recovered = recoverLeadsFromAllStorageKeys()
     const legacyPool = mergePersistedLeads([], [...readLegacyManualLeads(), ...recovered])
     const merged = migrateLegacyLeadStores(mergePersistedLeads(legacyPool, primary))
     let normalized = ensurePlumberLeadInCanonicalStore(merged.map(enrichLead))
 
-    if (normalized.length !== primary.length || JSON.stringify(normalized) !== JSON.stringify(primary)) {
-      normalized = savePersistedLeads(normalized, { notify: false })
+    if (
+      migrationResult?.migrated > 0
+      || batchMigrationResult?.migrated > 0
+      || normalized.length !== primary.length
+      || JSON.stringify(normalized) !== JSON.stringify(primary)
+    ) {
+      normalized = savePersistedLeads(normalized, { notify: migrationResult?.migrated > 0 || batchMigrationResult?.migrated > 0 })
     }
 
     migrateRelatedEntities(normalized)

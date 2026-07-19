@@ -2,7 +2,7 @@
 
 ## Last Updated
 
-2026-07-16 IDT
+2026-07-18 IDT
 
 ## Current Main Goal
 
@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS with one shared CRM and a stable 
 
 ## Current Active Task
 
-Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google Maps import, editing, images, server restart, and that no leads disappear. Pipeline stage selector and drag-and-drop now share `updateLeadStage` via `onUpdateLead` / `updatePersistedLead`.
+Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google Maps import, editing, images, server restart, and that no leads disappear.
 
 ## Last Completed Task
 
-Added “אתר אינסטלטור – דמו למכירה” to the existing Businesses hub beside BS Finder and BS Funds, backed by the shared website asset registry and its verified public Sites URL. Repository controls are optional for hosted assets without a GitHub repository.
+CRM pipeline compact filter-and-sort control: replaced category/batch chip rows with one Hebrew RTL "סינון ומיון" popover (presets, category/city/batch dropdowns, sort options, result counter, reset). Build and lint passed.
 
 ## Project Rules (Current)
 
@@ -30,10 +30,13 @@ Added “אתר אינסטלטור – דמו למכירה” to the existing Bu
 - Business OS shell with internal screen state and fixed RTL/LTR-aware sidebar.
 - Top-level navigation: Dashboard, Businesses, Sales, Finance, Tasks, AI Center, Documents, Users & Permissions, Integrations, Settings.
 - **Sales** sidebar tab opens the existing shared CRM & Sales Pipeline (`crm` screen); no duplicate CRM or pipeline was created.
-- Businesses hub lists BS Finder and BS Funds; BS Finder workspace links to Overview, Lead Sources, CRM & Sales Pipeline, Proposal, Demo Builder, Real Website Builder, Media Library, and Customers.
+- Businesses hub lists BS Finder, BS Funds, the plumber demo website asset, and the kidney donation campaign website (`התרמה להשתלת כליה`); BS Finder workspace links to Overview, Lead Sources, CRM & Sales Pipeline, Proposal, Demo Builder, Real Website Builder, Media Library, and Customers.
 - Projects, Websites & Assets, Ideas Vault, and Development remain accessible via business hubs, dashboard links, deep routes, or Settings — not as duplicate top-level modules.
 - Sales Pipeline uses two fixed-height rows (primary 420px / secondary 270px); lead lists scroll inside each stage column.
-- Pipeline lead cards use dynamic height from available data; compact stage selector on every card; drag-and-drop and selector share `updateLeadStage`; empty optional fields do not reserve space.
+- Pipeline lead cards use dynamic height from available data; compact stage selector on every card; drag-and-drop and selector share `updateLeadStage`; compact Hebrew category tag on each card; empty optional fields do not reserve space.
+- CRM Sales Pipeline category filter bar above the pipeline (`כל הלידים`, known Hebrew categories, dynamic future categories, `לא מסווג` when needed) with per-category counts; filtering is display-only for the pipeline section.
+- CRM Sales Pipeline compact filter-and-sort control (`סינון ומיון`) replaces category/batch chip rows; popover includes presets, category/city/batch dropdowns, sort options, `מציג X מתוך Y לידים`, and `איפוס`; display-only for the pipeline section.
+- CRM Sales Pipeline import batch filter metadata and compact batch tag on pipeline cards remain on lead records; batch labels visible on cards.
 - Pipeline phone numbers and CRM call actions open WhatsApp in a new tab and normalize Israeli local numbers with or without a leading zero to country code `972`.
 - Pipeline lead cards include a compact Send Demo action that reuses the existing shareable demo record and shared WhatsApp normalization; it never creates a second demo.
 - Demo Website selected images use a responsive full-cover hero background with dark readability layers, desktop right-copy/left-form layout, and mobile stacked copy/actions/form layout.
