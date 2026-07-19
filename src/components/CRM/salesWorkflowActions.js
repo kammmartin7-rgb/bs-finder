@@ -26,6 +26,34 @@ export function offerStageAdvance(onStageChange, leadId, nextStageId) {
   }
 }
 
+export function runStageAction(actionDef, context) {
+  if (!actionDef || !context?.view) return
+
+  if (actionDef.uiAction === 'edit') {
+    context.onEditLead?.(context.view)
+    return
+  }
+  if (actionDef.uiAction === 'notes') {
+    context.onNotesToggle?.()
+    return
+  }
+  if (actionDef.id === 'demo-image') {
+    context.onDemoImage?.(context.view)
+    return
+  }
+
+  executeSalesWorkflowAction(actionDef.id, {
+    view: context.view,
+    actionDef,
+    onAction: context.onAction,
+    onStageChange: context.onStageChange,
+    onEditLead: context.onEditLead,
+    demoRecord: context.demoRecord,
+    setDemoRecord: context.setDemoRecord,
+    copy: context.copy,
+  })
+}
+
 export function executeSalesWorkflowAction(actionId, {
   view,
   actionDef = {},
@@ -65,6 +93,9 @@ export function executeSalesWorkflowAction(actionId, {
       }
       const createdDemo = onAction?.('demo', view.lead)
       if (createdDemo && setDemoRecord) setDemoRecord(createdDemo)
+      if (createdDemo && actionDef.confirmNextStage) {
+        offerStageAdvance(onStageChange, view.leadId, actionDef.confirmNextStage)
+      }
       break
     }
     case 'send-demo': {

@@ -3,11 +3,11 @@ import { loadShareableDemo } from '../WebsiteBuilder/demoStorage'
 import {
   getNextStageId,
   getPreviousStageId,
-  getStageWorkflow,
+  getStagePrimaryAction,
+  getStageSecondaryActions,
   isReadOnlyStage,
 } from './salesWorkflow'
-import { executeSalesWorkflowAction } from './salesWorkflowActions'
-import { getDemoActionLabel, runCrmQuickAction } from './crmQuickActions'
+import { runStageAction } from './salesWorkflowActions'
 import LeadCustomerFile from './LeadCustomerFile'
 import { useLanguage } from '../../context/LanguageContext'
 
@@ -27,11 +27,18 @@ const CurrentLeadPanel = memo(function CurrentLeadPanel({
   const { t } = useLanguage()
   const [demoRecord, setDemoRecord] = useState(null)
 
-  const workflow = useMemo(() => (view ? getStageWorkflow(view.stage) : null), [view])
+  const primaryAction = useMemo(() => (view ? getStagePrimaryAction(view.stage) : null), [view])
+  const secondaryActions = useMemo(() => (
+    view
+      ? getStageSecondaryActions(view.stage, {
+        editLead: copy.editLead || t('editLead'),
+        notes: copy.notes,
+      })
+      : []
+  ), [view, copy.editLead, copy.notes, t])
   const readOnly = view ? isReadOnlyStage(view.stage) : false
   const previousStageId = view ? getPreviousStageId(view.stage) : null
   const nextStageId = view ? getNextStageId(view.stage) : null
-  const demoLabel = view ? getDemoActionLabel(view, demoRecord || loadShareableDemo(view.lead), copy) : copy.createDemo
 
   if (!view) {
     return (
@@ -42,20 +49,7 @@ const CurrentLeadPanel = memo(function CurrentLeadPanel({
   }
 
   function runAction(actionDef) {
-    executeSalesWorkflowAction(actionDef.id, {
-      view,
-      actionDef,
-      onAction,
-      onStageChange,
-      onEditLead,
-      demoRecord: demoRecord || loadShareableDemo(view.lead),
-      setDemoRecord,
-      copy,
-    })
-  }
-
-  function runQuick(actionId) {
-    runCrmQuickAction(actionId, {
+    runStageAction(actionDef, {
       view,
       onAction,
       onStageChange,
@@ -64,6 +58,7 @@ const CurrentLeadPanel = memo(function CurrentLeadPanel({
       demoRecord: demoRecord || loadShareableDemo(view.lead),
       setDemoRecord,
       copy,
+      onNotesToggle: () => document.getElementById('lead-notes-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
     })
   }
 
@@ -92,38 +87,27 @@ const CurrentLeadPanel = memo(function CurrentLeadPanel({
 
       {readOnly ? (
         <p className="crm-v2__current-lead-readonly">{copy.readOnlyStage}</p>
-      ) : (
+      ) : primaryAction ? (
         <div className="crm-v2__current-lead-actions">
-          {workflow?.primary ? (
-            <button type="button" className="crm-v2__current-lead-primary" onClick={() => runAction(workflow.primary)}>
-              {workflow.primary.emoji} {workflow.primary.label}
-            </button>
-          ) : null}
-          {workflow?.secondary?.map((actionDef) => (
+          <button
+            type="button"
+            className="crm-v2__current-lead-primary"
+            onClick={() => runAction(primaryAction)}
+          >
+            {primaryAction.emoji} {primaryAction.label}
+          </button>
+        </div>
+      ) : null}
+
+      {secondaryActions.length ? (
+        <div className="crm-v2__current-lead-secondary">
+          {secondaryActions.map((actionDef) => (
             <button key={actionDef.id} type="button" onClick={() => runAction(actionDef)}>
               {actionDef.emoji} {actionDef.label}
             </button>
           ))}
         </div>
-      )}
-
-      <div className="crm-v2__current-lead-crm-actions">
-        <button type="button" disabled={!view.phone} onClick={() => runQuick('call')}>{copy.call}</button>
-        <button type="button" disabled={!view.phone} onClick={() => runQuick('whatsapp')}>{copy.whatsapp}</button>
-        <button type="button" onClick={() => runQuick('demo')}>{demoLabel}</button>
-        <button type="button" disabled={!view.phone} onClick={() => runQuick('send-demo')}>{copy.sendDemo}</button>
-        <button type="button" onClick={() => runQuick('proposal')}>{copy.sendProposal || copy.openProposal}</button>
-        <button type="button" onClick={() => runQuick('demo-image')}>{copy.demoImage}</button>
-      </div>
-
-      <div className="crm-v2__current-lead-utility">
-        <button type="button" onClick={() => onEditLead?.(view)}>
-          ✏ {copy.editLead || t('editLead')}
-        </button>
-        <button type="button" onClick={() => document.getElementById('lead-notes-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}>
-          📝 {copy.notes}
-        </button>
-      </div>
+      ) : null}
 
       {!readOnly ? (
         <div className="crm-v2__current-lead-stage-nav">

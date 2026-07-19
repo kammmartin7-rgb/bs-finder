@@ -11,10 +11,11 @@ import {
   getNextStageId,
   getPreviousStageId,
   getStageConfirmMessage,
-  getStageWorkflow,
+  getStagePrimaryAction,
+  getStageSecondaryActions,
   isReadOnlyStage,
 } from './salesWorkflow'
-import { executeSalesWorkflowAction } from './salesWorkflowActions'
+import { runStageAction } from './salesWorkflowActions'
 import LeadNotesEditor from './LeadNotesEditor'
 import { useLanguage } from '../../context/LanguageContext'
 import ManualLeadForm from '../ManualLead/ManualLeadForm'
@@ -138,6 +139,7 @@ function PipelineLeadCard({
   copy,
   onAction,
   onEditLead,
+  onDemoImage,
   onStageChange,
   selected = false,
   onSelect,
@@ -145,7 +147,11 @@ function PipelineLeadCard({
   const { t } = useLanguage()
   const [demoRecord, setDemoRecord] = useState(null)
   const [notesOpen, setNotesOpen] = useState(false)
-  const workflow = getStageWorkflow(view.stage)
+  const primaryAction = getStagePrimaryAction(view.stage)
+  const secondaryActions = getStageSecondaryActions(view.stage, {
+    editLead: copy.editLead || t('editLead'),
+    notes: copy.notes,
+  })
   const readOnly = isReadOnlyStage(view.stage)
   const previousStageId = getPreviousStageId(view.stage)
   const nextStageId = getNextStageId(view.stage)
@@ -164,17 +170,18 @@ function PipelineLeadCard({
     event.dataTransfer.effectAllowed = 'move'
   }
 
-  function runAction(actionDef) {
-    stopCardOpen({ stopPropagation: () => {} })
-    executeSalesWorkflowAction(actionDef.id, {
+  function runAction(actionDef, event) {
+    if (event) stopCardOpen(event)
+    runStageAction(actionDef, {
       view,
-      actionDef,
       onAction,
       onStageChange,
       onEditLead,
+      onDemoImage,
       demoRecord,
       setDemoRecord,
       copy,
+      onNotesToggle: () => setNotesOpen((open) => !open),
     })
   }
 
@@ -207,20 +214,21 @@ function PipelineLeadCard({
 
         {readOnly ? (
           <p className="crm-lead-card__readonly">{copy.readOnlyStage}</p>
-        ) : workflow.primary ? (
-          <button type="button" className="crm-lead-card__workflow-primary" onClick={(event) => { stopCardOpen(event); runAction(workflow.primary) }}>
-            {workflow.primary.emoji} {workflow.primary.label}
+        ) : primaryAction ? (
+          <button type="button" className="crm-lead-card__workflow-primary" onClick={(event) => runAction(primaryAction, event)}>
+            {primaryAction.emoji} {primaryAction.label}
           </button>
         ) : null}
 
-        <div className="crm-lead-card__utility">
-          <button type="button" onClick={(event) => { stopCardOpen(event); onEditLead?.(view) }}>
-            ✏ {copy.editLead || t('editLead')}
-          </button>
-          <button type="button" onClick={(event) => { stopCardOpen(event); setNotesOpen((open) => !open) }}>
-            📝 {copy.notes}
-          </button>
-        </div>
+        {secondaryActions.length ? (
+          <div className="crm-lead-card__workflow-secondary">
+            {secondaryActions.map((actionDef) => (
+              <button key={actionDef.id} type="button" onClick={(event) => runAction(actionDef, event)}>
+                {actionDef.emoji} {actionDef.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         {notesOpen ? (
           <LeadNotesEditor view={view} copy={copy} onClose={() => setNotesOpen(false)} />
@@ -252,7 +260,7 @@ function PipelineLeadCard({
 
 const MemoPipelineLeadCard = memo(PipelineLeadCard)
 
-function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEditLead, onStageChange, selectedLeadId, onSelectLead, isDropTarget, onDragEnter, onDragLeave }) {
+function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEditLead, onDemoImage, onStageChange, selectedLeadId, onSelectLead, isDropTarget, onDragEnter, onDragLeave }) {
   return (
     <article className={`pipeline-column ${stageIndex < 5 ? 'pipeline-column--primary' : 'pipeline-column--secondary'}${isDropTarget ? ' is-drop-target' : ''}`}>
       <header className="pipeline-column-header"><span>{STAGE_ICONS[stageIndex]}</span><h3>{copy.stages[stageIndex]}</h3></header>
@@ -269,7 +277,7 @@ function PipelineColumn({ stageId, stageIndex, stageViews, copy, onAction, onEdi
         }}
       >
         {stageViews.map((view) => (
-          <MemoPipelineLeadCard key={view.leadId} view={view} copy={copy} selected={selectedLeadId === view.leadId} onSelect={onSelectLead} onAction={onAction} onEditLead={onEditLead} onStageChange={onStageChange} />
+          <MemoPipelineLeadCard key={view.leadId} view={view} copy={copy} selected={selectedLeadId === view.leadId} onSelect={onSelectLead} onAction={onAction} onEditLead={onEditLead} onDemoImage={onDemoImage} onStageChange={onStageChange} />
         ))}
       </div>
       <footer className="pipeline-column-footer"><strong>{stageViews.length}</strong></footer>
@@ -438,7 +446,7 @@ export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onR
   return <section className="crm-v2" dir={direction}><header className="crm-v2__header"><div><span>{copy.eyebrow}</span><h1>{copy.pageTitle}</h1><p>{copy.subtitle}</p></div></header>
     <CurrentLeadPanel view={currentLeadView} copy={PIPELINE_COPY} categoryLabels={PIPELINE_METADATA_HE} visibleIndex={currentLeadIndex} visibleTotal={pipelineFilteredViews.length} onAction={onAction} onEditLead={handleEditLead} onDemoImage={handleDemoImage} onStageChange={updateLeadStage} onNextLead={selectNextLead} onNotesSaved={handleNotesSaved} />
     <SalesActionCenter ref={actionRef} categories={categories} counts={counts} activeCategory={actionCategory} onCategoryChange={setActionCategory} copy={actionCopy} emptyReason={actionEmptyReason} onEditLead={handleEditLead} onAction={onAction} />
-    <section className="crm-v2__pipeline" ref={pipelineRef} dir="rtl"><header><span>02</span><h2>{PIPELINE_COPY.pipeline}</h2></header><LeadCommandBar views={pipelineBaseViews} leads={leads} filters={pipelineFilters} onChange={setPipelineFilters} onReset={resetPipelineFilters} openMenu={commandMenuOpen} onOpenMenuChange={setCommandMenuOpen} visibleCount={pipelineFilteredViews.length} totalCount={views.length} onImportGoogleMaps={() => setShowGoogleMapsImport(true)} onAddLeadManually={() => setShowManualLeadForm(true)} importGoogleMapsLabel={PIPELINE_COPY.importGoogleMaps} addLeadManuallyLabel={PIPELINE_COPY.addLeadManually} />{pipelineFilteredViews.length ? <div className="crm-v2__stages"><div className="crm-v2__stages-row crm-v2__stages-row--primary">{stages.slice(0, 5).map((stageViews, index) => <PipelineColumn key={CRM_STAGES[index]} stageId={CRM_STAGES[index]} stageIndex={index} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={handleEditLead} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={handleSelectPipelineLead} isDropTarget={dragOverStage === CRM_STAGES[index]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} />)}</div><div className="crm-v2__stages-row crm-v2__stages-row--secondary">{stages.slice(5).map((stageViews, index) => { const stageIndex = index + 5; return <PipelineColumn key={CRM_STAGES[stageIndex]} stageId={CRM_STAGES[stageIndex]} stageIndex={stageIndex} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={handleEditLead} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={handleSelectPipelineLead} isDropTarget={dragOverStage === CRM_STAGES[stageIndex]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} /> })}</div></div> : <p className="crm-v2__empty">{pipelineEmptyMessage}</p>}</section>
+    <section className="crm-v2__pipeline" ref={pipelineRef} dir="rtl"><header><span>02</span><h2>{PIPELINE_COPY.pipeline}</h2></header><LeadCommandBar views={pipelineBaseViews} leads={leads} filters={pipelineFilters} onChange={setPipelineFilters} onReset={resetPipelineFilters} openMenu={commandMenuOpen} onOpenMenuChange={setCommandMenuOpen} visibleCount={pipelineFilteredViews.length} totalCount={views.length} onImportGoogleMaps={() => setShowGoogleMapsImport(true)} onAddLeadManually={() => setShowManualLeadForm(true)} importGoogleMapsLabel={PIPELINE_COPY.importGoogleMaps} addLeadManuallyLabel={PIPELINE_COPY.addLeadManually} />{pipelineFilteredViews.length ? <div className="crm-v2__stages"><div className="crm-v2__stages-row crm-v2__stages-row--primary">{stages.slice(0, 5).map((stageViews, index) => <PipelineColumn key={CRM_STAGES[index]} stageId={CRM_STAGES[index]} stageIndex={index} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={handleEditLead} onDemoImage={handleDemoImage} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={handleSelectPipelineLead} isDropTarget={dragOverStage === CRM_STAGES[index]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} />)}</div><div className="crm-v2__stages-row crm-v2__stages-row--secondary">{stages.slice(5).map((stageViews, index) => { const stageIndex = index + 5; return <PipelineColumn key={CRM_STAGES[stageIndex]} stageId={CRM_STAGES[stageIndex]} stageIndex={stageIndex} stageViews={stageViews} copy={PIPELINE_COPY} onAction={onAction} onEditLead={handleEditLead} onDemoImage={handleDemoImage} onStageChange={updateLeadStage} selectedLeadId={selectedPipelineLeadId} onSelectLead={handleSelectPipelineLead} isDropTarget={dragOverStage === CRM_STAGES[stageIndex]} onDragEnter={setDragOverStage} onDragLeave={() => setDragOverStage('')} /> })}</div></div> : <p className="crm-v2__empty">{pipelineEmptyMessage}</p>}</section>
     {showManualLeadForm && <ManualLeadForm existingLeads={leads} useLegacyManualStore={false} onClose={() => setShowManualLeadForm(false)} onSave={(lead, notes) => { if (onAddLead?.(lead, notes)) setShowManualLeadForm(false) }} />}
     {showGoogleMapsImport && <GoogleMapsImportForm existingLeads={leads} onClose={() => setShowGoogleMapsImport(false)} onSave={(lead, notes, options) => { if (onAddLead?.(lead, notes, options)) setShowGoogleMapsImport(false) }} />}
     {editingView && <LeadEditForm key={editingView.leadId} lead={editingView.lead} crm={editingView.crm} stageLabels={copy.stages} onClose={() => setEditingView(null)} onPersistLeadFields={persistLeadFields} onSave={saveLeadEdit} onManageImages={openLeadMediaFromEdit} />}

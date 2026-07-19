@@ -25,8 +25,8 @@ export const STAGE_WORKFLOW = [
     icon: '📞',
     label: 'יצירת קשר ראשונה',
     readOnly: false,
-    primary: { id: 'whatsapp', emoji: '💬', label: 'WhatsApp' },
-    secondary: [{ id: 'demo', emoji: '🌐', label: 'יצירת דמו' }],
+    primary: { id: 'demo', emoji: '🌐', label: 'יצירת דמו', confirmNextStage: 'demo-created' },
+    secondary: [{ id: 'whatsapp', emoji: '💬', label: 'WhatsApp' }],
   },
   {
     id: 'demo-created',
@@ -34,7 +34,10 @@ export const STAGE_WORKFLOW = [
     label: 'דמו נוצר',
     readOnly: false,
     primary: { id: 'send-demo', emoji: '📤', label: 'שליחת דמו', confirmNextStage: 'demo-sent' },
-    secondary: [],
+    secondary: [
+      { id: 'whatsapp', emoji: '💬', label: 'WhatsApp' },
+      { id: 'demo-image', emoji: '🖼', label: 'תמונת דמו' },
+    ],
   },
   {
     id: 'demo-sent',
@@ -42,7 +45,7 @@ export const STAGE_WORKFLOW = [
     label: 'דמו נשלח',
     readOnly: false,
     primary: { id: 'proposal', emoji: '💰', label: 'שליחת הצעת מחיר' },
-    secondary: [],
+    secondary: [{ id: 'whatsapp', emoji: '💬', label: 'WhatsApp' }],
   },
   {
     id: 'proposal-sent',
@@ -50,7 +53,10 @@ export const STAGE_WORKFLOW = [
     label: 'הצעת מחיר נשלחה',
     readOnly: false,
     primary: { id: 'start-negotiation', emoji: '🤝', label: 'התחל משא ומתן', moveToStage: 'negotiation' },
-    secondary: [],
+    secondary: [
+      { id: 'call', emoji: '📞', label: 'התקשר' },
+      { id: 'whatsapp', emoji: '💬', label: 'WhatsApp' },
+    ],
   },
   {
     id: 'negotiation',
@@ -59,6 +65,9 @@ export const STAGE_WORKFLOW = [
     readOnly: false,
     primary: { id: 'schedule-follow-up', emoji: '📅', label: 'קבע מעקב', moveToStage: 'follow-up' },
     secondary: [
+      { id: 'call', emoji: '📞', label: 'התקשר' },
+      { id: 'whatsapp', emoji: '💬', label: 'WhatsApp' },
+      { id: 'proposal', emoji: '💰', label: 'הצעת מחיר' },
       { id: 'close-deal', emoji: '✅', label: 'סגור עסקה', moveToStage: 'deal-won' },
       { id: 'not-interested', emoji: '❌', label: 'לא מעוניין', moveToStage: 'lost' },
     ],
@@ -140,9 +149,29 @@ export function isReadOnlyStage(stageId) {
   return getStageWorkflow(stageId).readOnly
 }
 
+export function getStagePrimaryAction(stageId) {
+  const { primary } = getStageWorkflow(stageId)
+  return primary || null
+}
+
+/** @deprecated Use getStagePrimaryAction */
+export function getStagePrimaryActions(stageId) {
+  const primary = getStagePrimaryAction(stageId)
+  return primary ? [primary] : []
+}
+
+export function getStageSecondaryActions(stageId, labels = {}) {
+  const { secondary = [] } = getStageWorkflow(stageId)
+  return [
+    ...secondary,
+    { id: 'edit-lead', emoji: '✏', label: labels.editLead || 'עריכת ליד', uiAction: 'edit' },
+    { id: 'notes', emoji: '📝', label: labels.notes || 'הערות', uiAction: 'notes' },
+  ]
+}
+
 export function getStageConfirmMessage(nextStageId) {
   const label = getStageLabel(nextStageId)
-  return `להעביר את הליד לשלב "${label}"?`
+  return `האם להעביר את הליד לשלב '${label}'?`
 }
 
 export const STAGE_ICONS = STAGE_WORKFLOW.map((stage) => stage.icon)

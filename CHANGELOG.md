@@ -14,6 +14,7 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Changed
 
+- Sales workflow stage actions aligned to spec: single primary per stage (Call → Create Demo → Send Demo → Send Proposal → Start Negotiation → Follow-up); secondary exposes WhatsApp, Call, Proposal, Edit, and Notes per stage; pipeline cards and Current Lead panel render both rows; ⬅/⏸/➡ on every card; `runStageAction` handles UI actions (edit, notes, demo-image).
 - Lead customer file on Sales screen: `LeadCustomerFile.jsx` with business/sales sections, append-only `notesHistory` via `leadNotesHistory.js`, activity timeline from actions + notes, demo/proposal links; `LeadNotesEditor` append-only; `LeadEditForm` shows note history read-only.
 - Sales workflow redesigned (`salesWorkflow.js`, `salesWorkflowActions.js`): 9 pipeline stages as completed states; per-stage primary/secondary actions; manual ⬅/⏸/➡ navigation on every card; Send Demo and Save Proposal optionally advance stage after salesperson confirms.
 - Sales/CRM interaction slowness: cached `loadPersistedLeads`, CRM records, and lead-action history; removed full lead reload on screen change, window focus, lead-action events, and CRM mount; CRM-only stage updates no longer rewrite the entire lead array; Sales command data computed in one pass; pipeline cards memoized and demo lookups deferred until click.
