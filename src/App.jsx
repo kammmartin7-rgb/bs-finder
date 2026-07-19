@@ -491,6 +491,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
   const selectedDemoOpenUrl = selectedDemoLead?.shareDemo ? createDemoOpenUrl(selectedDemoLead.shareDemo) : ''
 
   return (
+    <>
     <BusinessOS leads={persistedLeads} realWebsiteLead={selectedRealWebsiteLead} onDashboardFilterChange={setDashboardFilter} onMissionAction={handleMissionAction} onCrmAction={handleCrmAction} onRefreshLeads={refreshLeadsFromStorage} onAddLead={handleAddLead} onUpdateLead={handleUpdateLead}>
       <main className="page">
       <h1>BS Hunter</h1>
@@ -853,61 +854,6 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
         </section>
       )}
 
-      {showProposal && selectedBusiness && (
-        <ProposalGenerator
-          business={selectedBusiness}
-          onClose={() => setShowProposal(false)}
-        />
-      )}
-
-      {selectedDemoLead && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Demo site for ${selectedDemoLead.businessName}`}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10000,
-            overflowY: 'auto',
-            background: '#ffffff',
-          }}
-        >
-          <div className="demo-share-toolbar">
-            <button type="button" className="mini-button" onClick={async () => { try { await navigator.clipboard.writeText(selectedDemoShareUrl); setDemoLinkNotice('Demo link copied.') } catch { setDemoLinkNotice('Could not copy. Open the demo and copy the browser URL.') } }}>Copy Demo Link</button>
-            <button type="button" className="mini-button" onClick={() => window.open(selectedDemoOpenUrl, '_blank', 'noopener,noreferrer')}>Open Demo</button>
-            <button type="button" className="mini-button" onClick={() => setSelectedDemoLead(null)}>{t('close')}</button>
-            {demoLinkNotice && <span>{demoLinkNotice}</span>}
-          </div>
-          <WebsiteBuilder business={selectedDemoLead} />
-        </div>
-      )}
-
-      {selectedSalesLead && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Sales pitch for ${selectedSalesLead.businessName}`}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10000,
-            overflowY: 'auto',
-            background: '#ffffff',
-          }}
-        >
-          <button
-            type="button"
-            className="mini-button"
-            onClick={() => setSelectedSalesLead(null)}
-            style={{ position: 'fixed', top: 20, right: 20, zIndex: 10001 }}
-          >
-            {t('close')}
-          </button>
-          <SalesCenter lead={selectedSalesLead} />
-        </div>
-      )}
-
       {showManualLeadForm && (
         <ManualLeadForm
           existingLeads={persistedLeads}
@@ -927,6 +873,62 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
 
       </main>
     </BusinessOS>
+
+    {showProposal && selectedBusiness && (
+      <ProposalGenerator
+        business={selectedBusiness}
+        onClose={() => setShowProposal(false)}
+      />
+    )}
+
+    {selectedDemoLead && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Demo site for ${selectedDemoLead.businessName}`}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 10000,
+          overflowY: 'auto',
+          background: '#ffffff',
+        }}
+      >
+        <div className="demo-share-toolbar">
+          <button type="button" className="mini-button" onClick={async () => { try { await navigator.clipboard.writeText(selectedDemoShareUrl); setDemoLinkNotice('Demo link copied.') } catch { setDemoLinkNotice('Could not copy. Open the demo and copy the browser URL.') } }}>Copy Demo Link</button>
+          <button type="button" className="mini-button" onClick={() => window.open(selectedDemoOpenUrl, '_blank', 'noopener,noreferrer')}>Open Demo</button>
+          <button type="button" className="mini-button" onClick={() => setSelectedDemoLead(null)}>{t('close')}</button>
+          {demoLinkNotice && <span>{demoLinkNotice}</span>}
+        </div>
+        <WebsiteBuilder business={selectedDemoLead} />
+      </div>
+    )}
+
+    {selectedSalesLead && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Sales pitch for ${selectedSalesLead.businessName}`}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 10000,
+          overflowY: 'auto',
+          background: '#ffffff',
+        }}
+      >
+        <button
+          type="button"
+          className="mini-button"
+          onClick={() => setSelectedSalesLead(null)}
+          style={{ position: 'fixed', top: 20, right: 20, zIndex: 10001 }}
+        >
+          {t('close')}
+        </button>
+        <SalesCenter lead={selectedSalesLead} />
+      </div>
+    )}
+    </>
   )
 }
 

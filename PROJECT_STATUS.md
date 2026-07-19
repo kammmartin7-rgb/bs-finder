@@ -14,7 +14,7 @@ Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-Sales workflow review: each pipeline stage exposes one primary action plus all relevant secondary actions (including Edit and Notes on every stage); pipeline cards and Current Lead panel aligned via `getStageSecondaryActions` and `runStageAction`; demo-image preserved on demo-created stage; build/lint passed.
+Fix proposal button regression: moved `ProposalGenerator` (and demo/sales overlays) to App root so they render on the CRM/Sales screen; workflow button still calls `handleCrmAction('proposal')`; stage advance confirm after save unchanged; build/lint passed.
 
 ## Project Rules (Current)
 

@@ -12,6 +12,10 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - Lead model sales tracking fields on every real lead record: `messageVersion`, `messageSentAt`, `demoOpenCount`, `firstDemoOpenAt`, `lastDemoOpenAt`, `lastContactAt`, `nextAction`, `nextActionDate`, and `salesStatus` (`new`, `message_sent`, `demo_opened`, `in_call`, `proposal_sent`, `follow_up`, `won`, `lost`). Existing leads receive defaults via `enrichLeadSalesTracking` on load and a one-time migration key `bs-hunter-lead-sales-tracking-migration-v1`.
 - LeadEditForm (Edit Lead dialog from Sales Pipeline): bordered **Sales Tracking** fieldset (`data-testid="lead-sales-tracking"`) directly above Notes; pipeline card click opens this dialog.
 
+### Fixed
+
+- CRM **שליחת הצעת מחיר** button regression: `ProposalGenerator` overlay moved to App root so it opens from the Sales/CRM screen; save still dispatches `bs-hunter-proposal-sent` for optional advance to `proposal-sent`.
+
 ### Changed
 
 - Sales workflow stage actions aligned to spec: single primary per stage (Call → Create Demo → Send Demo → Send Proposal → Start Negotiation → Follow-up); secondary exposes WhatsApp, Call, Proposal, Edit, and Notes per stage; pipeline cards and Current Lead panel render both rows; ⬅/⏸/➡ on every card; `runStageAction` handles UI actions (edit, notes, demo-image).
