@@ -278,6 +278,8 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     } else if (action === 'demo') {
       trackRealLeadAction(lead, LEAD_ACTIONS.DEMO_SITE_OPENED)
       return openDemoPreview(lead)
+    } else if (action === 'send-demo') {
+      trackRealLeadAction(lead, LEAD_ACTIONS.DEMO_SENT)
     } else if (action === 'proposal') {
       trackRealLeadAction(lead, LEAD_ACTIONS.PROPOSAL_OPENED)
       setSelectedBusiness(lead)

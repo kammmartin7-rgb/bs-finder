@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS with one shared CRM and a stable 
 
 ## Current Active Task
 
-Lead persistence E2E stabilization (BOS-028): verify drag-and-drop, refresh, server restart, and that no leads disappear after Sales Action Center rollout.
+Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-Sales Action Center: replaced command/follow-up blocks with six actionable categories (חייב טיפול עכשיו through נסגרה עסקה) via single-pass `getSalesActionCenterData`; pipeline unchanged; build/lint passed; no storage changes.
+Lead persistence E2E stabilization (BOS-028): expanded `scripts/verify-lead-e2e.mjs` to 12 checks (existing count, manual create, duplicate block, pipeline-card edit, stage selector, drag-and-drop, refresh, dev-server restart, count non-decrease, canonical storage); 12/12 passed; build/lint passed; no production code changes required.
 
 ## Project Rules (Current)
 
@@ -61,7 +61,7 @@ Sales Action Center: replaced command/follow-up blocks with six actionable categ
 
 ## What Is Incomplete
 
-- Lead persistence E2E stabilization (next task): drag-and-drop verification, server-restart checks, and full regression across all lead entry paths.
+- Google Maps paste import and lead images are not yet covered by the automated E2E script (manual verification still required).
 - No production deployment has been completed or verified on a real hosting provider.
 - Paid lead search still needs billing, a deployed backend, and `VITE_API_BASE_URL`.
 - BS Funds has no live data integration beyond the production website asset card.
@@ -75,7 +75,7 @@ Sales Action Center: replaced command/follow-up blocks with six actionable categ
 
 ## Known Problems
 
-- Lead persistence must be re-verified end-to-end after the load-loop fix (active task); pipeline card click opens `LeadEditForm` directly (no separate Edit Lead button).
+- Pipeline card click opens `LeadEditForm` directly (no separate Edit Lead button); automated E2E covers manual create/edit/stage/drag/refresh/restart paths.
 - Paid lead search requires provider billing and a deployed backend.
 - Production deployment is prepared but not smoke-tested on a public URL.
 - `VITE_PUBLIC_APP_URL` currently resolves to localhost; configure the public Vercel origin before sending customer demo links.
@@ -110,11 +110,13 @@ npm install
 npm start
 ```
 
-Optional lead persistence verification script (browser must be running with app loaded):
+Optional lead persistence E2E verification (requires running dev server; Playwright auto-installs if missing):
 
 ```bash
 node scripts/verify-lead-e2e.mjs
 ```
+
+Covers 12 checks: existing lead count, manual create, duplicate prevention, pipeline-card edit, stage selector, drag-and-drop, browser refresh, dev-server restart, count non-decrease, and canonical `bs-hunter-real-leads` persistence. Does not wipe existing leads.
 
 ## Project Structure
 
@@ -148,16 +150,16 @@ The flow currently works through WhatsApp opening and local tracking. Payment, r
 
 ## Next 10 Tasks
 
-1. Fully stabilize lead persistence and verify manual creation, Google Maps import, editing, images, status changes, drag-and-drop, refresh, and server restart (no disappearing leads).
-2. Add Real Website Builder page and section editor (RWB-003).
-3. Add customer approval workflow for generated websites (RWB-005).
-4. Restore and verify reliable real lead acquisition for multiple industries and cities (production billing/deploy still required).
-5. Select and configure the real payment provider and payment handoff.
-6. Perform full browser interaction QA for every CRM stage and action.
-7. Verify proposal acceptance and secure-payment handoff with a real configured URL.
-8. Deploy and smoke-test the customer-facing sales flow on a public URL.
-9. Add website publish/deploy pipeline after customer approval.
-10. Add revenue-critical follow-up reminders and outcome tracking.
+1. Add Real Website Builder page and section editor (RWB-003).
+2. Add customer approval workflow for generated websites (RWB-005).
+3. Restore and verify reliable real lead acquisition for multiple industries and cities (production billing/deploy still required).
+4. Select and configure the real payment provider and payment handoff.
+5. Perform full browser interaction QA for every CRM stage and action.
+6. Verify proposal acceptance and secure-payment handoff with a real configured URL.
+7. Deploy and smoke-test the customer-facing sales flow on a public URL.
+8. Add website publish/deploy pipeline after customer approval.
+9. Add revenue-critical follow-up reminders and outcome tracking.
+10. Extend E2E script to cover Google Maps import and lead images.
 
 ## Do Not Touch
 

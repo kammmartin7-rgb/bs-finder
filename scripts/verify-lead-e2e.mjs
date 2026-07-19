@@ -1,16 +1,22 @@
 #!/usr/bin/env node
 /**
- * End-to-end lead persistence verification against the running Vite dev server.
+ * BOS-028 lead persistence E2E verification against the running Vite dev server.
+ * Does not wipe existing leads — records count before/after and verifies the test lead persists.
+ *
  * Usage: node scripts/verify-lead-e2e.mjs [baseUrl]
  */
 import { spawn } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 
 const BASE_URL = process.argv[2] || 'http://localhost:5173'
-const PLUMBER_NAME = 'אינסטלטור בפתח תקווה יובל קדס'
 const CANONICAL_KEY = 'bs-hunter-real-leads'
+const REPO_ROOT = new URL('..', import.meta.url).pathname
 
 const results = []
+let testMarker = ''
+let testPhone = ''
+let testLeadId = null
+let initialLeadCount = 0
 
 function record(step, pass, detail = '') {
   results.push({ step, pass, detail })
@@ -23,7 +29,7 @@ async function loadPlaywright() {
     return mod.chromium
   } catch {
     const { execSync } = await import('node:child_process')
-    execSync('npm install --no-save playwright@1.52.0', { stdio: 'inherit' })
+    execSync('npm install --no-save playwright@1.52.0', { stdio: 'inherit', cwd: REPO_ROOT })
     const mod = await import('playwright')
     return mod.chromium
   }
@@ -47,158 +53,234 @@ async function restartDevServer() {
   spawn('pkill', ['-f', 'vite'], { stdio: 'ignore' }).on('error', () => {})
   await delay(1500)
   const child = spawn('npm', ['run', 'dev'], {
-    cwd: new URL('..', import.meta.url).pathname,
+    cwd: REPO_ROOT,
     stdio: 'ignore',
     detached: true,
   })
   child.unref()
-  const ready = await waitForServer(BASE_URL, 45000)
-  return ready
+  return waitForServer(BASE_URL, 45000)
+}
+
+async function readLeadStorage(page) {
+  return page.evaluate((key) => {
+    const raw = localStorage.getItem(key)
+    let leads = []
+    try {
+      leads = raw ? JSON.parse(raw) : []
+    } catch {
+      leads = []
+    }
+    if (!Array.isArray(leads)) leads = []
+    return { count: leads.length, leads }
+  }, CANONICAL_KEY)
+}
+
+async function openSales(page) {
+  await page.locator('.business-os__sidebar nav button').filter({ hasText: /Sales|מכירות|المبيعات|Продажи/i }).click()
+  await page.waitForSelector('.crm-v2__pipeline', { timeout: 15000 })
+}
+
+async function openManualLeadForm(page) {
+  await page.getByRole('button', { name: /הוספת ליד ידנית|Add Lead Manually|הוסף ליד/i }).click()
+  await page.waitForSelector('#manual-lead-title', { timeout: 10000 })
+}
+
+async function fillManualLeadForm(page, { businessName, phone, city = 'E2E City' }) {
+  const form = page.locator('form.manual-lead-form').filter({ has: page.locator('#manual-lead-title') })
+  await form.getByLabel(/Business Name|שם העסק|اسم النشاط|Название компании/i).fill(businessName)
+  await form.getByLabel(/City|עיר|المدينة|Город/i).fill(city)
+  await form.getByLabel(/Phone|טלפון|الهاتف|Телефон/i).fill(phone)
+  await form.getByRole('button', { name: /Save Lead|שמירת ליד|حفظ العميل|Сохранить лид/i }).click()
+}
+
+async function waitForManualLeadFormClose(page) {
+  await page.waitForSelector('#manual-lead-title', { state: 'detached', timeout: 10000 }).catch(() => {})
+  await delay(300)
+}
+
+async function openLeadEditFromPipelineCard(page, businessName) {
+  const card = page.locator('.crm-v2__pipeline .crm-lead-card--pipeline', { hasText: businessName }).first()
+  await card.click()
+  await page.waitForSelector('#lead-edit-title', { timeout: 10000 })
+  return card
+}
+
+async function closeLeadEdit(page) {
+  const dialog = page.locator('.manual-lead-overlay').filter({ has: page.locator('#lead-edit-title') })
+  await dialog.getByRole('button', { name: /Cancel|ביטול|Отмена|إلغاء/i }).click()
+  await page.waitForSelector('#lead-edit-title', { state: 'detached', timeout: 10000 }).catch(() => {})
+  await delay(300)
+}
+
+async function saveLeadEdit(page) {
+  const form = page.locator('form.manual-lead-form').filter({ has: page.locator('#lead-edit-title') })
+  await form.getByRole('button', { name: /Save Changes|שמירת שינויים|حفظ التغييرات|Сохранить изменения/i }).click()
+  await page.waitForSelector('#lead-edit-title', { state: 'detached', timeout: 10000 }).catch(() => {})
+  await delay(300)
+}
+
+async function findTestLeadInStorage(page) {
+  return page.evaluate(({ key, marker }) => {
+    const leads = JSON.parse(localStorage.getItem(key) || '[]')
+    const lead = leads.find((item) => String(item.businessName || '') === marker)
+    return lead ? { found: true, id: lead.id || lead.placeId || null, city: lead.city || '', phone: lead.phone || '' } : { found: false }
+  }, { key: CANONICAL_KEY, marker: testMarker })
 }
 
 async function run() {
+  testMarker = `E2E-BOS028-${Date.now()}`
+  testPhone = `050-${String(Date.now()).slice(-7)}`
+
   const chromium = await loadPlaywright()
   const browser = await chromium.launch({ headless: true })
-  const context = await browser.newContext()
-  const page = await context.newPage()
+  const page = await browser.newPage()
 
   const ready = await waitForServer(BASE_URL)
+  record('Dev server reachable', ready, BASE_URL)
   if (!ready) {
-    record('Dev server reachable', false, BASE_URL)
     await browser.close()
     printSummary()
     process.exit(1)
   }
 
-  // Seed legacy manual store to verify recovery path
   await page.goto(BASE_URL, { waitUntil: 'networkidle' })
-  await page.evaluate(({ lead }) => {
-    localStorage.removeItem('bs-hunter-real-leads')
-    localStorage.setItem('bs-hunter-manual-leads', JSON.stringify([lead]))
-  }, {
-    lead: {
-      id: 'manual-recover-test',
-      businessName: PLUMBER_NAME,
-      phone: '050-562-6228',
-      address: 'מבצע דקל 11, פתח תקווה',
-      category: 'Plumber',
-      rating: 5,
-      reviewsCount: 13,
-      source: 'Google Maps',
-      city: 'פתח תקווה',
-      isDemo: false,
-      createdAt: '2026-07-01T10:00:00.000Z',
-    },
-  })
 
-  await page.reload({ waitUntil: 'networkidle' })
+  const initialStorage = await readLeadStorage(page)
+  initialLeadCount = initialStorage.count
+  record('Record existing lead count before testing', initialLeadCount >= 0, `count=${initialLeadCount}`)
 
-  const storageAfterRecovery = await page.evaluate((key) => {
-    const raw = localStorage.getItem(key)
-    const leads = raw ? JSON.parse(raw) : []
-    const plumber = leads.find((lead) => String(lead.businessName || '').includes('יובל קדס'))
-    return {
-      count: leads.length,
-      hasPlumber: Boolean(plumber),
-      leadId: plumber?.id || null,
-      legacyManual: localStorage.getItem('bs-hunter-manual-leads'),
-    }
-  }, CANONICAL_KEY)
+  await openSales(page)
 
+  await openManualLeadForm(page)
+  await fillManualLeadForm(page, { businessName: testMarker, phone: testPhone })
+  await waitForManualLeadFormClose(page)
+
+  const afterCreateStorage = await readLeadStorage(page)
+  const createdLead = afterCreateStorage.leads.find((lead) => String(lead.businessName || '') === testMarker)
+  testLeadId = createdLead?.id || createdLead?.placeId || null
   record(
-    'Recover plumber from legacy storage into bs-hunter-real-leads',
-    storageAfterRecovery.hasPlumber && storageAfterRecovery.count >= 1,
-    `count=${storageAfterRecovery.count}, leadId=${storageAfterRecovery.leadId}`,
+    'Manual lead creation persists to bs-hunter-real-leads',
+    Boolean(createdLead) && afterCreateStorage.count === initialLeadCount + 1,
+    `count=${afterCreateStorage.count}, leadId=${testLeadId || 'missing'}`,
   )
 
-  await page.getByRole('button', { name: /CRM|crm/i }).first().click()
-  await page.waitForSelector('.crm-v2', { timeout: 10000 })
-  const crmVisible = await page.locator('.crm-lead-card', { hasText: 'יובל קדס' }).count()
-  record('Plumber appears in CRM', crmVisible > 0, `cards=${crmVisible}`)
+  await openManualLeadForm(page)
+  await fillManualLeadForm(page, { businessName: `${testMarker}-DUPLICATE`, phone: testPhone })
+  const duplicateErrorVisible = await page.locator('.manual-lead-form .manual-lead-error').isVisible()
+  await page.locator('form.manual-lead-form').filter({ has: page.locator('#manual-lead-title') })
+    .getByRole('button', { name: /Cancel|ביטול|Отмена|إلغاء/i }).click()
+  await waitForManualLeadFormClose(page)
+  const afterDuplicateStorage = await readLeadStorage(page)
+  record(
+    'Duplicate phone blocked on manual create',
+    duplicateErrorVisible && afterDuplicateStorage.count === afterCreateStorage.count,
+    duplicateErrorVisible ? 'duplicate error shown' : 'no duplicate error',
+  )
 
-  await page.getByRole('button', { name: /Sales|sales|מכירות/i }).first().click()
-  await page.waitForSelector('.crm-v2__pipeline', { timeout: 10000 })
-  const pipelineVisible = await page.locator('.crm-v2__pipeline .crm-lead-card', { hasText: 'יובל קדס' }).count()
-  record('Plumber appears in Sales Pipeline', pipelineVisible > 0, `cards=${pipelineVisible}`)
-
-  await page.reload({ waitUntil: 'networkidle' })
-  await page.getByRole('button', { name: /Sales|sales|מכירות/i }).first().click()
-  await page.waitForSelector('.crm-v2__pipeline', { timeout: 10000 })
-  const afterRefresh = await page.locator('.crm-v2__pipeline .crm-lead-card', { hasText: 'יובל קדס' }).count()
-  record('Plumber survives browser refresh', afterRefresh > 0)
-
-  const editField = `E2E-City-${Date.now()}`
-  const plumberCard = page.locator('.crm-lead-card', { hasText: 'יובל קדס' })
-  await plumberCard.getByRole('button', { name: /Edit Lead|עריכת ליד|Редактировать/i }).click()
-  await page.waitForSelector('#lead-edit-title')
+  const editCity = `E2E-City-${Date.now()}`
+  await openLeadEditFromPipelineCard(page, testMarker)
   const editForm = page.locator('form.manual-lead-form').filter({ has: page.locator('#lead-edit-title') })
-  await editForm.locator('input').nth(2).fill(editField)
-  await editForm.evaluate((form) => form.requestSubmit())
-  await page.waitForSelector('#lead-edit-title', { state: 'detached', timeout: 10000 }).catch(() => {})
-  await delay(500)
-  await page.reload({ waitUntil: 'networkidle' })
-  await page.getByRole('button', { name: /Sales|sales|מכירות/i }).first().click()
-  await page.waitForSelector('.crm-v2__pipeline', { timeout: 10000 })
-  const editPersisted = await page.evaluate(({ key, city }) => {
-    const leads = JSON.parse(localStorage.getItem(key) || '[]')
-    return leads.some((lead) => String(lead.city || '') === city)
-  }, { key: CANONICAL_KEY, city: editField })
-  record('Field edit persists after refresh', editPersisted, editField)
+  await editForm.getByLabel(/City|עיר|المدينة|Город/i).fill(editCity)
+  await saveLeadEdit(page)
+  const afterEditStorage = await findTestLeadInStorage(page)
+  record(
+    'Lead edit opens from pipeline card click and persists city',
+    afterEditStorage.found && afterEditStorage.city === editCity,
+    `city=${afterEditStorage.city || 'missing'}`,
+  )
 
-  await page.locator('.crm-lead-card', { hasText: 'יובל קדס' }).locator('.crm-lead-card__stage').selectOption('first-contact')
-  await delay(300)
-  await page.getByRole('button', { name: /CRM|crm/i }).first().click()
-  await page.waitForSelector('.crm-v2', { timeout: 10000 })
-  const crmStageValue = await page.locator('.crm-lead-card', { hasText: 'יובל קדס' }).locator('.crm-lead-card__stage').inputValue()
-  const statusLeadId = await page.evaluate((key) => {
+  await openLeadEditFromPipelineCard(page, testMarker)
+  await closeLeadEdit(page)
+
+  const selectedCard = page.locator('.crm-v2__pipeline .crm-lead-card--pipeline.is-selected', { hasText: testMarker }).first()
+  const stageSelect = selectedCard.locator('.crm-lead-card__stage--pipeline')
+  await stageSelect.waitFor({ state: 'visible', timeout: 10000 })
+  await stageSelect.selectOption('first-contact')
+  await delay(400)
+
+  const stageFromStorage = await page.evaluate(({ key, marker }) => {
     const leads = JSON.parse(localStorage.getItem(key) || '[]')
-    const plumber = leads.find((lead) => String(lead.businessName || '').includes('יובל קדס'))
-    return plumber?.id || null
-  }, CANONICAL_KEY)
-  const statusEverywhere = crmStageValue === 'first-contact' && await page.evaluate((leadId) => {
+    const lead = leads.find((item) => String(item.businessName || '') === marker)
+    const leadId = lead?.id || lead?.placeId
+    if (!leadId) return { ok: false }
     const crm = JSON.parse(localStorage.getItem(`bs-hunter-crm:${leadId}`) || '{}')
-    return crm.status === 'first-contact'
-  }, statusLeadId)
-  record('Status change stored on LeadID CRM record', statusEverywhere, `${statusLeadId} stage=${crmStageValue}`)
+    return { ok: crm.status === 'first-contact', leadId, status: crm.status || '' }
+  }, { key: CANONICAL_KEY, marker: testMarker })
+  record(
+    'Pipeline stage selector updates LeadID CRM record',
+    stageFromStorage.ok,
+    `leadId=${stageFromStorage.leadId}, status=${stageFromStorage.status}`,
+  )
 
-  const duplicateBlocked = await page.evaluate(async () => {
-    const leadsBefore = JSON.parse(localStorage.getItem('bs-hunter-real-leads') || '[]').length
-    window.__dupTest = { blocked: false }
-    return { leadsBefore }
-  })
-  void duplicateBlocked
+  const sourceCard = page.locator('.crm-v2__pipeline .crm-lead-card--pipeline', { hasText: testMarker }).first()
+  const targetDropZone = page.locator('.crm-v2__pipeline .pipeline-column').nth(2).locator('.pipeline-column-leads')
+  await sourceCard.dragTo(targetDropZone)
+  await delay(500)
 
-  const manualAddBlocked = await page.evaluate(() => {
-    const leads = JSON.parse(localStorage.getItem('bs-hunter-real-leads') || '[]')
-    const phone = '0505626228'
-    const duplicate = leads.filter((lead) => String(lead.phone || '').replace(/\D/g, '') === phone)
-    return duplicate.length === 1
-  })
-  record('No duplicate for same phone number', manualAddBlocked)
+  const dragStageFromStorage = await page.evaluate(({ key, marker }) => {
+    const leads = JSON.parse(localStorage.getItem(key) || '[]')
+    const lead = leads.find((item) => String(item.businessName || '') === marker)
+    const leadId = lead?.id || lead?.placeId
+    if (!leadId) return { ok: false }
+    const crm = JSON.parse(localStorage.getItem(`bs-hunter-crm:${leadId}`) || '{}')
+    return { ok: crm.status === 'demo-sent', leadId, status: crm.status || '' }
+  }, { key: CANONICAL_KEY, marker: testMarker })
+  record(
+    'Drag-and-drop between pipeline stages updates CRM status',
+    dragStageFromStorage.ok,
+    `leadId=${dragStageFromStorage.leadId}, status=${dragStageFromStorage.status}`,
+  )
 
-  await browser.close()
+  await page.reload({ waitUntil: 'networkidle' })
+  await openSales(page)
+  const afterRefreshCardCount = await page.locator('.crm-v2__pipeline .crm-lead-card--pipeline', { hasText: testMarker }).count()
+  const afterRefreshStorage = await findTestLeadInStorage(page)
+  record(
+    'Test lead survives browser refresh',
+    afterRefreshCardCount > 0 && afterRefreshStorage.found,
+    `cards=${afterRefreshCardCount}, storage=${afterRefreshStorage.found}`,
+  )
 
   const viteRestarted = await restartDevServer()
   record('Vite dev server restart', viteRestarted, BASE_URL)
 
-  const browser2 = await chromium.launch({ headless: true })
-  const page2 = await browser2.newPage()
-  await page2.goto(BASE_URL, { waitUntil: 'networkidle' })
-  await page2.getByRole('button', { name: /Sales|sales|מכירות/i }).first().click()
-  await page2.waitForSelector('.crm-v2__pipeline', { timeout: 15000 })
-  const afterViteRestart = await page2.locator('.crm-v2__pipeline .crm-lead-card', { hasText: 'יובל קדס' }).count()
-  record('Plumber survives Vite restart', afterViteRestart > 0)
-  await browser2.close()
+  await page.reload({ waitUntil: 'networkidle' })
+  await openSales(page)
+  const afterRestartCardCount = await page.locator('.crm-v2__pipeline .crm-lead-card--pipeline', { hasText: testMarker }).count()
+  const afterRestartStorage = await readLeadStorage(page)
+  const restartLead = afterRestartStorage.leads.find((lead) => String(lead.businessName || '') === testMarker)
+  record(
+    'Test lead survives dev-server restart',
+    afterRestartCardCount > 0 && Boolean(restartLead),
+    `cards=${afterRestartCardCount}, count=${afterRestartStorage.count}`,
+  )
+
+  const finalCountOk = afterRestartStorage.count >= initialLeadCount + 1
+  record(
+    'Final lead count did not decrease',
+    finalCountOk,
+    `before=${initialLeadCount}, after=${afterRestartStorage.count}`,
+  )
+
+  record(
+    'Test lead remains in bs-hunter-real-leads',
+    Boolean(restartLead),
+    restartLead ? `leadId=${restartLead.id || restartLead.placeId}` : 'missing',
+  )
+
+  await browser.close()
 
   printSummary()
   process.exit(results.every((item) => item.pass) ? 0 : 1)
 }
 
 function printSummary() {
-  console.log('\n=== Verification Summary ===')
+  console.log('\n=== BOS-028 Verification Summary ===')
   for (const item of results) {
     console.log(`${item.pass ? 'PASS' : 'FAIL'} — ${item.step}`)
   }
+  const passed = results.filter((item) => item.pass).length
+  console.log(`\n${passed}/${results.length} checks passed`)
 }
 
 run().catch((error) => {

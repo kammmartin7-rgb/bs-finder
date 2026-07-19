@@ -6,6 +6,7 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- BOS-028 lead persistence E2E script (`scripts/verify-lead-e2e.mjs`): 12 Playwright checks against the running dev server — existing lead count, manual create, duplicate phone block, pipeline-card edit, stage selector, drag-and-drop, browser refresh, dev-server restart, count non-decrease, and canonical `bs-hunter-real-leads` persistence; does not wipe existing leads.
 - Sales page **מרכז פעולות מכירה** (`SalesActionCenter.jsx`, `data-testid="sales-action-center"`) with six categories: חייב טיפול עכשיו, התקשר עכשיו, שלח WhatsApp, פתח דמו, מוכן להצעת מחיר, נסגרה עסקה — single-pass `getSalesActionCenterData` selector.
 - Sales page **Requires Attention**, **פעולות דחופות**, and **מרכז מעקבים** now read real lead sales-tracking fields (`salesStatus`, `nextAction`, `nextActionDate`, `lastContactAt`) via `salesTrackingSelectors.js`; empty states explain why no leads match with live counts.
 - Lead model sales tracking fields on every real lead record: `messageVersion`, `messageSentAt`, `demoOpenCount`, `firstDemoOpenAt`, `lastDemoOpenAt`, `lastContactAt`, `nextAction`, `nextActionDate`, and `salesStatus` (`new`, `message_sent`, `demo_opened`, `in_call`, `proposal_sent`, `follow_up`, `won`, `lost`). Existing leads receive defaults via `enrichLeadSalesTracking` on load and a one-time migration key `bs-hunter-lead-sales-tracking-migration-v1`.

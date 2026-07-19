@@ -30,6 +30,7 @@ export function loadLeadActionHistory() {
 
 export const LEAD_ACTIONS = {
   DEMO_SITE_OPENED: 'demo-site-opened',
+  DEMO_SENT: 'demo-sent',
   PROPOSAL_OPENED: 'proposal-opened',
   SALES_PITCH_OPENED: 'sales-pitch-opened',
   WHATSAPP_OPENED: 'whatsapp-opened',
@@ -65,7 +66,7 @@ export function recordLeadAction(lead, actionType) {
     return false
   }
 
-  if ([LEAD_ACTIONS.PROPOSAL_OPENED, LEAD_ACTIONS.WHATSAPP_OPENED, LEAD_ACTIONS.DEMO_SITE_OPENED].includes(actionType)) {
+  if ([LEAD_ACTIONS.PROPOSAL_OPENED, LEAD_ACTIONS.WHATSAPP_OPENED, LEAD_ACTIONS.DEMO_SENT].includes(actionType)) {
     const crm = loadLeadCrm(leadId)
     const stage = normalizeCrmStage(crm.status)
     const nowIso = new Date().toISOString()
@@ -74,7 +75,7 @@ export function recordLeadAction(lead, actionType) {
       saveLeadCrm(leadId, { ...crm, status: 'proposal-sent', stageChangedAt: nowIso })
     } else if (actionType === LEAD_ACTIONS.WHATSAPP_OPENED && stage === 'new') {
       saveLeadCrm(leadId, { ...crm, status: 'first-contact', stageChangedAt: nowIso })
-    } else if (actionType === LEAD_ACTIONS.DEMO_SITE_OPENED && ['new', 'first-contact'].includes(stage)) {
+    } else if (actionType === LEAD_ACTIONS.DEMO_SENT && ['new', 'first-contact'].includes(stage)) {
       saveLeadCrm(leadId, { ...crm, status: 'demo-sent', stageChangedAt: nowIso })
     }
   }

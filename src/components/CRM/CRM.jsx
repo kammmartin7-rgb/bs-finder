@@ -160,6 +160,7 @@ function PipelineLeadCard({ view, copy, onAction, onEditLead, onDemoImage, onSta
       return
     }
     if (!whatsappUrl) return
+    onAction?.('send-demo', view.lead)
     const demoUrl = createShareableDemoUrl(demo)
     window.open(`${whatsappUrl}?text=${encodeURIComponent(SEND_DEMO_MESSAGE(demoUrl))}`, '_blank', 'noopener,noreferrer')
   }
