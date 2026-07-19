@@ -15,7 +15,7 @@ import ManualLeadForm from './components/ManualLead/ManualLeadForm'
 import { loadPersistedLeads, mergePersistedLeads, persistLeadCollection, addPersistedLead, updatePersistedLead, subscribeToLeadPersistenceChanges } from './services/leadPersistence'
 import { runLeadCategoryMigrationOnce } from './services/leadCategoryMigration'
 import { createIsraeliWhatsAppUrl } from './services/whatsapp'
-import { hasLeadAction, LEAD_ACTIONS, recordLeadAction, subscribeToLeadActionChanges } from './components/LeadCRM/leadActionStorage'
+import { hasLeadAction, LEAD_ACTIONS, recordLeadAction } from './components/LeadCRM/leadActionStorage'
 import ShareableDemo from './components/WebsiteBuilder/ShareableDemo'
 import { createDemoOpenUrl, createShareableDemoUrl, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
 function hasValue(value) {
@@ -202,8 +202,8 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
 
   function applyPersistedLeads(nextLeads) {
     isDemoTableSessionRef.current = false
-    setPersistedLeads(nextLeads)
-    setTableLeads(nextLeads)
+    setPersistedLeads((current) => (current === nextLeads ? current : nextLeads))
+    setTableLeads((current) => (current === nextLeads ? current : nextLeads))
   }
 
   function handleAddLead(lead, notes = '', options = {}) {
@@ -222,8 +222,10 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
 
   const refreshLeadsFromStorage = useCallback(() => {
     const nextLeads = loadPersistedLeads()
-    setPersistedLeads(nextLeads)
-    if (!isDemoTableSessionRef.current) setTableLeads(nextLeads)
+    setPersistedLeads((current) => (current === nextLeads ? current : nextLeads))
+    if (!isDemoTableSessionRef.current) {
+      setTableLeads((current) => (current === nextLeads ? current : nextLeads))
+    }
   }, [])
 
   useEffect(() => {
@@ -235,19 +237,6 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
   }, [refreshLeadsFromStorage])
 
   useEffect(() => subscribeToLeadPersistenceChanges(refreshLeadsFromStorage), [refreshLeadsFromStorage])
-
-  useEffect(() => {
-    function syncLeadsFromStorage() {
-      refreshLeadsFromStorage()
-    }
-
-    window.addEventListener('focus', syncLeadsFromStorage)
-    return () => {
-      window.removeEventListener('focus', syncLeadsFromStorage)
-    }
-  }, [refreshLeadsFromStorage])
-
-  useEffect(() => subscribeToLeadActionChanges(refreshLeadsFromStorage), [refreshLeadsFromStorage])
 
   function trackRealLeadAction(lead, actionType) {
     if (!isDemoLead(lead)) recordLeadAction(lead, actionType)

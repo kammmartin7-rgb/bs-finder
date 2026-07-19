@@ -33,6 +33,15 @@ const ADDITIONAL_LEGACY_LEAD_KEY_PATTERNS = [
 
 export const LEAD_PERSISTENCE_CHANGE_EVENT = 'bs-hunter-lead-persistence-change'
 
+let persistedLeadsCache = null
+let persistedLeadsCacheValid = false
+let initialLeadLoadComplete = false
+
+export function invalidatePersistedLeadsCache() {
+  persistedLeadsCache = null
+  persistedLeadsCacheValid = false
+}
+
 const PLUMBER_PHONE_DIGITS = '0505626228'
 const PLUMBER_MATCH = 'אינסטלטור בפתח תקווה יובל קדס'
 const PLUMBER_SEED = {
@@ -202,6 +211,7 @@ function notifyLeadPersistenceChange() {
 export function subscribeToLeadPersistenceChanges(callback) {
   function handleStorage(event) {
     if (event.key === REAL_LEADS_STORAGE_KEY || LEGACY_LEAD_STORAGE_KEYS.includes(event.key)) {
+      invalidatePersistedLeadsCache()
       callback()
     }
   }
@@ -244,12 +254,16 @@ function migrateRelatedEntities(leads = []) {
 
 /** Loads every real lead from the canonical store and migrates legacy keys without duplicates. */
 export function loadPersistedLeads() {
+  if (persistedLeadsCacheValid && persistedLeadsCache) {
+    return persistedLeadsCache
+  }
+
   try {
     const migrationResult = runLeadCategoryMigrationOnce()
     const batchMigrationResult = runLeadBatchMigrationOnce()
     const salesTrackingMigrationResult = runLeadSalesTrackingMigrationOnce()
     const primary = readPrimaryLeads()
-    const recovered = recoverLeadsFromAllStorageKeys()
+    const recovered = initialLeadLoadComplete ? [] : recoverLeadsFromAllStorageKeys()
     const legacyPool = mergePersistedLeads([], [...readLegacyManualLeads(), ...recovered])
     const merged = migrateLegacyLeadStores(mergePersistedLeads(legacyPool, primary))
     let normalized = ensurePlumberLeadInCanonicalStore(merged.map(enrichLead))
@@ -264,7 +278,6 @@ export function loadPersistedLeads() {
       || batchWrote
       || salesTrackingWrote
       || normalized.length !== primary.length
-      || JSON.stringify(normalized) !== JSON.stringify(primary)
     ) {
       normalized = savePersistedLeads(normalized, {
         notify: categoryWrote || batchWrote || salesTrackingWrote,
@@ -273,14 +286,23 @@ export function loadPersistedLeads() {
 
     migrateRelatedEntities(normalized)
     ensureCrmRecordsForLeads(normalized)
+    initialLeadLoadComplete = true
+    persistedLeadsCache = normalized
+    persistedLeadsCacheValid = true
     return normalized
   } catch (error) {
     console.error('[bs-hunter] Failed to load persisted leads:', error)
     try {
       const fallback = ensurePlumberLeadInCanonicalStore(readPrimaryLeads())
       if (fallback.length) savePersistedLeads(fallback, { notify: false })
+      persistedLeadsCache = fallback
+      persistedLeadsCacheValid = true
+      initialLeadLoadComplete = true
       return fallback
     } catch {
+      persistedLeadsCache = []
+      persistedLeadsCacheValid = true
+      initialLeadLoadComplete = true
       return []
     }
   }
@@ -295,6 +317,8 @@ export function savePersistedLeads(leads = [], { notify = true } = {}) {
     if (window.localStorage.getItem(REAL_LEADS_STORAGE_KEY) !== payload) {
       throw new Error('Lead storage verification failed.')
     }
+    persistedLeadsCache = realLeads
+    persistedLeadsCacheValid = true
     if (notify) notifyLeadPersistenceChange()
     return realLeads
   } catch (error) {
@@ -408,17 +432,23 @@ export function updatePersistedLead(leadId, leadUpdates = {}, { crm = {} } = {})
   if (index < 0) return { ok: false, reason: 'not-found' }
 
   const current = persisted[index]
-  const nextLead = buildUpdatedLead(current, leadUpdates)
-  const others = persisted.filter((_, itemIndex) => itemIndex !== index)
+  const hasLeadUpdates = Object.keys(leadUpdates).length > 0
+  let saved = persisted
+  let nextLead = current
 
-  if (isDuplicatePhoneLead(nextLead, others)) {
-    return { ok: false, reason: 'duplicate-phone' }
-  }
-  if (isDuplicateManualLead(nextLead, others)) {
-    return { ok: false, reason: 'duplicate-lead' }
-  }
+  if (hasLeadUpdates) {
+    nextLead = buildUpdatedLead(current, leadUpdates)
+    const others = persisted.filter((_, itemIndex) => itemIndex !== index)
 
-  const saved = persistLeadCollection(persisted.map((lead, itemIndex) => (itemIndex === index ? nextLead : lead)))
+    if (isDuplicatePhoneLead(nextLead, others)) {
+      return { ok: false, reason: 'duplicate-phone' }
+    }
+    if (isDuplicateManualLead(nextLead, others)) {
+      return { ok: false, reason: 'duplicate-lead' }
+    }
+
+    saved = persistLeadCollection(persisted.map((lead, itemIndex) => (itemIndex === index ? nextLead : lead)))
+  }
 
   const existingCrm = loadLeadCrm(leadId)
   const nextCrm = {

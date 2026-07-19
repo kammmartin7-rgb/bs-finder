@@ -1,7 +1,7 @@
 // Pure CRM view selectors assembled from the existing lead, CRM, and activity sources.
 import { CRM_STAGES, loadLeadCrm, normalizeCrmStage } from '../LeadCRM/crmStorage'
 import { getLeadId } from '../../services/leadId'
-import { getLeadActions, LEAD_ACTIONS } from '../LeadCRM/leadActionStorage'
+import { getLeadActions, LEAD_ACTIONS, loadLeadActionHistory } from '../LeadCRM/leadActionStorage'
 import { isDemoLead } from '../BusinessOS/dashboardFilters'
 import { getProposalSummary } from '../proposalStorage'
 import { resolveLeadCategory, resolveLeadCategoryId, resolveLeadBatchId, resolveLeadBatchLabel } from '../../services/leadCategory'
@@ -14,10 +14,10 @@ function getLatestActivity(actions, crm) {
   return crm.updatedAt || crm.stageChangedAt || ''
 }
 
-export function createCrmLeadView(lead) {
+export function createCrmLeadView(lead, actionHistory = null) {
   const leadId = getLeadId(lead)
   const crm = loadLeadCrm(leadId)
-  const actions = getLeadActions(lead)
+  const actions = actionHistory ? (actionHistory[leadId] || []) : getLeadActions(lead)
   const proposal = getProposalSummary(lead)
   return {
     lead,
@@ -59,7 +59,11 @@ export function getCrmRevenueSummary(views) {
 }
 
 export function getCrmLeadViews(leads = []) {
-  return leads.filter((lead) => !isDemoLead(lead)).map(createCrmLeadView)
+  const realLeads = leads.filter((lead) => !isDemoLead(lead))
+  if (!realLeads.length) return []
+
+  const actionHistory = loadLeadActionHistory()
+  return realLeads.map((lead) => createCrmLeadView(lead, actionHistory))
 }
 
 export function getUrgency(view, today = new Date().toISOString().slice(0, 10)) {

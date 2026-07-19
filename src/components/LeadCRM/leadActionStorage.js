@@ -7,6 +7,27 @@ import { completeRoadmapTrackingTask } from '../BusinessOS/taskStorage'
 const STORAGE_KEY = 'bs-hunter-lead-action-history'
 const ACTION_CHANGE_EVENT = 'bs-hunter-lead-action-change'
 
+let actionHistoryCache = null
+
+function readActionHistoryFromStorage() {
+  try {
+    const history = JSON.parse(window.localStorage.getItem(STORAGE_KEY))
+    return history && typeof history === 'object' ? history : {}
+  } catch {
+    return {}
+  }
+}
+
+export function invalidateLeadActionHistoryCache() {
+  actionHistoryCache = null
+}
+
+export function loadLeadActionHistory() {
+  if (actionHistoryCache) return actionHistoryCache
+  actionHistoryCache = readActionHistoryFromStorage()
+  return actionHistoryCache
+}
+
 export const LEAD_ACTIONS = {
   DEMO_SITE_OPENED: 'demo-site-opened',
   PROPOSAL_OPENED: 'proposal-opened',
@@ -16,17 +37,8 @@ export const LEAD_ACTIONS = {
   FOLLOW_UP_COMPLETED: 'follow-up-completed',
 }
 
-export function loadLeadActionHistory() {
-  try {
-    const history = JSON.parse(window.localStorage.getItem(STORAGE_KEY))
-    return history && typeof history === 'object' ? history : {}
-  } catch {
-    return {}
-  }
-}
-
-export function getLeadActions(lead) {
-  return loadLeadActionHistory()[getLeadId(lead)] || []
+export function getLeadActions(lead, actionHistory = loadLeadActionHistory()) {
+  return actionHistory[getLeadId(lead)] || []
 }
 
 export function hasLeadAction(lead, actionType) {
@@ -46,7 +58,9 @@ export function recordLeadAction(lead, actionType) {
   }
 
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...history, [leadId]: [...(history[leadId] || []), record] }))
+    const nextHistory = { ...history, [leadId]: [...(history[leadId] || []), record] }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextHistory))
+    actionHistoryCache = nextHistory
   } catch {
     return false
   }
@@ -72,12 +86,18 @@ export function recordLeadAction(lead, actionType) {
 
 export function subscribeToLeadActionChanges(callback) {
   function handleStorage(event) {
-    if (event.key === STORAGE_KEY) callback()
+    if (event.key === STORAGE_KEY) {
+      invalidateLeadActionHistoryCache()
+      callback()
+    }
   }
-  window.addEventListener(ACTION_CHANGE_EVENT, callback)
+  function handleActionChange() {
+    callback()
+  }
+  window.addEventListener(ACTION_CHANGE_EVENT, handleActionChange)
   window.addEventListener('storage', handleStorage)
   return () => {
-    window.removeEventListener(ACTION_CHANGE_EVENT, callback)
+    window.removeEventListener(ACTION_CHANGE_EVENT, handleActionChange)
     window.removeEventListener('storage', handleStorage)
   }
 }

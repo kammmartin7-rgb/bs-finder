@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS with one shared CRM and a stable 
 
 ## Current Active Task
 
-Fully stabilize lead persistence E2E (BOS-028): verify manual creation, Google Maps import, editing, images, server restart, and that no leads disappear. Sales Command Center (BSH-009) paused until Task 1 is deployed.
+Lead persistence E2E stabilization (BOS-028): verify drag-and-drop, refresh, server restart, and that no leads disappear after Sales Action Center rollout.
 
 ## Last Completed Task
 
-Fix lead load stack overflow: stopped synchronous persistence-change reload loop that blocked 149+ stored leads from rendering after the sales-tracking deploy; build and lint passed; no localStorage data changes.
+Sales Action Center: replaced command/follow-up blocks with six actionable categories (חייב טיפול עכשיו through נסגרה עסקה) via single-pass `getSalesActionCenterData`; pipeline unchanged; build/lint passed; no storage changes.
 
 ## Project Rules (Current)
 
@@ -51,8 +51,10 @@ Fix lead load stack overflow: stopped synchronous persistence-change reload loop
 - Real lead records include sales tracking fields (`messageVersion`, `messageSentAt`, `demoOpenCount`, `firstDemoOpenAt`, `lastDemoOpenAt`, `lastContactAt`, `nextAction`, `nextActionDate`, `salesStatus`) with backward-compatible defaults and one-time migration on load.
 - CRM/Sales Pipeline manual lead entry and Google Maps paste import with optional images into per-business Media Library.
 - CRM lead cards: click-to-edit opens the shared `LeadEditForm`; Manage Images opens from the edit dialog footer; persisted updates via `updatePersistedLead`; Sales Tracking fieldset (`data-testid="lead-sales-tracking"`) sits directly above Notes with immediate save on blur/change.
+- Sales page **מרכז פעולות מכירה** (`data-testid="sales-action-center"`) above the pipeline: six actionable categories with real counts, max 5 leads per active category, Call/WhatsApp/Edit Lead actions; single-pass selector from lead sales-tracking fields.
+- Sales page layout: one action center + one pipeline; no duplicate urgent/follow-up/command blocks.
 - LeadID-only joins for CRM, actions, proposals, demos, media, and real website projects with legacy migration on load.
-- CRM V2 pipeline, urgency ordering, follow-up center, revenue summary, search/filter/sort, and four-language UI.
+- CRM V2 pipeline, follow-up center (inside Sales Command), and four-language UI.
 - Real Website Builder V1 with Image Manager, Media Library, templates, previews, and localStorage persistence.
 - Proposal Generator and Templates V1, Sales Center, Tasks module, Projects Command Center, AI Center, Settings, and four-language RTL/LTR support.
 - Production build is static; Free Mode, CSV, Demo, CRM, and Tasks do not require the local backend for basic operation.

@@ -6,15 +6,19 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- Sales page **מרכז פעולות מכירה** (`SalesActionCenter.jsx`, `data-testid="sales-action-center"`) with six categories: חייב טיפול עכשיו, התקשר עכשיו, שלח WhatsApp, פתח דמו, מוכן להצעת מחיר, נסגרה עסקה — single-pass `getSalesActionCenterData` selector.
+- Sales page **Requires Attention**, **פעולות דחופות**, and **מרכז מעקבים** now read real lead sales-tracking fields (`salesStatus`, `nextAction`, `nextActionDate`, `lastContactAt`) via `salesTrackingSelectors.js`; empty states explain why no leads match with live counts.
 - Lead model sales tracking fields on every real lead record: `messageVersion`, `messageSentAt`, `demoOpenCount`, `firstDemoOpenAt`, `lastDemoOpenAt`, `lastContactAt`, `nextAction`, `nextActionDate`, and `salesStatus` (`new`, `message_sent`, `demo_opened`, `in_call`, `proposal_sent`, `follow_up`, `won`, `lost`). Existing leads receive defaults via `enrichLeadSalesTracking` on load and a one-time migration key `bs-hunter-lead-sales-tracking-migration-v1`.
 - LeadEditForm (Edit Lead dialog from Sales Pipeline): bordered **Sales Tracking** fieldset (`data-testid="lead-sales-tracking"`) directly above Notes; pipeline card click opens this dialog.
 
 ### Fixed
 
-- Lead load stack overflow after sales-tracking deploy: cached one-time migration results exposed `migrated > 0` on every load, so `loadPersistedLeads()` re-saved and emitted `bs-hunter-lead-persistence-change` synchronously while `App.jsx` was subscribed—creating an infinite reload loop and `RangeError: Maximum call stack size exceeded` with large lead sets (e.g. 149 leads). Fixed by treating cached migration hits as `alreadyMigrated: true` and notifying only when a migration actually writes in the current load.
+- Sales/CRM interaction slowness: cached `loadPersistedLeads`, CRM records, and lead-action history; removed full lead reload on screen change, window focus, lead-action events, and CRM mount; CRM-only stage updates no longer rewrite the entire lead array; Sales command data computed in one pass; pipeline cards memoized and demo lookups deferred until click.
 
 ### Changed
 
+- Sales Screen Cleanup Audit: removed daily mission goals, duplicate urgent actions list, CRM revenue summary, redundant header search/stage/sort toolbar, and standalone follow-up section; dashboard deep-links scroll to the action center; pipeline filter/sort popover remains the sole pipeline filter UI.
+- Sales Action Center replaces **מרכז פיקוד מכירות** / **דורש טיפול עכשיו** / **מרכז מעקבים** with one category-filtered action queue above the pipeline.
 - Lead edit cleanup: removed unreachable legacy full CRM lead-card edit UI; pipeline cards renamed to `PipelineLeadCard`; Sales and CRM both open the same `LeadEditForm`; **Manage Images** moved to the edit dialog footer.
 - CRM pipeline filter UI: replaced category and import-batch chip rows with one compact Hebrew RTL `סינון ומיון` popover (presets, category/city/batch dropdowns, sort, result counter, reset, active indicator).
 - CRM import batch filtering: shared Apify batch object per search (`batchId`, `batchLabel`, `businessType`, `city`, `country`, `importedAt`, `importedDate`, `source: Apify`); legacy leads migrate in place with `legacyBatch: true` and derived `batchLabel`; compact batch tag on cards.

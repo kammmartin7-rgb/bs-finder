@@ -28,6 +28,19 @@ export const DEFAULT_CRM_RECORD = {
   updatedAt: '',
 }
 
+const crmRecordCache = new Map()
+const ensuredLeadIds = new Set()
+
+export function invalidateLeadCrmCache(leadId = '') {
+  if (leadId) {
+    crmRecordCache.delete(leadId)
+    ensuredLeadIds.delete(leadId)
+    return
+  }
+  crmRecordCache.clear()
+  ensuredLeadIds.clear()
+}
+
 /** @deprecated Use getLeadId */
 export function getLeadCrmKey(lead = {}) {
   return getLeadId(lead)
@@ -37,11 +50,19 @@ export function loadLeadCrm(leadOrLeadId) {
   const leadId = typeof leadOrLeadId === 'string' ? leadOrLeadId : getLeadId(leadOrLeadId)
   if (!leadId) return { ...DEFAULT_CRM_RECORD }
 
+  if (crmRecordCache.has(leadId)) {
+    return crmRecordCache.get(leadId)
+  }
+
   try {
     const savedRecord = JSON.parse(window.localStorage.getItem(`${STORAGE_PREFIX}${leadId}`))
-    return { ...DEFAULT_CRM_RECORD, ...(savedRecord || {}) }
+    const record = { ...DEFAULT_CRM_RECORD, ...(savedRecord || {}) }
+    crmRecordCache.set(leadId, record)
+    return record
   } catch {
-    return { ...DEFAULT_CRM_RECORD }
+    const record = { ...DEFAULT_CRM_RECORD }
+    crmRecordCache.set(leadId, record)
+    return record
   }
 }
 
@@ -52,6 +73,7 @@ export function saveLeadCrm(leadOrLeadId, record) {
   try {
     const nextRecord = { ...DEFAULT_CRM_RECORD, ...record, updatedAt: new Date().toISOString() }
     window.localStorage.setItem(`${STORAGE_PREFIX}${leadId}`, JSON.stringify(nextRecord))
+    crmRecordCache.set(leadId, nextRecord)
     window.dispatchEvent(new CustomEvent(CRM_CHANGE_EVENT, { detail: { leadId, record: nextRecord } }))
     return true
   } catch {
@@ -63,7 +85,12 @@ export function ensureLeadCrmRecord(lead) {
   const leadId = getLeadId(lead)
   if (!leadId) return { ...DEFAULT_CRM_RECORD }
 
+  if (crmRecordCache.has(leadId) || ensuredLeadIds.has(leadId)) {
+    return loadLeadCrm(leadId)
+  }
+
   if (window.localStorage.getItem(`${STORAGE_PREFIX}${leadId}`)) {
+    ensuredLeadIds.add(leadId)
     return loadLeadCrm(leadId)
   }
 
@@ -73,6 +100,7 @@ export function ensureLeadCrmRecord(lead) {
     status: 'new',
     stageChangedAt: createdAt,
   })
+  ensuredLeadIds.add(leadId)
   return loadLeadCrm(leadId)
 }
 
@@ -83,15 +111,24 @@ export function ensureCrmRecordsForLeads(leads = []) {
 }
 
 export function subscribeToCrmChanges(callback) {
-  function handleStorage(event) {
-    if (event.key?.startsWith(STORAGE_PREFIX)) callback()
+  function handleCrmChange(event) {
+    const leadId = event?.detail?.leadId
+    if (leadId) invalidateLeadCrmCache(leadId)
+    callback()
   }
 
-  window.addEventListener(CRM_CHANGE_EVENT, callback)
+  function handleStorage(event) {
+    if (event.key?.startsWith(STORAGE_PREFIX)) {
+      invalidateLeadCrmCache(event.key.slice(STORAGE_PREFIX.length))
+      callback()
+    }
+  }
+
+  window.addEventListener(CRM_CHANGE_EVENT, handleCrmChange)
   window.addEventListener('storage', handleStorage)
 
   return () => {
-    window.removeEventListener(CRM_CHANGE_EVENT, callback)
+    window.removeEventListener(CRM_CHANGE_EVENT, handleCrmChange)
     window.removeEventListener('storage', handleStorage)
   }
 }
