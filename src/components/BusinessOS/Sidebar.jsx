@@ -1,6 +1,7 @@
 // Renders Business OS navigation without depending on a routing library.
 import { useLanguage } from '../../context/LanguageContext'
 import logoCircle from '../../assets/brand/growthpilot-logo-circle.png'
+import { useAuth } from '../../context/AuthContext'
 
 const MENU_ITEMS = [
   ['dashboard', 'dashboard', '⌂'],
@@ -34,6 +35,7 @@ function sidebarCategory(activeScreen) {
 
 export default function Sidebar({ activeScreen, onSelect }) {
   const { t } = useLanguage()
+  const { signOut } = useAuth()
   const activeCategory = sidebarCategory(activeScreen)
 
   return (
@@ -46,7 +48,7 @@ export default function Sidebar({ activeScreen, onSelect }) {
           </button>
         ))}
       </nav>
-      <p className="business-os__sidebar-footer">GrowthPilot OS</p>
+      <p className="business-os__sidebar-footer">GrowthPilot OS</p><button type="button" className="business-os__logout" onClick={signOut}>Log out</button>
     </aside>
   )
 }

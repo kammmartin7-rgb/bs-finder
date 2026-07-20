@@ -6,6 +6,10 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- Added `public.users` authorization migration with RLS and AuthProvider profile validation; only active owner profiles can enter the existing application.
+
+- Added Supabase Auth foundation with environment-configured client, protected application gate, email/password login, password reset, and logout.
+
 - Integrated the provided GrowthPilot circular and horizontal logo assets into platform sidebar and customer-facing proposal, payment, and shared-demo surfaces with accessible alt text.
 
 - Proposal drafts now carry compatible pricing metadata fields for proposal price, discount, VAT, and extra line items; existing drafts continue loading with defaults.

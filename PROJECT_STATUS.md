@@ -14,7 +14,7 @@ Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-Added the Proposal Generator “שליחת הצעה” action using the existing draft, shared-link, WhatsApp, and confirmed stage-advance flows; build/lint passed without storage or CRM architecture changes.
+Added authorization foundation: Supabase `public.users` profile migration with RLS and owner-only active-profile validation before the existing platform renders.
 
 ## Project Rules (Current)
 

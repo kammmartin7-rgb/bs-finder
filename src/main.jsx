@@ -5,6 +5,8 @@ import App from './App.jsx'
 import { LanguageProvider } from './context/LanguageContext'
 import ProductionErrorBoundary from './components/ProductionErrorBoundary'
 import { findRecoveredPlumberLead, verifyLeadPersistence } from './services/leadPersistence'
+import { AuthProvider } from './context/AuthContext'
+import AuthGate from './components/AuthGate'
 
 if (import.meta.env.DEV) {
   window.__bsHunterVerifyLeadPersistence = verifyLeadPersistence
@@ -14,9 +16,7 @@ if (import.meta.env.DEV) {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ProductionErrorBoundary>
-      <LanguageProvider>
-        <App />
-      </LanguageProvider>
+      <AuthProvider><LanguageProvider><AuthGate><App /></AuthGate></LanguageProvider></AuthProvider>
     </ProductionErrorBoundary>
   </StrictMode>,
 )

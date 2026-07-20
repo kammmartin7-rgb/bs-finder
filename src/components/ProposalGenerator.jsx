@@ -13,7 +13,6 @@ import { createShareableDemoUrl, saveShareableDemo } from './WebsiteBuilder/demo
 import { createIsraeliWhatsAppUrl } from '../services/whatsapp'
 import './ProposalGenerator.css'
 import './ProposalBranding.css'
-import logoHorizontal from '../assets/brand/growthpilot-logo-horizontal.png'
 
 const FEATURE_HE = {
   'One-page mobile website': 'אתר מובייל בן עמוד אחד', 'Call, WhatsApp and Maps': 'שיחה, WhatsApp ומפות', 'Business content setup': 'הכנת תוכן עסקי', 'One revision round': 'סבב תיקונים אחד', 'Basic SEO setup': 'הגדרת SEO בסיסית',
@@ -66,8 +65,6 @@ export default function ProposalGenerator({ business, onClose }) {
   const subtotal = selectedPackage.price + extraLineItems.reduce((sum, item) => sum + item.amount, 0)
   const discountValue = Math.min(subtotal, Math.max(0, draft.discountType === 'percent' ? subtotal * (Number(draft.discount) || 0) / 100 : Number(draft.discount) || 0))
   const taxableTotal = Math.max(0, subtotal - discountValue)
-  const vat = draft.vatEnabled ? taxableTotal * 0.18 : 0
-  const finalTotal = taxableTotal + vat
   const name = draft.businessName || (language === 'he' ? 'שם העסק' : 'Customer business')
   const proposalDate = draft.proposalDate ? new Date(`${draft.proposalDate}T00:00:00`).toLocaleDateString(language) : '—'
   const featureLabel = (feature) => language === 'he' ? FEATURE_HE[feature] || feature : feature
