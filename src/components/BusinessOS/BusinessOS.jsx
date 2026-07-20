@@ -10,6 +10,7 @@ import { loadSettings, resetSettings, saveSettings } from '../Settings/settingsS
 import { DASHBOARD_FILTERS } from './dashboardFilters'
 import { AssetsHub, BSFinderWorkspace, BSFundsWorkspace, BusinessesHub, DevelopmentConsole, DocumentsHub, FinanceHub } from './NavigationHub'
 import InternalBackButton from './InternalBackButton'
+import UsersPermissions from './UsersPermissions'
 
 const TasksModule = lazy(() => import('./TasksModule'))
 const AICenter = lazy(() => import('../AICenter/AICenter'))
@@ -139,6 +140,7 @@ export default function BusinessOS({ leads = [], realWebsiteLead, onDashboardFil
       return <Suspense fallback={<ScreenLoading />}><CRM leads={leads} onAction={onCrmAction} onAddLead={onAddLead} onUpdateLead={onUpdateLead} onRefreshLeads={onRefreshLeads} navigation={crmNavigation || salesPipelineNavigation} onNavigationApplied={() => setCrmNavigation(null)} /></Suspense>
     }
     if (activeScreen === 'settings') return <Settings settings={settings} onChange={changeSetting} onReset={resetAllSettings} onOpenScreen={navigateTo} />
+    if (activeScreen === 'users') return <UsersPermissions />
 
     return (
       <section className="business-os__placeholder">

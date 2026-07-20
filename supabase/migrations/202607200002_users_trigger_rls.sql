@@ -1,0 +1,12 @@
+create or replace function public.is_active_owner() returns boolean language sql security definer set search_path = public as $$ select exists (select 1 from public.users where auth_user_id = auth.uid() and role = 'owner' and active = true); $$;
+create or replace function public.handle_new_auth_user() returns trigger language plpgsql security definer set search_path = public as $$ begin insert into public.users(auth_user_id,email,role,active,business_id) values (new.id,new.email,'client',false,null) on conflict (auth_user_id) do nothing; return new; end; $$;
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_auth_user();
+drop policy if exists "users can read their own authorization profile" on public.users;
+drop policy if exists "owners can read authorization profiles" on public.users;
+drop policy if exists "active owners can read authorization profiles" on public.users;
+drop policy if exists "active owners can update authorization profiles" on public.users;
+create policy "users can read their own authorization profile" on public.users for select using (auth.uid() = auth_user_id);
+create policy "active owners can read authorization profiles" on public.users for select using (public.is_active_owner());
+create policy "active owners can update authorization profiles" on public.users for update using (public.is_active_owner()) with check (public.is_active_owner());
+revoke insert, delete on public.users from authenticated;
