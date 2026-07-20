@@ -14,7 +14,7 @@ export default function Settings({ settings, onChange, onReset, onOpenScreen }) 
   function reset() { if (!window.confirm(t('settingsResetConfirm'))) return; onReset(); setNotice(t('settingsResetSuccess')) }
 
   return <section className="settings-page">
-    <header><span>Business OS</span><h1>{t('settings')}</h1><p>{t('settingsSubtitle')}</p></header>
+    <header><span>GrowthPilot OS</span><h1>{t('settings')}</h1><p>{t('settingsSubtitle')}</p></header>
     <div className="settings-card">
       <label><span>{t('settingsLanguage')}</span><small>{t('settingsLanguageHelp')}</small><select value={settings.language} onChange={(event) => change('language', event.target.value)}><option value="en">English</option><option value="he">עברית</option><option value="ar">العربية</option><option value="ru">Русский</option></select></label>
       <fieldset><legend>{t('settingsAppearance')}</legend><p>{t('settingsThemeHelp')}</p><div className="settings-segmented"><button type="button" className={settings.theme === 'light' ? 'is-active' : ''} onClick={() => change('theme', 'light')}>☀ {t('settingsLight')}</button><button type="button" className={settings.theme === 'dark' ? 'is-active' : ''} onClick={() => change('theme', 'dark')}>◐ {t('settingsDark')}</button></div></fieldset>

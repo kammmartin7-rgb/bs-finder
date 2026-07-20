@@ -81,7 +81,7 @@ export default function TasksModule({ navigation = null, onNavigationApplied }) 
 
   return (
     <section className="business-os__tasks-page">
-      <header><div><span>Business OS</span><h1>{t('tasks')}</h1></div><strong>{tasks.length}</strong></header>
+      <header><div><span>GrowthPilot OS</span><h1>{t('tasks')}</h1></div><strong>{tasks.length}</strong></header>
       <div className="business-os__task-progress">
         {['all', 'open', 'in-progress', 'blocked', 'completed'].map((status) => <button type="button" key={status} className={(status === 'all' ? filters.status === 'all' : filters.status === status) ? 'is-active' : ''} onClick={() => updateFilters({ ...filters, status: status === 'all' ? 'all' : status })}><strong>{progress[status]}</strong><span>{t(status === 'all' ? 'taskTotal' : `taskStatus_${status}`)}</span></button>)}
       </div>

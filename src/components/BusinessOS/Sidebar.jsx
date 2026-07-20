@@ -37,7 +37,7 @@ export default function Sidebar({ activeScreen, onSelect }) {
 
   return (
     <aside className="business-os__sidebar">
-      <div className="business-os__brand"><span>BO</span><div><strong>Business OS</strong><small>Growth workspace</small></div></div>
+      <div className="business-os__brand"><span>GP</span><div><strong>GrowthPilot OS</strong><small>AI Growth Platform</small></div></div>
       <nav aria-label="Business OS">
         {MENU_ITEMS.map(([screen, labelKey, icon]) => (
           <button key={screen} type="button" className={activeCategory === screen ? 'is-active' : ''} onClick={() => onSelect(screen)}>
@@ -45,7 +45,7 @@ export default function Sidebar({ activeScreen, onSelect }) {
           </button>
         ))}
       </nav>
-      <p className="business-os__sidebar-footer">Business OS</p>
+      <p className="business-os__sidebar-footer">GrowthPilot OS</p>
     </aside>
   )
 }

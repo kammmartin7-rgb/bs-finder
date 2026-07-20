@@ -24,6 +24,13 @@ export function ProposalPaymentOptionsEditor({ draft, copy, onChange }) {
 
   return (
     <fieldset className="proposal-payment-editor">
+      <legend>מחיר ותנאי הצעה</legend>
+      <div className="proposal-payment-editor__installments">
+        <label>מחיר ההצעה<input type="number" min="0" value={draft.price ?? ''} onChange={(event) => onChange('price', event.target.value)} /></label>
+        <label>הנחה<input type="number" min="0" value={draft.discount ?? ''} onChange={(event) => onChange('discount', event.target.value)} /></label>
+        <label>סוג הנחה<select value={draft.discountType || 'amount'} onChange={(event) => onChange('discountType', event.target.value)}><option value="amount">סכום</option><option value="percent">אחוז</option></select></label>
+      </div>
+      <label><input type="checkbox" checked={Boolean(draft.vatEnabled)} onChange={(event) => onChange('vatEnabled', event.target.checked)} /> מע״מ</label>
       <legend>{copy.paymentOptionsTitle}</legend>
       <div className="proposal-payment-editor__options">
         {PAYMENT_OPTIONS.map(([optionId, labelKey]) => (
@@ -56,6 +63,10 @@ export function ProposalPaymentOptionsPreview({ draft, copy, language }) {
   const startDate = draft.paymentStartDate
     ? new Date(`${draft.paymentStartDate}T00:00:00`).toLocaleDateString(language)
     : ''
+  const base = Math.max(0, Number(draft.price) || 0)
+  const discount = Math.min(base, Math.max(0, draft.discountType === 'percent' ? base * (Number(draft.discount) || 0) / 100 : Number(draft.discount) || 0))
+  const subtotal = base - discount
+  const vat = draft.vatEnabled ? subtotal * 0.18 : 0
 
   return (
     <section className="proposal-section proposal-payment-preview">
@@ -75,6 +86,7 @@ export function ProposalPaymentOptionsPreview({ draft, copy, language }) {
       ) : null}
 
       {draft.paymentNotes ? <p className="proposal-payment-preview__notes"><strong>{copy.paymentNotes}:</strong> {draft.paymentNotes}</p> : null}
+      <dl className="proposal-payment-preview__details"><div><dt>Subtotal</dt><dd>₪{subtotal.toLocaleString()}</dd></div>{discount > 0 ? <div><dt>Discount</dt><dd>−₪{discount.toLocaleString()}</dd></div> : null}{draft.vatEnabled ? <div><dt>VAT (18%)</dt><dd>₪{vat.toLocaleString()}</dd></div> : null}<div><dt>Final total</dt><dd>₪{(subtotal + vat).toLocaleString()}</dd></div></dl>
     </section>
   )
 }

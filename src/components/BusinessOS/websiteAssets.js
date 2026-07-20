@@ -2,7 +2,7 @@
 export const WEBSITE_ASSETS = [
   {
     id: 'bs-funds',
-    name: 'BS Funds',
+    name: 'GrowthPilot Funds',
     icon: '◈',
     typeKey: 'assetTypeWebsite',
     statusKey: 'assetStatusActive',
@@ -11,7 +11,7 @@ export const WEBSITE_ASSETS = [
   },
   {
     id: 'bs-finder',
-    name: 'BS Finder',
+    name: 'GrowthPilot Finder',
     icon: '◎',
     typeKey: 'assetTypeWebsite',
     statusKey: 'assetStatusActive',

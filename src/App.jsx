@@ -505,7 +505,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     <>
     <BusinessOS leads={persistedLeads} realWebsiteLead={selectedRealWebsiteLead} onDashboardFilterChange={setDashboardFilter} onMissionAction={handleMissionAction} onCrmAction={handleCrmAction} onRefreshLeads={refreshLeadsFromStorage} onAddLead={handleAddLead} onUpdateLead={handleUpdateLead}>
       <main className="page">
-      <h1>BS Hunter</h1>
+      <h1>GrowthPilot Finder</h1>
       <p className="subtitle">AI Lead Generation</p>
 
       <form className="form" onSubmit={(event) => event.preventDefault()}>

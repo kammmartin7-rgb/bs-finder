@@ -100,7 +100,7 @@ export default function GoogleMapsImportForm({ existingLeads: _existingLeads, on
       {step === 'paste' ? (
         <form className="gmaps-import-form" onSubmit={continueToReview}>
           <header>
-            <div><span>BS Hunter</span><h2 id="gmaps-import-title">{t('importFromGoogleMaps')}</h2></div>
+            <div><span>GrowthPilot Hunter</span><h2 id="gmaps-import-title">{t('importFromGoogleMaps')}</h2></div>
             <button type="button" onClick={onClose} aria-label={t('close')}>×</button>
           </header>
           <p className="gmaps-import-hint">{t('gmapsPasteHint')}</p>
@@ -139,7 +139,7 @@ export default function GoogleMapsImportForm({ existingLeads: _existingLeads, on
       ) : (
         <form className="gmaps-import-form" onSubmit={submitReview}>
           <header>
-            <div><span>BS Hunter</span><h2>{t('gmapsReviewTitle')}</h2></div>
+            <div><span>GrowthPilot Hunter</span><h2>{t('gmapsReviewTitle')}</h2></div>
             <button type="button" onClick={onClose} aria-label={t('close')}>×</button>
           </header>
           <p className="gmaps-import-hint">{t('gmapsReviewHint')}</p>

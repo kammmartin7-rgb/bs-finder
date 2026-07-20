@@ -27,8 +27,23 @@ const EDIT_COPY = {
   he: { contactName: 'שם איש קשר', proposalDate: 'תאריך ההצעה', choose: 'בחירת תבנית להצעה', launch: 'אתר בסיסי', growth: 'אתר לעסק', pro: 'אתר פרימיום', editProposal: 'עריכת ההצעה', previewProposal: 'תצוגת ההצעה', saveDraft: 'שמירת טיוטת הצעה', draftSaved: 'טיוטת ההצעה נשמרה.', editableDetails: 'פרטי הצעה לעריכה', price: 'מחיר', delivery: 'זמן מסירה', features: 'פריטים כלולים — אחד בכל שורה', select: 'שימוש בתבנית', paymentOptionsTitle: 'אפשרויות תשלום', bankTransfer: 'העברה בנקאית', creditCard: 'כרטיס אשראי', bit: 'Bit', payBox: 'PayBox', cash: 'מזומן', check: 'צ\'ק', installments: 'תשלומים', installmentCount: 'מספר תשלומים', firstPayment: 'תשלום ראשון', paymentStartDate: 'תאריך תחילת תשלום', paymentNotes: 'הערות ותנאי תשלום', paymentNotesPlaceholder: 'לדוגמה: 50% בתחילת העבודה ו-50% במסירה', noPaymentOptions: 'לא נבחרו אפשרויות תשלום.' },
 }
 
+COPY.en.brand = 'GrowthPilot'
+COPY.en.price = 'Proposal price'
+COPY.en.proposal = 'GrowthPilot Proposal'
+COPY.en.notGuarantee = 'GrowthPilot does not guarantee traffic, leads, revenue, or search ranking.'
+COPY.en.nextText = 'After acceptance, GrowthPilot confirms the deposit method and sends the content checklist.'
+COPY.he.brand = 'GrowthPilot'
+COPY.he.price = 'מחיר ההצעה'
+COPY.he.proposal = 'GrowthPilot Proposal'
+COPY.he.notGuarantee = 'GrowthPilot אינה מתחייבת לתנועה, לידים, הכנסות או דירוג בחיפוש.'
+COPY.he.nextText = 'לאחר האישור, GrowthPilot מאשרת את אמצעי המקדמה ושולחת רשימת תוכן.'
+
 function loadDraft(key, business, templateId) {
   try { const stored = JSON.parse(localStorage.getItem(`${key}:draft`)); return stored?.businessName ? { ...createProposalDraft(business, templateId), ...stored } : createProposalDraft(business, templateId) } catch { return createProposalDraft(business, templateId) }
+}
+
+function parseExtraLineItems(value) {
+  return String(value || '').split('\n').map((line) => { const [label, amount] = line.split('|'); return { label: String(label || '').trim(), amount: Number(amount) || 0 } }).filter((item) => item.label && item.amount > 0)
 }
 
 export default function ProposalGenerator({ business, onClose }) {
@@ -43,6 +58,12 @@ export default function ProposalGenerator({ business, onClose }) {
   const [draftNotice, setDraftNotice] = useState('')
   const [approval, setApproval] = useState(storedApproval)
   const selectedPackage = { ...getProposalTemplate(draft.templateId), price: Math.max(0, Number(draft.price) || 0), delivery: draft.delivery, revisions: Math.max(0, Number(draft.revisions) || 0), features: proposalFeatures(draft) }
+  const extraLineItems = parseExtraLineItems(draft.extraLineItems)
+  const subtotal = selectedPackage.price + extraLineItems.reduce((sum, item) => sum + item.amount, 0)
+  const discountValue = Math.min(subtotal, Math.max(0, draft.discountType === 'percent' ? subtotal * (Number(draft.discount) || 0) / 100 : Number(draft.discount) || 0))
+  const taxableTotal = Math.max(0, subtotal - discountValue)
+  const vat = draft.vatEnabled ? taxableTotal * 0.18 : 0
+  const finalTotal = taxableTotal + vat
   const name = draft.businessName || (language === 'he' ? 'שם העסק' : 'Customer business')
   const proposalDate = draft.proposalDate ? new Date(`${draft.proposalDate}T00:00:00`).toLocaleDateString(language) : '—'
   const featureLabel = (feature) => language === 'he' ? FEATURE_HE[feature] || feature : feature
@@ -92,6 +113,6 @@ export default function ProposalGenerator({ business, onClose }) {
 
     <ProposalPaymentOptionsPreview draft={draft} copy={copy} language={language} />
 
-    <section className="proposal-commercial"><div><span>05</span><h2>{copy.payment}</h2><strong>₪{selectedPackage.price.toLocaleString()}</strong><p>{copy.deposit}: ₪{Math.round(selectedPackage.price / 2).toLocaleString()}</p><p>{copy.balance}: ₪{Math.round(selectedPackage.price / 2).toLocaleString()}</p><small>{copy.paymentNote}</small><h3>{copy.afterPayment}</h3><ul>{copy.afterPaymentItems.map((item) => <li key={item}>✓ {item}</li>)}</ul><h3>Payment Methods</h3><div className="proposal-payment-methods"><section><strong>Bit</strong><p>Phone: 050-753-6992</p></section><section><strong>PayBox</strong><p>Phone: 050-753-6992</p></section><section><strong>Bank Transfer</strong><p>Bank: בנק דיסקונט</p><p>Branch: 41</p><p>Account: 252378344</p></section></div><p className="proposal-payment-confirmation">After completing the payment, please send the payment confirmation via WhatsApp or email.</p></div><div><span>06</span><h2>{copy.terms}</h2><p>{copy.termsText}</p><h3>{copy.next}</h3><p>{copy.nextText}</p>{approval ? <strong className="proposal-approved">✓ {copy.accepted}</strong> : <button type="button" className="proposal-accept" onClick={acceptProposal}>{copy.approve}</button>}</div></section>
+    <section className="proposal-commercial"><div><span>05</span><h2>{copy.payment}</h2><strong>₪{selectedPackage.price.toLocaleString()}</strong><p>{copy.deposit}: ₪{Math.round(selectedPackage.price / 2).toLocaleString()}</p><p>{copy.balance}: ₪{Math.round(selectedPackage.price / 2).toLocaleString()}</p><small>{copy.paymentNote}</small><h3>{copy.afterPayment}</h3><ul>{copy.afterPaymentItems.map((item) => <li key={item}>✓ {item}</li>)}</ul><h3>Payment Methods</h3><div className="proposal-payment-methods"><section><strong>Bit</strong><p>Phone: 050-753-6992</p></section><section><strong>PayBox</strong><p>Phone: 050-753-6992</p></section><section><strong>Bank Transfer</strong><p>Bank: בנק דיסקונט</p><p>Branch: 41</p><p>Account: 252378344</p></section></div><p className="proposal-payment-confirmation">After completing the payment, please send the payment confirmation via WhatsApp or email.</p></div><div><span>06</span><h2>{copy.terms}</h2><p>{copy.termsText}</p><h3>{copy.next}</h3><p>{copy.nextText}</p>{approval ? <strong className="proposal-approved">✓ {copy.accepted}</strong> : <button type="button" className="proposal-accept" onClick={acceptProposal}>{copy.approve}</button>}</div></section><footer className="proposal-footer">Prepared by GrowthPilot · © GrowthPilot</footer>
   </article></div>
 }

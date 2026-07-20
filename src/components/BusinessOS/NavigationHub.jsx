@@ -42,10 +42,10 @@ export function BusinessesHub({ leads, onOpenScreen }) {
           <span className="navigation-card__icon">◎</span>
           <div>
             <small>{t('revenueGeneratingBusiness')}</small>
-            <h2>BS Finder</h2>
+            <h2>GrowthPilot Finder</h2>
             <p>{t('bsFinderDescription')}</p>
             <dl>
-              <div><dt>{t('technicalName')}</dt><dd>BS Hunter</dd></div>
+            <div><dt>{t('technicalName')}</dt><dd>GrowthPilot Hunter</dd></div>
               <div><dt>{t('workspaceStatus')}</dt><dd>{t('activePartial')}</dd></div>
               <div><dt>{t('currentBusinessTask')}</dt><dd>{t('protectSourceTask')}</dd></div>
             </dl>
@@ -73,8 +73,8 @@ export function BSFinderWorkspace({ onOpenScreen }) {
   const { t } = useLanguage()
   return (
     <section className="navigation-hub">
-      <HubHeader eyebrow={t('primaryRevenueBusiness')} title="BS Finder" description={t('bsFinderWorkspaceDescription')} onBack={() => onOpenScreen('businesses')} />
-      <div className="navigation-hub__status"><span>{t('technicalName')}</span><strong>BS Hunter / bs-hunter</strong><span>{t('workspaceStatus')}</span><strong>{t('activePartial')}</strong></div>
+      <HubHeader eyebrow={t('primaryRevenueBusiness')} title="GrowthPilot Finder" description={t('bsFinderWorkspaceDescription')} onBack={() => onOpenScreen('businesses')} />
+      <div className="navigation-hub__status"><span>{t('technicalName')}</span><strong>GrowthPilot Hunter / bs-hunter</strong><span>{t('workspaceStatus')}</span><strong>{t('activePartial')}</strong></div>
       <div className="navigation-hub__grid">{BUSINESS_TOOLS.map(([title, description, screen, icon]) => <button type="button" className="navigation-card" key={title} onClick={() => onOpenScreen(screen)}><span className="navigation-card__icon">{icon}</span><div><h2>{t(title)}</h2><p>{t(description)}</p><strong>{t('openModule')} →</strong></div></button>)}</div>
       {BS_FINDER_ASSET && <div className="navigation-hub__grid is-website-assets"><WebsiteAssetCard asset={BS_FINDER_ASSET} onOpenScreen={onOpenScreen} /></div>}
     </section>

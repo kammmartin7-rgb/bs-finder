@@ -24,13 +24,13 @@ function opportunityText(lead) {
 export function createPhoneScript(rawLead) {
   const lead = normalizeSalesLead(rawLead)
 
-  return `Hi, is this ${lead.businessName}? My name is [Your Name] from BS Hunter. ${opportunityText(lead)}. We create modern, mobile-friendly business websites designed to build trust and make it easier for customers to call, message, or visit. I prepared a quick demo specifically for ${lead.businessName}. Would you have two minutes for me to show you what it could look like?`
+  return `Hi, is this ${lead.businessName}? My name is [Your Name] from GrowthPilot. ${opportunityText(lead)}. We create modern, mobile-friendly business websites designed to build trust and make it easier for customers to call, message, or visit. I prepared a quick demo specifically for ${lead.businessName}. Would you have two minutes for me to show you what it could look like?`
 }
 
 export function createWhatsAppMessage(rawLead) {
   const lead = normalizeSalesLead(rawLead)
 
-  return `Hi ${lead.contactName}, I’m [Your Name] from BS Hunter. I came across ${lead.businessName} while looking at businesses in ${lead.city}. ${opportunityText(lead)}, so I prepared a modern demo site for you—no commitment required. It shows how customers could quickly learn about your services, call, WhatsApp, and find your location. Would you like me to send you the preview?`
+  return `Hi ${lead.contactName}, I’m [Your Name] from GrowthPilot. I came across ${lead.businessName} while looking at businesses in ${lead.city}. ${opportunityText(lead)}, so I prepared a modern demo site for you—no commitment required. It shows how customers could quickly learn about your services, call, WhatsApp, and find your location. Would you like me to send you the preview?`
 }
 
 export function createEmailTemplate(rawLead) {
@@ -40,7 +40,7 @@ export function createEmailTemplate(rawLead) {
 
 Hi ${lead.contactName},
 
-I’m [Your Name] from BS Hunter. I recently found ${lead.businessName} and was impressed by the business${lead.rating ? `’s ${lead.rating.toFixed(1)} rating` : ''}${lead.reviewsCount ? ` across ${lead.reviewsCount} customer reviews` : ''}.
+I’m [Your Name] from GrowthPilot. I recently found ${lead.businessName} and was impressed by the business${lead.rating ? `’s ${lead.rating.toFixed(1)} rating` : ''}${lead.reviewsCount ? ` across ${lead.reviewsCount} customer reviews` : ''}.
 
 ${opportunityText(lead)}. I created a complimentary one-page demo showing how a polished online presence could present your services, strengthen customer trust, and turn more visitors into calls and messages.
 
@@ -48,7 +48,7 @@ I’d be happy to send the preview and walk you through it. Would you be availab
 
 Best,
 [Your Name]
-BS Hunter
+GrowthPilot
 [Your Phone]`
 }
 

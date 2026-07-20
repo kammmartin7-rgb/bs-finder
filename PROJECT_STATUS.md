@@ -14,7 +14,7 @@ Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-Added the compact GrowthPilot “השירותים שלנו” section with quote and WhatsApp actions; existing proposal, CRM, and storage flows remain unchanged, and build/lint passed.
+Fixed the Proposal Generator pricing editor: editable Hebrew price input, discount amount/percentage, VAT toggle, live totals, and draft persistence now use the existing proposal flow; build/lint passed.
 
 ## Project Rules (Current)
 

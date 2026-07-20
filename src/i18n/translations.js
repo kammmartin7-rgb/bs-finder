@@ -209,4 +209,12 @@ const settingsScreenTranslations = {
 
 Object.keys(translations).forEach((language) => Object.assign(translations[language], settingsScreenTranslations[language]))
 
+const brandingTranslations = {
+  en: { bsHunter: 'GrowthPilot Hunter', bsFunds: 'GrowthPilot Funds', openBsHunter: 'Open GrowthPilot Hunter', emptyDashboardMessage: 'Open GrowthPilot Hunter to discover businesses and start building your pipeline.', openBsFinder: 'Open GrowthPilot Finder', category_BusinessOS: 'GrowthPilot OS', module_BusinessOS: 'GrowthPilot OS', module_BSHunter: 'GrowthPilot Hunter' },
+  he: { bsHunter: 'GrowthPilot Hunter', bsFunds: 'GrowthPilot Funds', openBsHunter: 'פתיחת GrowthPilot Hunter', emptyDashboardMessage: 'פתחו את GrowthPilot Hunter כדי למצוא עסקים ולהתחיל לבנות תהליך מכירה.', openBsFinder: 'פתיחת GrowthPilot Finder', category_BusinessOS: 'GrowthPilot OS', module_BusinessOS: 'GrowthPilot OS', module_BSHunter: 'GrowthPilot Hunter' },
+  ar: { bsHunter: 'GrowthPilot Hunter', openBsHunter: 'فتح GrowthPilot Hunter', emptyDashboardMessage: 'افتح GrowthPilot Hunter لاكتشاف الأنشطة وبناء مسار المبيعات.', openBsFinder: 'فتح GrowthPilot Finder', category_BusinessOS: 'GrowthPilot OS', module_BusinessOS: 'GrowthPilot OS', module_BSHunter: 'GrowthPilot Hunter' },
+  ru: { bsHunter: 'GrowthPilot Hunter', openBsHunter: 'Открыть GrowthPilot Hunter', emptyDashboardMessage: 'Откройте GrowthPilot Hunter, чтобы найти компании и начать строить воронку.', openBsFinder: 'Открыть GrowthPilot Finder', category_BusinessOS: 'GrowthPilot OS', module_BusinessOS: 'GrowthPilot OS', module_BSHunter: 'GrowthPilot Hunter' },
+}
+Object.keys(translations).forEach((language) => Object.assign(translations[language], brandingTranslations[language]))
+
 export const DEFAULT_LANGUAGE = 'en'

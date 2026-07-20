@@ -27,7 +27,7 @@ export default function LeadMediaModal({ lead, onClose, onChanged }) {
     <div className="lead-media-overlay" role="dialog" aria-modal="true" aria-labelledby="lead-media-title">
       <section className="lead-media-modal">
         <header>
-          <div><span>BS Hunter</span><h2 id="lead-media-title">{t('manageImages')}</h2><p>{businessName}</p></div>
+          <div><span>GrowthPilot Hunter</span><h2 id="lead-media-title">{t('manageImages')}</h2><p>{businessName}</p></div>
           <button type="button" onClick={handleClose} aria-label={t('close')}>×</button>
         </header>
         <ImageManager

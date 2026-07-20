@@ -80,7 +80,7 @@ export default function LeadEditForm({ lead, crm, stageLabels = [], onSave, onPe
   return (
     <div className="manual-lead-overlay" role="dialog" aria-modal="true" aria-labelledby="lead-edit-title">
       <form className="manual-lead-form" onSubmit={submit}>
-        <header><div><span>BS Hunter</span><h2 id="lead-edit-title">{t('editLead')}</h2></div><button type="button" onClick={onClose} aria-label={t('close')}>×</button></header>
+        <header><div><span>GrowthPilot Hunter</span><h2 id="lead-edit-title">{t('editLead')}</h2></div><button type="button" onClick={onClose} aria-label={t('close')}>×</button></header>
         <div className="manual-lead-grid">
           <label>{t('manualBusinessName')}<input value={values.businessName} onChange={(event) => update('businessName', event.target.value)} required autoFocus /></label>
           <label>{t('manualCategory')}<input value={values.category} onChange={(event) => update('category', event.target.value)} /></label>

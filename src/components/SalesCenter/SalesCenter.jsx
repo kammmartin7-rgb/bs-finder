@@ -50,7 +50,7 @@ export function SalesCenter({ lead }) {
   return (
     <div className="sales-center">
       <header className="sales-center__hero">
-        <span>BS Hunter Sales Center</span>
+        <span>GrowthPilot Hunter Sales Center</span>
         <h1>Outreach for {normalizedLead.businessName}</h1>
         <p>Ready-to-use conversation starters personalized with available lead details.</p>
       </header>

@@ -297,7 +297,7 @@ function mapNavigationActionCategory(navigation) {
 }
 
 export default function CRM({ leads = [], onAction, onAddLead, onUpdateLead, onRefreshLeads: _onRefreshLeads, navigation = null, onNavigationApplied }) {
-  const direction = 'rtl'; const copy = PIPELINE_COPY
+  const direction = 'rtl'; const copy = { ...PIPELINE_COPY, eyebrow: 'GrowthPilot Finder Sales' }
   const [revision, setRevision] = useState(0); const [actionCategory, setActionCategory] = useState(SALES_ACTION_CATEGORIES.MUST_HANDLE_NOW); const [pipelineFilters, setPipelineFilters] = useState(DEFAULT_PIPELINE_FILTERS); const [commandMenuOpen, setCommandMenuOpen] = useState(null); const [dashboardLeadFilter, setDashboardLeadFilter] = useState(null); const [showManualLeadForm, setShowManualLeadForm] = useState(false); const [showGoogleMapsImport, setShowGoogleMapsImport] = useState(false); const [editingView, setEditingView] = useState(null); const [mediaView, setMediaView] = useState(null); const [demoImageView, setDemoImageView] = useState(null); const [dragOverStage, setDragOverStage] = useState(''); const [selectedPipelineLeadId, setSelectedPipelineLeadId] = useState('')
   const actionRef = useRef(null)
   const pipelineRef = useRef(null)

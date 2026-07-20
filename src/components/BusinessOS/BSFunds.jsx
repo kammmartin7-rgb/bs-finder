@@ -14,7 +14,7 @@ export default function BSFunds() {
 
   return (
     <section className="business-os__funds">
-      <header><span>Business OS</span><h1>{t('bsFunds')}</h1><p>{t('bsFundsSubtitle')}</p></header>
+      <header><span>GrowthPilot OS</span><h1>GrowthPilot Funds</h1><p>{t('bsFundsSubtitle')}</p></header>
       <div className="business-os__funds-grid">
         {cards.map(([labelKey, value]) => <article key={labelKey}><strong>{value}</strong><p>{t(labelKey)}</p></article>)}
       </div>

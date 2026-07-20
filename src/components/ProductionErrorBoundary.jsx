@@ -18,7 +18,7 @@ export default class ProductionErrorBoundary extends Component {
       return (
         <main className="production-error" role="alert">
           <div>
-            <span>Business OS</span>
+            <span>GrowthPilot OS</span>
             <h1>Something went wrong</h1>
             <p>The application could not finish loading. Your locally saved data has not been deleted.</p>
             <button type="button" onClick={() => window.location.reload()}>Reload application</button>

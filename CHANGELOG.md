@@ -6,6 +6,14 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- Proposal drafts now carry compatible pricing metadata fields for proposal price, discount, VAT, and extra line items; existing drafts continue loading with defaults.
+
+- Enforced the customer-facing GrowthPilot boundary across proposal output, WhatsApp templates, and public browser title while retaining private admin module names.
+
+- Replaced remaining visible BS Funds/BS Finder/BS Hunter/Business OS labels with the corresponding GrowthPilot branding; historical internal IDs, keys, routes, APIs, and documentation references remain unchanged intentionally.
+
+- Updated visible branding to GrowthPilot Finder, GrowthPilot Hunter, and GrowthPilot OS, including browser title, sidebar, proposal output, and navigation labels; internal keys and APIs are unchanged.
+
 - Compact GrowthPilot **השירותים שלנו** section with eight in-house services, responsive RTL cards, quote actions opening the existing Proposal Generator, and WhatsApp contact actions.
 
 - Existing Proposal Generator payment options: bank transfer, credit card, Bit, PayBox, cash, check, and installments; optional installment count, first payment, start date, and free-text payment terms persist in the current proposal draft and render in preview/print.
@@ -16,6 +24,8 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - LeadEditForm (Edit Lead dialog from Sales Pipeline): bordered **Sales Tracking** fieldset (`data-testid="lead-sales-tracking"`) directly above Notes; pipeline card click opens this dialog.
 
 ### Fixed
+
+- Fixed Proposal Generator pricing controls: the selected package price is editable via `מחיר ההצעה`, with discount amount/percentage, VAT toggle, live subtotal/final-total preview, and draft persistence.
 
 - Replaced the proposal payment-link placeholder with static Bit, PayBox, and Discount Bank transfer instructions and payment-confirmation guidance; no CRM or proposal storage changes.
 
