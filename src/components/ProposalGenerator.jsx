@@ -9,6 +9,8 @@ import { dispatchProposalSent } from './CRM/salesWorkflowActions'
 import { getLeadId } from '../services/leadId'
 import { loadLeadCrm, saveLeadCrm } from './LeadCRM/crmStorage'
 import { ProposalPaymentOptionsEditor, ProposalPaymentOptionsPreview } from './ProposalPaymentOptions'
+import { createShareableDemoUrl, saveShareableDemo } from './WebsiteBuilder/demoStorage'
+import { createIsraeliWhatsAppUrl } from '../services/whatsapp'
 import './ProposalGenerator.css'
 import './ProposalBranding.css'
 import logoHorizontal from '../assets/brand/growthpilot-logo-horizontal.png'
@@ -86,6 +88,20 @@ export default function ProposalGenerator({ business, onClose }) {
     setEditing(false)
   }
 
+  function sendProposal() {
+    localStorage.setItem(`${key}:draft`, JSON.stringify(draft))
+    const proposalUrl = createShareableDemoUrl(saveShareableDemo(business))
+    const whatsappUrl = createIsraeliWhatsAppUrl(business.phone)
+    if (!whatsappUrl) { window.alert('לא נמצא מספר טלפון ללקוח'); return }
+    const message = `שלום ${name},\nהכנתי עבורך הצעת מחיר מ-GrowthPilot.\n\nאפשר לצפות ולאשר את ההצעה כאן:\n${proposalUrl}\n\nאשמח לעזור בכל שאלה.`
+    window.open(`${whatsappUrl}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
+    if (window.confirm('האם ההצעה נשלחה ללקוח?')) {
+      dispatchProposalSent(business)
+      notifyProposalChange(business)
+      setDraftNotice('ההצעה נשלחה ונשמרה.')
+    }
+  }
+
   function acceptProposal() {
     const record = { status: 'accepted', packageId: selectedPackage.id, price: selectedPackage.price, acceptedAt: new Date().toISOString(), businessName: name }
     localStorage.setItem(key, JSON.stringify(record))
@@ -102,7 +118,7 @@ export default function ProposalGenerator({ business, onClose }) {
   }
 
   return <div className="proposal-overlay" role="dialog" aria-modal="true" aria-label={`${copy.proposal} — ${name}`}><article className="proposal-page" dir={direction}>
-    <header className="proposal-toolbar"><button type="button" onClick={onClose}>× {copy.close}</button><div>{!approval && <button type="button" onClick={() => setEditing((value) => !value)}>{editing ? copy.previewProposal : copy.editProposal}</button>}<button type="button" onClick={() => window.print()}>▣ {copy.print}</button></div></header>
+    <header className="proposal-toolbar"><button type="button" onClick={onClose}>× {copy.close}</button><div>{!approval && <button type="button" className="proposal-send" onClick={sendProposal}>שליחת הצעה</button>}{!approval && <button type="button" onClick={() => setEditing((value) => !value)}>{editing ? copy.previewProposal : copy.editProposal}</button>}<button type="button" onClick={() => window.print()}>▣ {copy.print}</button></div></header>
     <section className="proposal-hero"><div><span>{copy.brand}</span><h1>{copy.proposal}</h1><p>{copy.preparedFor}: <strong>{name}</strong></p>{draft.contactName && <p>{copy.contactName}: <strong>{draft.contactName}</strong></p>}<p>{copy.proposalDate}: <strong>{proposalDate}</strong></p></div><div className={`proposal-status ${approval ? 'is-accepted' : ''}`}><small>{copy.status}</small><strong>{approval ? `✓ ${copy.accepted}` : copy.awaiting}</strong>{approval && <span>{copy.approvedOn}: {new Date(approval.acceptedAt).toLocaleDateString(language)}</span>}<em>{copy.valid}</em></div></section>
 
     {editing && !approval && <section className="proposal-editor"><header><h2>{copy.editableDetails}</h2><button type="button" onClick={saveDraft}>{copy.saveDraft}</button></header><div><label>{copy.preparedFor}<input value={draft.businessName} onChange={(event) => updateDraft('businessName', event.target.value)} /></label><label>{copy.contactName}<input value={draft.contactName} onChange={(event) => updateDraft('contactName', event.target.value)} /></label><label>{copy.proposalDate}<input type="date" value={draft.proposalDate} onChange={(event) => updateDraft('proposalDate', event.target.value)} /></label><label>{copy.price}<input type="number" min="0" value={draft.price} onChange={(event) => updateDraft('price', event.target.value)} /></label><label>{copy.delivery}<input value={draft.delivery} onChange={(event) => updateDraft('delivery', event.target.value)} /></label><label>{copy.revisions}<input type="number" min="0" value={draft.revisions} onChange={(event) => updateDraft('revisions', event.target.value)} /></label><label className="is-wide">{copy.features}<textarea rows="7" value={draft.features} onChange={(event) => updateDraft('features', event.target.value)} /></label><ProposalPaymentOptionsEditor draft={draft} copy={copy} onChange={updateDraft} /></div></section>}{draftNotice && <p className="proposal-draft-notice">{draftNotice}</p>}

@@ -27,6 +27,8 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Fixed
 
+- Added the Proposal Generator **שליחת הצעה** action: saves the current draft, reuses the shared public link flow, opens prefilled WhatsApp, and advances the lead only after send confirmation.
+
 - Repositioned the GrowthPilot horizontal logo into the proposal header, removed the payment-section banner, and added a compact circular powered-by footer for print-friendly output.
 
 - Fixed Proposal Generator pricing controls: the selected package price is editable via `מחיר ההצעה`, with discount amount/percentage, VAT toggle, live subtotal/final-total preview, and draft persistence.

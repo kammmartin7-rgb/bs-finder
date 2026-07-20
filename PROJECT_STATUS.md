@@ -14,7 +14,7 @@ Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-Polished proposal branding: removed the payment-section logo, moved the horizontal mark to the proposal header, and added a compact powered-by footer; build/lint passed without workflow or storage changes.
+Added the Proposal Generator “שליחת הצעה” action using the existing draft, shared-link, WhatsApp, and confirmed stage-advance flows; build/lint passed without storage or CRM architecture changes.
 
 ## Project Rules (Current)
 
