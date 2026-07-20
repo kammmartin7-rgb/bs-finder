@@ -6,6 +6,8 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- Integrated the provided GrowthPilot circular and horizontal logo assets into platform sidebar and customer-facing proposal, payment, and shared-demo surfaces with accessible alt text.
+
 - Proposal drafts now carry compatible pricing metadata fields for proposal price, discount, VAT, and extra line items; existing drafts continue loading with defaults.
 
 - Enforced the customer-facing GrowthPilot boundary across proposal output, WhatsApp templates, and public browser title while retaining private admin module names.
@@ -24,6 +26,8 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - LeadEditForm (Edit Lead dialog from Sales Pipeline): bordered **Sales Tracking** fieldset (`data-testid="lead-sales-tracking"`) directly above Notes; pipeline card click opens this dialog.
 
 ### Fixed
+
+- Repositioned the GrowthPilot horizontal logo into the proposal header, removed the payment-section banner, and added a compact circular powered-by footer for print-friendly output.
 
 - Fixed Proposal Generator pricing controls: the selected package price is editable via `מחיר ההצעה`, with discount amount/percentage, VAT toggle, live subtotal/final-total preview, and draft persistence.
 

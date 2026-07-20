@@ -10,6 +10,8 @@ import { getLeadId } from '../services/leadId'
 import { loadLeadCrm, saveLeadCrm } from './LeadCRM/crmStorage'
 import { ProposalPaymentOptionsEditor, ProposalPaymentOptionsPreview } from './ProposalPaymentOptions'
 import './ProposalGenerator.css'
+import './ProposalBranding.css'
+import logoHorizontal from '../assets/brand/growthpilot-logo-horizontal.png'
 
 const FEATURE_HE = {
   'One-page mobile website': 'אתר מובייל בן עמוד אחד', 'Call, WhatsApp and Maps': 'שיחה, WhatsApp ומפות', 'Business content setup': 'הכנת תוכן עסקי', 'One revision round': 'סבב תיקונים אחד', 'Basic SEO setup': 'הגדרת SEO בסיסית',

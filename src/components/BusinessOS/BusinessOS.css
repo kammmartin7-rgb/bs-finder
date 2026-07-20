@@ -4,7 +4,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .business-os__sidebar { position: fixed; inset-block: 0; left: 0; z-index: 1000; display: flex; width: 230px; flex-direction: column; padding: 24px 16px; background: #0c1b2d; color: #fff; }
 [dir='rtl'] .business-os__sidebar { right: 0; left: auto; }
 .business-os__brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 28px; }
-.business-os__brand > span { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 12px; background: #1d7894; font-weight: 850; }
+.business-os__brand > img { display: block; width: 40px; height: 40px; object-fit: contain; border-radius: 50%; }
 .business-os__brand div { display: grid; }
 .business-os__brand small { color: #91a4b8; font-size: 11px; }
 .business-os__sidebar nav { display: grid; gap: 6px; }

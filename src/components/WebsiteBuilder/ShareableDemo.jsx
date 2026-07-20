@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import WebsiteBuilder from './WebsiteBuilder'
 import { createDemoOpenUrl, loadPublicDemo } from './demoStorage'
 import './ShareableDemo.css'
+import logoHorizontal from '../../assets/brand/growthpilot-logo-horizontal.png'
 
 export default function ShareableDemo({ route }) {
   const [record, setRecord] = useState(route?.record || null)
@@ -36,5 +37,5 @@ export default function ShareableDemo({ route }) {
 
   if (loading) return null
   if (!record?.business) return <main className="share-demo-error" dir="rtl" lang="he"><div><span>אתר הדגמה</span><h1>הדמו לא נמצא</h1><p>קישור הדמו חסר, אינו תקין או אינו זמין עוד. בקשו מהשולח קישור חדש.</p><a href="/">חזרה למערכת</a></div></main>
-  return <div className="share-demo-page"><WebsiteBuilder business={record.business} /></div>
+  return <div className="share-demo-page"><div className="share-demo-page__brand"><img src={logoHorizontal} alt="GrowthPilot" /></div><WebsiteBuilder business={record.business} /></div>
 }

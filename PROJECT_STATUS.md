@@ -14,7 +14,7 @@ Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-Fixed the Proposal Generator pricing editor: editable Hebrew price input, discount amount/percentage, VAT toggle, live totals, and draft persistence now use the existing proposal flow; build/lint passed.
+Polished proposal branding: removed the payment-section logo, moved the horizontal mark to the proposal header, and added a compact powered-by footer; build/lint passed without workflow or storage changes.
 
 ## Project Rules (Current)
 

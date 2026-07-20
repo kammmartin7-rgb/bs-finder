@@ -1,5 +1,6 @@
 // Renders Business OS navigation without depending on a routing library.
 import { useLanguage } from '../../context/LanguageContext'
+import logoCircle from '../../assets/brand/growthpilot-logo-circle.png'
 
 const MENU_ITEMS = [
   ['dashboard', 'dashboard', '⌂'],
@@ -37,7 +38,7 @@ export default function Sidebar({ activeScreen, onSelect }) {
 
   return (
     <aside className="business-os__sidebar">
-      <div className="business-os__brand"><span>GP</span><div><strong>GrowthPilot OS</strong><small>AI Growth Platform</small></div></div>
+      <div className="business-os__brand"><img src={logoCircle} alt="GrowthPilot" /><div><strong>GrowthPilot OS</strong><small>AI Growth Platform</small></div></div>
       <nav aria-label="Business OS">
         {MENU_ITEMS.map(([screen, labelKey, icon]) => (
           <button key={screen} type="button" className={activeCategory === screen ? 'is-active' : ''} onClick={() => onSelect(screen)}>
