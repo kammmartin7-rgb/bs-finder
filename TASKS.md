@@ -24,6 +24,8 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | BOS-016 | Establish permanent project memory | Business OS | Business OS | GREEN | Completed | High | No | None | Six root memory files created and verified. |
 | BOS-017 | Add Projects status module | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-016 | Live task progress and mirrored project facts verified. |
 | BOS-018 | Upgrade Project Command Center | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-017 | Compact translated command view and rich task details verified. |
+| BOS-019 | Maintain proposal payment instructions | Payments | Business OS | GREEN | Completed | Medium | No | Proposal Generator | Static Bit, PayBox, and bank-transfer details render in the existing proposal payment section. |
+| BOS-020 | Add GrowthPilot services section | Sales | Business OS | GREEN | Completed | Medium | No | Existing proposal and WhatsApp flows | Compact RTL service cards with quote and WhatsApp actions verified by build/lint. |
 | BOS-019 | Add secure AI Center and backend | Business OS | Business OS | GREEN | Completed | Medium | No | None | Backend-only SDK, safe no-key flow, and translated UI verified. |
 | BOS-020 | Clean and localize Project Command Center | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-018 | Known starter and roadmap task content localized for display; compact Overview verified. |
 | BOS-021 | Complete AI Center Business OS integration | Business OS | Business OS | GREEN | Completed | Medium | No | BOS-019 | Status endpoint, four AI actions, constrained context, navigation, validation, and no-key behavior verified. |
@@ -55,6 +57,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | CRM-003 | Add follow-up calendar view | CRM | Business OS | GREEN | Completed | High | No | CRM-002 | Overdue, today, upcoming, and no-date groups with existing-record date updates verified. |
 | CRM-004 | Add lead owner assignment | CRM | Business OS | ORANGE | Open | Medium | No | Authentication | Person or agent ownership. |
 | CRM-005 | Add CRM history timeline | CRM | Business OS | ORANGE | In Progress | Medium | No | Action events | Latest recorded activity is visible; a complete chronological timeline remains future work. |
+| CRM-006 | Keep terminal leads recoverable | CRM | Business OS | GREEN | Completed | High | No | CRM-002 | Closed and lost stages retain previous-stage, stay, edit, notes, call, and WhatsApp controls; both return to negotiation; build, lint, and workflow assertion passed. |
 | TSK-001 | Maintain Tasks CRUD | Tasks | Business OS | GREEN | Completed | Medium | No | localStorage | Add/edit/delete/complete verified. |
 | TSK-002 | Maintain 100-task roadmap migration | Tasks | Business OS | GREEN | Completed | Medium | No | Storage flag | Deduplicates six starters. |
 | TSK-003 | Add cloud task synchronization | Tasks | Business OS | ORANGE | Open | Medium | No | BOS-008 | Multi-device tasks. |
@@ -90,6 +93,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | PRP-003 | Add proposal PDF export | Proposals | Business OS | ORANGE | Open | High | No | PRP-002 | Shareable artifact. |
 | PRP-004 | Add proposal delivery confirmation | Proposals | Business OS | ORANGE | Open | High | No | Messaging/email | “Opened” is not delivery proof. |
 | PRP-005 | Add proposal acceptance state | Proposals | Business OS | RED | In Progress | High | Yes | PRP-002 | Acceptance now updates CRM to `deal-won` with proposal amount. |
+| PRP-006 | Add proposal payment options | Proposals | Business OS | GREEN | Completed | High | No | PRP-002 | Existing proposal drafts now support multiple payment methods, installment details, and payment terms in editor, preview, and print; backward compatibility, browser regression, build, and lint verified. |
 | WAP-001 | Maintain WhatsApp action | WhatsApp | BS Hunter | GREEN | Completed | High | No | Phone number | Personalized WhatsApp Web URL. |
 | WAP-002 | Maintain action history | WhatsApp | BS Hunter | GREEN | Completed | Medium | No | Lead IDs | Open events persist. |
 | WAP-003 | Verify message delivery externally | WhatsApp | Business OS | ORANGE | Open | High | No | WhatsApp API/provider | Open is not sent confirmation. |

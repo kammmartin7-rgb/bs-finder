@@ -19,6 +19,7 @@ import { hasLeadAction, LEAD_ACTIONS, recordLeadAction } from './components/Lead
 import { getProposalSummary } from './components/proposalStorage'
 import ShareableDemo from './components/WebsiteBuilder/ShareableDemo'
 import { createDemoOpenUrl, createShareableDemoUrl, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
+import OurServices from './components/OurServices'
 function hasValue(value) {
   return value !== null && value !== undefined && value !== ''
 }
@@ -212,6 +213,16 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     if (!result.ok) return false
     applyPersistedLeads(result.leads)
     return true
+  }
+
+  function openServiceProposal(service) {
+    setSelectedBusiness({ businessName: service.name, name: service.name, contactName: 'GrowthPilot', phone: '050-753-6992', serviceName: service.name })
+    setShowProposal(true)
+  }
+
+  function openServiceWhatsApp(service) {
+    const url = createIsraeliWhatsAppUrl('050-753-6992')
+    if (url) window.open(`${url}&text=${encodeURIComponent(`שלום, אני מעוניין לקבל פרטים על ${service.name}`)}`, '_blank', 'noopener,noreferrer')
   }
 
   function handleUpdateLead(leadId, leadUpdates, crmUpdates) {
@@ -871,6 +882,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
         />
       )}
 
+        <OurServices onQuote={openServiceProposal} onWhatsApp={openServiceWhatsApp} />
       </main>
     </BusinessOS>
 

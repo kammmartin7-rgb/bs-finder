@@ -153,6 +153,8 @@ function PipelineLeadCard({
     notes: copy.notes,
   })
   const readOnly = isReadOnlyStage(view.stage)
+  const terminalStage = ['deal-won', 'lost'].includes(view.stage)
+  const navigationEnabled = !readOnly || terminalStage
   const previousStageId = getPreviousStageId(view.stage)
   const nextStageId = getNextStageId(view.stage)
   const businessName = display(view.businessName, copy.unknown)
@@ -234,25 +236,25 @@ function PipelineLeadCard({
           <LeadNotesEditor view={view} copy={copy} onClose={() => setNotesOpen(false)} />
         ) : null}
 
-        <div className="crm-lead-card__stage-nav">
+        {navigationEnabled && <div className="crm-lead-card__stage-nav">
           <button
             type="button"
-            disabled={!previousStageId || readOnly}
+            disabled={!previousStageId}
             onClick={(event) => { stopCardOpen(event); if (previousStageId) onStageChange?.(view.leadId, previousStageId) }}
           >
             ⬅ {copy.previousStage}
           </button>
-          <button type="button" disabled={readOnly} onClick={stopCardOpen}>
+          <button type="button" onClick={stopCardOpen}>
             ⏸ {copy.stayHere}
           </button>
-          <button
+          {!terminalStage && <button
             type="button"
-            disabled={!nextStageId || readOnly}
+            disabled={!nextStageId}
             onClick={(event) => { stopCardOpen(event); if (nextStageId) onStageChange?.(view.leadId, nextStageId) }}
           >
             ➡ {copy.nextStage}
-          </button>
-        </div>
+          </button>}
+        </div>}
       </div>
     </article>
   )

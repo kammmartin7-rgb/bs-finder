@@ -9,7 +9,7 @@ export function getProposalTemplate(id) { return PROPOSAL_TEMPLATES.find((templa
 
 export function createProposalDraft(business = {}, templateId = 'growth') {
   const template = getProposalTemplate(templateId)
-  return { templateId: template.id, businessName: business.businessName || business.name || '', contactName: business.contactName || business.ownerName || business.contact || '', proposalDate: new Date().toISOString().slice(0, 10), price: template.price, delivery: template.delivery, revisions: template.revisions, features: template.features.join('\n') }
+  return { templateId: template.id, businessName: business.businessName || business.name || '', contactName: business.contactName || business.ownerName || business.contact || '', proposalDate: new Date().toISOString().slice(0, 10), price: template.price, delivery: template.delivery, revisions: template.revisions, features: template.features.join('\n'), paymentOptions: [], installmentCount: '', firstPayment: '', paymentStartDate: '', paymentNotes: '' }
 }
 
 export function applyProposalTemplate(currentDraft, templateId) {

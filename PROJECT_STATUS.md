@@ -2,7 +2,7 @@
 
 ## Last Updated
 
-2026-07-19 IDT
+2026-07-20 IDT
 
 ## Current Main Goal
 
@@ -14,7 +14,7 @@ Add Real Website Builder page and section editor (RWB-003).
 
 ## Last Completed Task
 
-Fix proposal button regression: moved `ProposalGenerator` (and demo/sales overlays) to App root so they render on the CRM/Sales screen; workflow button still calls `handleCrmAction('proposal')`; stage advance confirm after save unchanged; build/lint passed.
+Added the compact GrowthPilot “השירותים שלנו” section with quote and WhatsApp actions; existing proposal, CRM, and storage flows remain unchanged, and build/lint passed.
 
 ## Project Rules (Current)
 
@@ -58,6 +58,8 @@ Fix proposal button regression: moved `ProposalGenerator` (and demo/sales overla
 - CRM V2 pipeline, follow-up center (inside Sales Command), and four-language UI.
 - Real Website Builder V1 with Image Manager, Media Library, templates, previews, and localStorage persistence.
 - Proposal Generator and Templates V1, Sales Center, Tasks module, Projects Command Center, AI Center, Settings, and four-language RTL/LTR support.
+- Proposal drafts support optional payment methods, installment count/first payment/start date, and free-text payment terms; saved options appear in preview and print while legacy drafts remain compatible.
+- Terminal Sales stages remain recoverable: closed and lost leads retain previous-stage, stay, edit, notes, call, and WhatsApp controls; previous-stage returns to negotiation and next-stage is hidden.
 - Production build is static; Free Mode, CSV, Demo, CRM, and Tasks do not require the local backend for basic operation.
 
 ## What Is Incomplete

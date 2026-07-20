@@ -89,7 +89,10 @@ export const STAGE_WORKFLOW = [
     label: 'נסגר',
     readOnly: true,
     primary: null,
-    secondary: [],
+    secondary: [
+      { id: 'call', emoji: '📞', label: 'התקשר' },
+      { id: 'whatsapp', emoji: '💬', label: 'WhatsApp' },
+    ],
   },
   {
     id: 'lost',
@@ -97,7 +100,10 @@ export const STAGE_WORKFLOW = [
     label: 'לא מעוניין',
     readOnly: true,
     primary: null,
-    secondary: [],
+    secondary: [
+      { id: 'call', emoji: '📞', label: 'התקשר' },
+      { id: 'whatsapp', emoji: '💬', label: 'WhatsApp' },
+    ],
   },
 ]
 
@@ -140,6 +146,7 @@ export function getNextStageId(stageId) {
 }
 
 export function getPreviousStageId(stageId) {
+  if (['deal-won', 'lost'].includes(normalizeCrmStage(stageId))) return 'negotiation'
   const index = getStageIndex(stageId)
   if (index <= 0) return null
   return CRM_STAGES[index - 1]

@@ -6,6 +6,9 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- Compact GrowthPilot **השירותים שלנו** section with eight in-house services, responsive RTL cards, quote actions opening the existing Proposal Generator, and WhatsApp contact actions.
+
+- Existing Proposal Generator payment options: bank transfer, credit card, Bit, PayBox, cash, check, and installments; optional installment count, first payment, start date, and free-text payment terms persist in the current proposal draft and render in preview/print.
 - BOS-028 lead persistence E2E script (`scripts/verify-lead-e2e.mjs`): 12 Playwright checks against the running dev server — existing lead count, manual create, duplicate phone block, pipeline-card edit, stage selector, drag-and-drop, browser refresh, dev-server restart, count non-decrease, and canonical `bs-hunter-real-leads` persistence; does not wipe existing leads.
 - Sales page **מרכז פעולות מכירה** (`SalesActionCenter.jsx`, `data-testid="sales-action-center"`) with six categories: חייב טיפול עכשיו, התקשר עכשיו, שלח WhatsApp, פתח דמו, מוכן להצעת מחיר, נסגרה עסקה — single-pass `getSalesActionCenterData` selector.
 - Sales page **Requires Attention**, **פעולות דחופות**, and **מרכז מעקבים** now read real lead sales-tracking fields (`salesStatus`, `nextAction`, `nextActionDate`, `lastContactAt`) via `salesTrackingSelectors.js`; empty states explain why no leads match with live counts.
@@ -14,6 +17,9 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Fixed
 
+- Replaced the proposal payment-link placeholder with static Bit, PayBox, and Discount Bank transfer instructions and payment-confirmation guidance; no CRM or proposal storage changes.
+
+- Terminal Sales stages: closed (`נסגר`) and lost (`לא מעוניין`) leads can return to `negotiation`, retain normal contact/edit/note controls, and no longer expose a next-stage action.
 - CRM **שליחת הצעת מחיר** button regression: `ProposalGenerator` overlay moved to App root so it opens from the Sales/CRM screen; save still dispatches `bs-hunter-proposal-sent` for optional advance to `proposal-sent`.
 
 ### Changed

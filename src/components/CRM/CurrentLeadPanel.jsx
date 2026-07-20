@@ -37,6 +37,8 @@ const CurrentLeadPanel = memo(function CurrentLeadPanel({
       : []
   ), [view, copy.editLead, copy.notes, t])
   const readOnly = view ? isReadOnlyStage(view.stage) : false
+  const terminalStage = view ? ['deal-won', 'lost'].includes(view.stage) : false
+  const navigationEnabled = !readOnly || terminalStage
   const previousStageId = view ? getPreviousStageId(view.stage) : null
   const nextStageId = view ? getNextStageId(view.stage) : null
 
@@ -109,7 +111,7 @@ const CurrentLeadPanel = memo(function CurrentLeadPanel({
         </div>
       ) : null}
 
-      {!readOnly ? (
+      {navigationEnabled ? (
         <div className="crm-v2__current-lead-stage-nav">
           <button
             type="button"
@@ -119,13 +121,13 @@ const CurrentLeadPanel = memo(function CurrentLeadPanel({
             ⬅ {copy.previousStage}
           </button>
           <button type="button">⏸ {copy.stayHere}</button>
-          <button
+          {!terminalStage && <button
             type="button"
             disabled={!nextStageId}
             onClick={() => nextStageId && onStageChange?.(view.leadId, nextStageId)}
           >
             ➡ {copy.nextStage}
-          </button>
+          </button>}
           <button type="button" className="crm-v2__current-lead-next" onClick={onNextLead}>
             ⏭ {copy.nextLead || 'ליד הבא'}
           </button>
