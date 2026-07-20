@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [authorizationError, setAuthorizationError] = useState('')
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    if (!supabase) { setLoading(false); return undefined }
     async function loadSession(nextSession) {
       setSession(nextSession)
       setProfile(null)
