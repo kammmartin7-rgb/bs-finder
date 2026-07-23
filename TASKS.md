@@ -16,6 +16,7 @@ Priority: **RED** = revenue-critical/blocking; **ORANGE** = important; **GREEN**
 | BOS-008 | Move operational data to cloud database | Infrastructure | Business OS | RED | Open | High | Yes | Data model | localStorage is temporary. |
 | BOS-009 | Add authentication and tenant ownership | Infrastructure | Business OS | RED | Open | High | Yes | BOS-008 | Required before customer data. |
 | BOS-010 | Add revenue-flow integration tests | Infrastructure | Business OS | RED | Open | High | Yes | Stable flows | Test lead through payment/deployment. |
+| AUTH-001 | Centralize multi-role authorization | Infrastructure | Business OS | GREEN | Completed | High | No | Supabase Auth | Active profiles enter the app; owner, admin, sales, client, and demo permissions centrally protect Business OS screens. Authorization regression script, build, and lint verified. |
 | BOS-011 | Maintain Business OS shell | Business OS | Business OS | GREEN | Completed | High | No | None | Fixed sidebar and screens verified. |
 | BOS-012 | Maintain clickable dashboard metrics | Business OS | Business OS | GREEN | Completed | Medium | No | Lead data | Real-lead filters verified. |
 | BOS-013 | Persist active Business OS screen | Business OS | Business OS | ORANGE | Open | Low | No | Screen-state design | Refresh currently returns to Dashboard. |

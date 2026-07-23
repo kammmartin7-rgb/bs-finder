@@ -11,6 +11,7 @@ import { DASHBOARD_FILTERS } from './dashboardFilters'
 import { AssetsHub, BSFinderWorkspace, BSFundsWorkspace, BusinessesHub, DevelopmentConsole, DocumentsHub, FinanceHub } from './NavigationHub'
 import InternalBackButton from './InternalBackButton'
 import UsersPermissions from './UsersPermissions'
+import { useAuth } from '../../context/AuthContext'
 
 const TasksModule = lazy(() => import('./TasksModule'))
 const AICenter = lazy(() => import('../AICenter/AICenter'))
@@ -32,16 +33,17 @@ export default function BusinessOS({ leads = [], realWebsiteLead, onDashboardFil
   const [tasksNavigation, setTasksNavigation] = useState(null)
   const screenHistory = useRef([])
   const { language, setLanguage, t } = useLanguage()
+  const { canAccess } = useAuth()
   const theme = settings.theme
   const salesPipelineNavigation = useMemo(() => ({ section: 'pipeline' }), [])
 
   useEffect(() => {
-    if (!realWebsiteLead) return
+    if (!realWebsiteLead || !canAccess('screen', 'real-website-builder')) return
     setActiveScreen((current) => {
       if (current !== 'real-website-builder') screenHistory.current.push(current)
       return 'real-website-builder'
     })
-  }, [realWebsiteLead])
+  }, [canAccess, realWebsiteLead])
   useEffect(() => { try { window.localStorage.setItem('business-os-theme', theme) } catch { /* Theme still works for this session. */ } }, [theme])
   useEffect(() => { if (settings.language !== language) setSettings((current) => saveSettings({ ...current, language })) }, [language, settings.language])
 
@@ -63,6 +65,7 @@ export default function BusinessOS({ leads = [], realWebsiteLead, onDashboardFil
     if (!screen) return
     let nextScreen = screen
     if (nextScreen === 'sales') nextScreen = 'crm'
+    if (!canAccess('screen', nextScreen)) return
 
     if (nextScreen === 'crm-customers') {
       setCrmNavigation({ filter: DASHBOARD_FILTERS.WON_DEALS, section: 'pipeline' })
@@ -80,7 +83,7 @@ export default function BusinessOS({ leads = [], realWebsiteLead, onDashboardFil
 
   function navigateBack() {
     const previous = screenHistory.current.pop()
-    setActiveScreen(previous || 'dashboard')
+    setActiveScreen(previous && canAccess('screen', previous) ? previous : 'dashboard')
   }
 
   function handleDashboardNavigate(action) {
@@ -119,6 +122,13 @@ export default function BusinessOS({ leads = [], realWebsiteLead, onDashboardFil
   }
 
   function renderScreen() {
+    if (!canAccess('screen', activeScreen)) {
+      return (
+        <section className="business-os__placeholder">
+          <span>Business OS</span><h1>Access denied</h1><p>You do not have permission to open this screen.</p>
+        </section>
+      )
+    }
     if (activeScreen === 'dashboard') {
       return <DashboardHome leads={leads} theme={theme} onToggleTheme={() => changeSetting('theme', theme === 'dark' ? 'light' : 'dark')} onOpenScreen={navigateTo} onNavigate={handleDashboardNavigate} />
     }

@@ -2,7 +2,7 @@
 
 ## Last Updated
 
-2026-07-20 IDT
+2026-07-23 IDT
 
 ## Current Main Goal
 
@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS with one shared CRM and a stable 
 
 ## Current Active Task
 
-Add Real Website Builder page and section editor (RWB-003).
+Await approval of the multi-role authorization layer.
 
 ## Last Completed Task
 
-Added authorization foundation: Supabase `public.users` profile migration with RLS and owner-only active-profile validation before the existing platform renders.
+Added centralized multi-role authorization: every active profile can sign in, stale profile responses cannot overwrite current auth state, and Business OS screen access uses permissions.
 
 ## Project Rules (Current)
 
@@ -28,6 +28,7 @@ Added authorization foundation: Supabase `public.users` profile migration with R
 ## What Is Working
 
 - Business OS shell with internal screen state and fixed RTL/LTR-aware sidebar.
+- Central authorization supports owner, admin, sales, client, and demo roles; authentication admits active profiles while screen navigation is permission-filtered.
 - Top-level navigation: Dashboard, Businesses, Sales, Finance, Tasks, AI Center, Documents, Users & Permissions, Integrations, Settings.
 - **Sales** sidebar tab opens the existing shared CRM & Sales Pipeline (`crm` screen); no duplicate CRM or pipeline was created.
 - Businesses hub lists BS Finder, BS Funds, the plumber demo website asset, and the kidney donation campaign website (`התרמה להשתלת כליה`); BS Finder workspace links to Overview, Lead Sources, CRM & Sales Pipeline, Proposal, Demo Builder, Real Website Builder, Media Library, and Customers.
@@ -73,7 +74,7 @@ Added authorization foundation: Supabase `public.users` profile migration with R
 - No payment integration exists.
 - Live AI responses remain unavailable until backend `OPENAI_API_KEY` billing/configuration is added.
 - CRM remains localStorage-based.
-- No authentication, cloud database, backups, audit permissions, analytics, or multi-device synchronization.
+- Authentication and frontend permissions exist; cloud operational storage, backups, audit permissions, analytics, and multi-device synchronization remain incomplete.
 - No automated test suite exists beyond build, lint, and the optional `scripts/verify-lead-e2e.mjs` helper.
 
 ## Known Problems
@@ -87,6 +88,7 @@ Added authorization foundation: Supabase `public.users` profile migration with R
 - All operational data currently relies on browser localStorage and can be lost if browser storage is cleared.
 - AI Center is safely disconnected because no OpenAI API key is currently configured.
 - There are no confirmed build or lint failures as of the timestamp above.
+- The new role-constraint migration must be applied to the configured Supabase project before assigning `sales` or `demo`.
 
 ## How To Run
 
@@ -101,6 +103,7 @@ Open the URL Vite prints, normally `http://localhost:5173`.
 Verification:
 
 ```bash
+node scripts/verify-authorization.mjs
 npm run build
 npm run lint
 ```

@@ -6,7 +6,11 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
-- Added `public.users` authorization migration with RLS and AuthProvider profile validation; only active owner profiles can enter the existing application.
+- Added centralized role permissions for owner, admin, sales, client, and demo profiles, with permission-filtered Business OS screens and navigation.
+
+- Added deterministic authorization regression coverage for active owner/client admission, inactive rejection, post-login permissions, and every role/screen permission evaluation.
+
+- Added `public.users` authorization migration with RLS and AuthProvider profile validation; authenticated profiles must exist and be active before entering the application.
 
 - Added Supabase Auth foundation with environment-configured client, protected application gate, email/password login, password reset, and logout.
 
@@ -30,6 +34,8 @@ Exact completion dates for earlier work are not available. Verified existing wor
 - LeadEditForm (Edit Lead dialog from Sales Pipeline): bordered **Sales Tracking** fieldset (`data-testid="lead-sales-tracking"`) directly above Notes; pipeline card click opens this dialog.
 
 ### Fixed
+
+- Active non-owner profiles can sign in; role checks now control screen access instead of rejecting authentication, and stale overlapping profile queries can no longer overwrite the current authorization state.
 
 - Added the Proposal Generator **שליחת הצעה** action: saves the current draft, reuses the shared public link flow, opens prefilled WhatsApp, and advances the lead only after send confirmation.
 
