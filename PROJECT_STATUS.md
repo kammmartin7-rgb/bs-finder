@@ -2,7 +2,7 @@
 
 ## Last Updated
 
-2026-07-23 IDT
+2026-07-26 IDT
 
 ## Current Main Goal
 
@@ -10,11 +10,11 @@ Launch a working revenue-producing Business OS with one shared CRM and a stable 
 
 ## Current Active Task
 
-Await approval of the multi-role authorization layer.
+Apply and live-verify the completed trusted user-provisioning migrations and server endpoints.
 
 ## Last Completed Task
 
-Added centralized multi-role authorization: every active profile can sign in, stale profile responses cannot overwrite current auth state, and Business OS screen access uses permissions.
+Completed the local SaaS User Management implementation: trusted invite/update/disable endpoints, business-scoped owner/admin management, audit records, immediate authorization refresh, and the full Users & Permissions workflow.
 
 ## Project Rules (Current)
 
@@ -29,6 +29,14 @@ Added centralized multi-role authorization: every active profile can sign in, st
 
 - Business OS shell with internal screen state and fixed RTL/LTR-aware sidebar.
 - Central authorization supports owner, admin, sales, client, and demo roles; authentication admits active profiles while screen navigation is permission-filtered.
+- User-management foundation includes `public.businesses`, `public.business_memberships`, profile names/timestamps, indexed compatibility migration from `users.business_id`, and owner/admin database scopes.
+- Existing Users & Permissions screen now loads profiles and business memberships through a modular directory service; active admins can access assigned-user management after the foundation migration is applied.
+- Owners can invite and manage all supported roles; admins can manage non-owner/non-admin users only inside assigned businesses.
+- User creation sends a Supabase Auth invitation and creates the matching profile and memberships; disable/activate updates both Auth access and the profile.
+- Invitation and recovery links open the in-app password setup form; users can request their own reset and authorized managers can send an audited reset email.
+- Role and active-state changes reach open sessions through Supabase Realtime; inactive users are signed out immediately.
+- User-management mutations are server-only, business-scoped, and recorded in `user_management_audit`.
+- Database helpers atomically update profiles, memberships, and audit records while serializing active-owner transitions; invitation profiles fail closed until provisioning commits.
 - Top-level navigation: Dashboard, Businesses, Sales, Finance, Tasks, AI Center, Documents, Users & Permissions, Integrations, Settings.
 - **Sales** sidebar tab opens the existing shared CRM & Sales Pipeline (`crm` screen); no duplicate CRM or pipeline was created.
 - Businesses hub lists BS Finder, BS Funds, the plumber demo website asset, and the kidney donation campaign website (`התרמה להשתלת כליה`); BS Finder workspace links to Overview, Lead Sources, CRM & Sales Pipeline, Proposal, Demo Builder, Real Website Builder, Media Library, and Customers.
@@ -69,12 +77,13 @@ Added centralized multi-role authorization: every active profile can sign in, st
 - No production deployment has been completed or verified on a real hosting provider.
 - Paid lead search still needs billing, a deployed backend, and `VITE_API_BASE_URL`.
 - BS Funds has no live data integration beyond the production website asset card.
-- Global Users & Permissions and Integrations remain placeholder screens.
+- Integrations remains a placeholder screen.
 - Real Website Builder V1 does not yet include section editing, client approvals, publishing, domains, hosting, or payment-triggered delivery.
 - No payment integration exists.
 - Live AI responses remain unavailable until backend `OPENAI_API_KEY` billing/configuration is added.
 - CRM remains localStorage-based.
 - Authentication and frontend permissions exist; cloud operational storage, backups, audit permissions, analytics, and multi-device synchronization remain incomplete.
+- Trusted user provisioning is implemented locally but cannot be live-verified until the migrations are applied and `SUPABASE_SERVICE_ROLE_KEY` is configured.
 - No automated test suite exists beyond build, lint, and the optional `scripts/verify-lead-e2e.mjs` helper.
 
 ## Known Problems
@@ -89,6 +98,9 @@ Added centralized multi-role authorization: every active profile can sign in, st
 - AI Center is safely disconnected because no OpenAI API key is currently configured.
 - There are no confirmed build or lint failures as of the timestamp above.
 - The new role-constraint migration must be applied to the configured Supabase project before assigning `sales` or `demo`.
+- The Phase 1 foundation migration must be applied before the upgraded Users directory can load names, businesses, and memberships.
+- Migrations `202607260001` through `202607260003` must be applied in order before using the Users & Permissions workflow.
+- Local live API verification is blocked because `.env` has no `SUPABASE_SERVICE_ROLE_KEY`; never expose this value with a `VITE_` prefix.
 
 ## How To Run
 
@@ -104,6 +116,8 @@ Verification:
 
 ```bash
 node scripts/verify-authorization.mjs
+node scripts/verify-user-management-foundation.mjs
+node scripts/verify-user-management-api.mjs
 npm run build
 npm run lint
 ```
@@ -131,6 +145,11 @@ Covers 12 checks: existing lead count, manual create, duplicate prevention, pipe
 - `src/components/BusinessOS/NavigationHub.jsx` — Businesses, BS Finder workspace, BS Funds, Finance, Documents, and asset hubs.
 - `src/components/CRM/` — shared CRM & Sales Pipeline, lead cards, edit form, media modal, selectors.
 - `src/services/leadPersistence.js` — canonical real-lead store and change notifications.
+- `src/services/userDirectory.js` — RLS-backed directory reads and authenticated user-management API calls.
+- `api/_lib/` and `api/users/` — server-only authentication, validation, audit, invite, update, activate, and safe-disable endpoints.
+- `supabase/migrations/202607260001_saas_user_management_foundation.sql` — profiles, businesses, memberships, helpers, triggers, grants, and RLS.
+- `supabase/migrations/202607260002_user_management_audit.sql` — server-written user-management audit records.
+- `supabase/migrations/202607260003_authorization_profile_realtime.sql` — immediate active/role updates for open sessions.
 - `src/services/leadSalesTracking.js`, `leadSalesTrackingMigration.js` — lead-level sales tracking fields and one-time backfill.
 - `src/services/leadId.js`, `leadRelationMigration.js` — LeadID normalization and legacy migration.
 - `src/components/GoogleMapsImport/` — Google Maps paste import for CRM pipeline.

@@ -27,6 +27,7 @@ assert.equal(getProfileAuthorizationError(inactiveOwner), 'This account is inact
 assert.equal(getProfileAuthorizationError(null), 'No authorization profile exists for this account.', 'Missing user profile must be rejected.')
 
 assert.equal(canAccess(activeOwner, 'screen', 'users'), true, 'Owner must retain full access.')
+assert.equal(canAccess(profile(ROLES.ADMIN), 'screen', 'users'), true, 'Admin must reach assigned user management.')
 assert.equal(canAccess(activeClient, 'screen', 'dashboard'), true, 'Client must reach its dashboard after login.')
 assert.equal(canAccess(activeClient, 'screen', 'users'), false, 'Client must not reach user administration.')
 assert.equal(hasPermission(profile(ROLES.SALES), PERMISSIONS.CRM), true, 'Sales must access CRM.')

@@ -6,6 +6,22 @@ Exact completion dates for earlier work are not available. Verified existing wor
 
 ### Added
 
+- Completed the local trusted user-management workflow: owner/admin-scoped Supabase Auth invitations, matching profiles and memberships, role/business edits, safe Auth ban/reactivation, audit history, and last-owner protection.
+
+- Added immediate Realtime authorization-profile refresh so role changes apply without a new login and deactivation signs an open session out.
+
+- Upgraded Users & Permissions with create/invite, role assignment, multi-business assignment, activation controls, and admin-safe role choices.
+
+- Completed password setup and recovery: invitation/recovery redirects open an in-app new-password form, self-service reset remains available, and manager-triggered resets are scoped and audited.
+
+- Added deterministic checks for API input/scope rules, server-only writes, invitation/disable paths, audit schema, and Realtime publication.
+
+- Hardened user management after full diff review: tenant-bound roles require businesses, booleans and UUIDs are strictly validated, admin RLS excludes owner/admin profiles and unrelated memberships, browser mutations are revoked, membership replacement is transactional, and concurrent last-owner changes are serialized in PostgreSQL.
+
+- Made profile, membership, and audit mutations atomic; invitation-trigger profiles now remain inactive until provisioning commits, and failed Auth-user cleanup falls back to banning and deactivating the incomplete account.
+
+- SaaS User Management Phase 1: authoritative `businesses` and `business_memberships`, compatible user names/timestamps, indexed legacy `business_id` migration, private database authorization helpers, owner/admin RLS, primary-membership synchronization, server-only Supabase client guards, and a modular business-aware Users directory.
+
 - Added centralized role permissions for owner, admin, sales, client, and demo profiles, with permission-filtered Business OS screens and navigation.
 
 - Added deterministic authorization regression coverage for active owner/client admission, inactive rejection, post-login permissions, and every role/screen permission evaluation.

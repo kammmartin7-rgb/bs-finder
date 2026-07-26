@@ -4,12 +4,31 @@ import logo from '../assets/brand/growthpilot-logo-horizontal.png'
 import './AuthGate.css'
 
 export default function AuthGate({ children }) {
-  const { user, authorized, authorizationError, loading, signIn, resetPassword, signOut } = useAuth()
+  const { user, authorized, authorizationError, loading, passwordSetupMode, signIn, resetPassword, updatePassword, signOut } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   if (loading) return <div className="auth-gate"><p>Loading…</p></div>
+  async function savePassword(event) {
+    event.preventDefault()
+    setError('')
+    if (password.length < 8) {
+      setError('Password must contain at least 8 characters.')
+      return
+    }
+    if (password !== passwordConfirmation) {
+      setError('Passwords do not match.')
+      return
+    }
+    const result = await updatePassword(password)
+    if (result.error) setError(result.error.message)
+    else setNotice('Password updated successfully.')
+  }
+  if (passwordSetupMode && user && authorized) {
+    return <main className="auth-gate" dir="ltr"><form className="auth-gate__card" onSubmit={savePassword}><img src={logo} alt="GrowthPilot" /><h1>Set your password</h1><label>New password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} autoComplete="new-password" /></label><label>Confirm password<input type="password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} required minLength={8} autoComplete="new-password" /></label>{error && <p className="auth-gate__error">{error}</p>}<button type="submit">Save password</button></form></main>
+  }
   if (user && authorized) return children
   if (user && authorizationError) return <main className="auth-gate"><section className="auth-gate__card"><img src={logo} alt="GrowthPilot" /><h1>Access denied</h1><p>{authorizationError}</p><button type="button" onClick={signOut}>Log out</button></section></main>
   async function submit(event) { event.preventDefault(); setError(''); const result = await signIn(email.trim(), password); if (result.error) setError(result.error.message) }

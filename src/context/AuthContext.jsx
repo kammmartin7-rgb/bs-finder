@@ -8,6 +8,10 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [authorizationError, setAuthorizationError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [passwordSetupMode, setPasswordSetupMode] = useState(() => {
+    const parameters = `${window.location.search}&${window.location.hash}`
+    return /(?:setup|reset)=password|type=(?:invite|recovery)/.test(parameters)
+  })
   const sessionRef = useRef(null)
   const profileRef = useRef(null)
   const profileRequestRef = useRef(0)
@@ -38,6 +42,7 @@ export function AuthProvider({ children }) {
     }
     supabase.auth.getSession().then(({ data }) => loadSession(data.session))
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'PASSWORD_RECOVERY') setPasswordSetupMode(true)
       const currentUserId = sessionRef.current?.user?.id
       const nextUserId = nextSession?.user?.id
 
@@ -59,6 +64,43 @@ export function AuthProvider({ children }) {
     })
     return () => { listener.subscription.unsubscribe() }
   }, [])
+
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!userId) return undefined
+
+    const channel = supabase
+      .channel(`authorization-profile-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'users', filter: `auth_user_id=eq.${userId}` },
+        ({ new: nextProfile }) => {
+          if (nextProfile.active !== true) {
+            profileRef.current = null
+            setProfile(null)
+            setAuthorizationError('This account is inactive.')
+            void supabase.auth.signOut()
+            return
+          }
+
+          const profileError = getProfileAuthorizationError(nextProfile)
+          if (profileError) {
+            profileRef.current = null
+            setProfile(null)
+            setAuthorizationError(profileError)
+            return
+          }
+
+          profileRef.current = nextProfile
+          setProfile(nextProfile)
+          setAuthorizationError('')
+        },
+      )
+      .subscribe()
+
+    return () => { void supabase.removeChannel(channel) }
+  }, [session?.user?.id])
+
   const value = {
     session,
     user: session?.user || null,
@@ -66,6 +108,7 @@ export function AuthProvider({ children }) {
     authorizationError,
     authorized: Boolean(profile?.active && !authorizationError),
     loading,
+    passwordSetupMode,
     canAccess: (resource, action) => canAccess(profile, resource, action),
     hasPermission: (permission) => hasPermission(profile, permission),
     isOwner: () => isOwner(profile),
@@ -75,7 +118,15 @@ export function AuthProvider({ children }) {
     isDemo: () => isDemo(profile),
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signOut: () => supabase.auth.signOut(),
-    resetPassword: (email) => supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin }),
+    resetPassword: (email) => supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/?reset=password` }),
+    updatePassword: async (password) => {
+      const result = await supabase.auth.updateUser({ password })
+      if (!result.error) {
+        setPasswordSetupMode(false)
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+      return result
+    },
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

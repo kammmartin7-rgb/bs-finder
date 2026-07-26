@@ -14,6 +14,7 @@ export const supabase = url && key
         signInWithPassword: async () => ({ data: { session: null }, error: new Error(configError) }),
         signOut: async () => ({ error: new Error(configError) }),
         resetPasswordForEmail: async () => ({ error: new Error(configError) }),
+        updateUser: async () => ({ data: { user: null }, error: new Error(configError) }),
       },
       from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: new Error(configError) }) }) }) }),
     }
