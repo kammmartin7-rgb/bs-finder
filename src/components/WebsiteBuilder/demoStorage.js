@@ -12,7 +12,17 @@ const DEMO_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const DEFAULT_PUBLIC_APP_URL = 'https://bs-finder.vercel.app'
 
 export function getPublicAppBaseUrl() {
-  return import.meta.env.VITE_PUBLIC_APP_URL?.trim().replace(/\/$/, '') || DEFAULT_PUBLIC_APP_URL
+  const configuredUrl = import.meta.env.VITE_PUBLIC_APP_URL?.trim().replace(/\/$/, '')
+  if (!configuredUrl) return DEFAULT_PUBLIC_APP_URL
+  try {
+    const url = new URL(configuredUrl)
+    if (url.protocol !== 'https:' || ['localhost', '127.0.0.1', '::1'].includes(url.hostname)) {
+      return DEFAULT_PUBLIC_APP_URL
+    }
+    return configuredUrl
+  } catch {
+    return DEFAULT_PUBLIC_APP_URL
+  }
 }
 
 function getLocalDemoPreviewBaseUrl() {

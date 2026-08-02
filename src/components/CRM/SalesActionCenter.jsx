@@ -1,6 +1,5 @@
 // Sales Action Center: category tabs + actionable lead queue (read-only filtering).
 import { forwardRef, memo } from 'react'
-import { createIsraeliWhatsAppUrl } from '../../services/whatsapp'
 import { SALES_ACTION_CATEGORY_ORDER } from './salesTrackingSelectors'
 
 const VISIBLE_LIMIT = 5
@@ -11,7 +10,6 @@ function phoneTelHref(phone) {
 }
 
 const ActionLeadRow = memo(function ActionLeadRow({ view, copy, onEditLead, onAction }) {
-  const whatsappUrl = createIsraeliWhatsAppUrl(view.phone)
   const telHref = phoneTelHref(view.phone)
 
   return (
@@ -38,9 +36,8 @@ const ActionLeadRow = memo(function ActionLeadRow({ view, copy, onEditLead, onAc
         </button>
         <button
           type="button"
-          disabled={!whatsappUrl}
+          disabled={!view.phone}
           onClick={() => {
-            if (whatsappUrl) window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
             onAction?.('whatsapp', view.lead)
           }}
         >

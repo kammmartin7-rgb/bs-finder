@@ -14,11 +14,11 @@ import { parseLeadsCsv } from './utils/csvImport'
 import ManualLeadForm from './components/ManualLead/ManualLeadForm'
 import { loadPersistedLeads, mergePersistedLeads, persistLeadCollection, addPersistedLead, updatePersistedLead, subscribeToLeadPersistenceChanges } from './services/leadPersistence'
 import { runLeadCategoryMigrationOnce } from './services/leadCategoryMigration'
-import { createIsraeliWhatsAppUrl } from './services/whatsapp'
+import { createDemoWhatsAppUrl, createIsraeliWhatsAppUrl } from './services/whatsapp'
 import { hasLeadAction, LEAD_ACTIONS, recordLeadAction } from './components/LeadCRM/leadActionStorage'
 import { getProposalSummary } from './components/proposalStorage'
 import ShareableDemo from './components/WebsiteBuilder/ShareableDemo'
-import { createDemoOpenUrl, createShareableDemoUrl, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
+import { createDemoOpenUrl, createShareableDemoUrl, loadShareableDemo, parseShareableDemoRoute, saveShareableDemo } from './components/WebsiteBuilder/demoStorage'
 import OurServices from './components/OurServices'
 function hasValue(value) {
   return value !== null && value !== undefined && value !== ''
@@ -36,17 +36,19 @@ function formatWebsiteUrl(website) {
   return website.startsWith('http') ? website : `https://${website}`
 }
 
-function createWhatsAppUrl(lead) {
-  const phone = lead.phone?.replace(/\D/g, '')
-
-  if (!phone) {
-    return null
-  }
-
-  const location = lead.city || lead.address || 'your area'
-  const message = `Hi ${lead.businessName}, I came across your business in ${location} and prepared a demo website for you. Would you like me to send you the preview?`
-
-  return `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`
+function createWhatsAppUrl(lead, language = 'he') {
+  if (!lead?.phone) return ''
+  const demoRecord = loadShareableDemo(lead) || saveShareableDemo({ ...lead, websiteLanguage: language })
+  const demoUrl = createShareableDemoUrl(demoRecord)
+  const whatsappUrl = createDemoWhatsAppUrl(lead.phone, demoUrl, lead.businessName || lead.name)
+  const message = whatsappUrl ? new URL(whatsappUrl).searchParams.get('text') || '' : ''
+  console.info('[CRM WhatsApp share]', {
+    phoneNumber: lead.phone,
+    generatedDemoUrl: demoUrl,
+    finalMessageText: message,
+    finalWhatsAppUrl: whatsappUrl,
+  })
+  return whatsappUrl
 }
 
 function formatRating(rating) {
@@ -270,7 +272,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     } else if (task.action === 'sales-pitch') {
       setSelectedSalesLead(task.lead)
     } else if (task.action === 'whatsapp') {
-      const whatsappUrl = createWhatsAppUrl(task.lead)
+      const whatsappUrl = createWhatsAppUrl(task.lead, language)
       if (whatsappUrl) window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
     }
   }
@@ -283,7 +285,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
       trackRealLeadAction(lead, LEAD_ACTIONS.WHATSAPP_OPENED)
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
     } else if (action === 'whatsapp') {
-      const whatsappUrl = createWhatsAppUrl(lead)
+      const whatsappUrl = createWhatsAppUrl(lead, language)
       if (!whatsappUrl) return
       trackRealLeadAction(lead, LEAD_ACTIONS.WHATSAPP_OPENED)
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
@@ -755,7 +757,7 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
               <tbody>
                 {filteredLeads.map((lead) => {
                   const websiteUrl = formatWebsiteUrl(lead.website)
-                  const whatsappUrl = createWhatsAppUrl(lead)
+                  const canShareOnWhatsApp = Boolean(createIsraeliWhatsAppUrl(lead.phone))
 
                   return (
                     <tr key={lead.id} className={isDemoLead(lead) ? 'is-demo-lead' : undefined}>
@@ -844,9 +846,10 @@ const [demoLinkNotice, setDemoLinkNotice] = useState('')
     <button
       type="button"
       className="mini-button"
-      disabled={!whatsappUrl}
+      disabled={!canShareOnWhatsApp}
       onClick={() => {
         trackRealLeadAction(lead, LEAD_ACTIONS.WHATSAPP_OPENED)
+        const whatsappUrl = createWhatsAppUrl(lead, language)
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
       }}
     >

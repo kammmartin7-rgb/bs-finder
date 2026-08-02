@@ -1,22 +1,21 @@
-import { createDemoOpenUrl, createShareableDemoUrl, loadShareableDemo } from '../WebsiteBuilder/demoStorage'
-import { createIsraeliWhatsAppUrl } from '../../services/whatsapp'
+import { createDemoOpenUrl, createShareableDemoUrl, loadShareableDemo, saveShareableDemo } from '../WebsiteBuilder/demoStorage'
+import { createDemoWhatsAppUrl, createIsraeliWhatsAppUrl } from '../../services/whatsapp'
 import { getLeadId } from '../../services/leadId'
 import { getStageConfirmMessage, getStageLabel } from './salesWorkflow'
-
-const SEND_DEMO_MESSAGE = (demoUrl) => `היי, ראיתי את העסק שלכם בגוגל והכנתי לכם דוגמה אישית לאתר חדש.
-
-הדמו מבוסס על הפרטים והתמונה של העסק שלכם.
-
-אפשר לראות כאן:
-${demoUrl}
-
-אם אהבתם, אפשר להפוך אותו לאתר אמיתי ולהעלות אותו לאוויר במהירות.
-
-אשמח לשמוע מה דעתכם.`
 
 function phoneTelHref(phone) {
   const digits = String(phone || '').replace(/\D/g, '')
   return digits ? `tel:+${digits.startsWith('972') ? digits : `972${digits.replace(/^0/, '')}`}` : ''
+}
+
+function logWhatsAppShare(phoneNumber, demoUrl, whatsappUrl) {
+  const message = whatsappUrl ? new URL(whatsappUrl).searchParams.get('text') || '' : ''
+  console.info('[CRM WhatsApp share]', {
+    phoneNumber,
+    generatedDemoUrl: demoUrl,
+    finalMessageText: message,
+    finalWhatsAppUrl: whatsappUrl,
+  })
 }
 
 export function offerStageAdvance(onStageChange, leadId, nextStageId) {
@@ -62,7 +61,6 @@ export function executeSalesWorkflowAction(actionId, {
   onEditLead,
   demoRecord = null,
   setDemoRecord,
-  copy = {},
 }) {
   if (!view?.lead) return
 
@@ -83,7 +81,13 @@ export function executeSalesWorkflowAction(actionId, {
       onAction?.('call', view.lead)
       break
     case 'whatsapp':
-      if (whatsappUrl) window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+      if (whatsappUrl) {
+        const record = demo || saveShareableDemo(view.lead)
+        const demoUrl = createShareableDemoUrl(record)
+        const shareUrl = createDemoWhatsAppUrl(view.phone, demoUrl, view.businessName)
+        logWhatsAppShare(view.phone, demoUrl, shareUrl)
+        if (shareUrl) window.open(shareUrl, '_blank', 'noopener,noreferrer')
+      }
       onAction?.('whatsapp', view.lead)
       break
     case 'demo': {
@@ -99,15 +103,14 @@ export function executeSalesWorkflowAction(actionId, {
       break
     }
     case 'send-demo': {
-      const record = demoRecord || loadShareableDemo(view.lead)
-      if (!record) {
-        window.alert(copy.demoRequired || 'יש ליצור אתר דמו לפני השליחה')
-        return
-      }
+      const record = demoRecord || loadShareableDemo(view.lead) || saveShareableDemo(view.lead)
       if (!whatsappUrl) return
       onAction?.('send-demo', view.lead)
       const demoUrl = createShareableDemoUrl(record)
-      window.open(`${whatsappUrl}?text=${encodeURIComponent(SEND_DEMO_MESSAGE(demoUrl))}`, '_blank', 'noopener,noreferrer')
+      const shareUrl = createDemoWhatsAppUrl(view.phone, demoUrl, view.businessName)
+      logWhatsAppShare(view.phone, demoUrl, shareUrl)
+      if (!shareUrl) return
+      window.open(shareUrl, '_blank', 'noopener,noreferrer')
       if (actionDef.confirmNextStage) {
         offerStageAdvance(onStageChange, view.leadId, actionDef.confirmNextStage)
       }
